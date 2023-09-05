@@ -44,7 +44,7 @@ function ChildProfile() {
                         <a style={{ color: "white" }} className="navbar-brand ms-5" href="#">ParentAssist</a>
                         <ul className="navbar-nav ms-auto me-5">
                             <li className="nav-item px-3">
-                                <button type="button" className="btn btn-success"><i className="bi bi-plus-lg"></i>Add Parent</button>
+                                <button type="button" className="btn btn-success"><a className="text-decoration-none text-white" href="/ParentRegister"><i className="bi bi-plus-lg"></i>Add Parent</a></button>
                             </li>
                             <li className="nav-item px-3">
                                 <button type="button" className="btn btn-success"><i className="bi bi-plus-lg"></i>Add Doctor</button>

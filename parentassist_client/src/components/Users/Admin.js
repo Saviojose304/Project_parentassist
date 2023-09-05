@@ -11,6 +11,7 @@ function Admin() {
     const token = JSON.parse(localStorage.getItem('token'))
     const navigate = useNavigate();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [show, setShow] = useState(false);
 
     useEffect(() => {
         const token = JSON.parse(localStorage.getItem('token'));
@@ -23,6 +24,7 @@ function Admin() {
     }, [navigate]);
 
     const handleusers = async () => {
+        setShow(!show);
         axios.get('http://localhost:9000/users')
             .then(response => setUsers(response.data))
             .catch(error => console.error('Error fetching data: ', error));
@@ -41,6 +43,7 @@ function Admin() {
     const toggleSidebar = () => {
         setSidebarOpen(!isSidebarOpen);
     };
+
 
     return (
         <>
@@ -94,25 +97,27 @@ function Admin() {
                         <div className="bg-light border rounded-3 p-5">
                             <h1>Admin Dashboard</h1>
 
-                            <h3>User Table</h3>
-                            <table className='table-success table-striped table-hover'>
-                                <thead>
-                                    <tr className='table-success'>
-                                        <th scope="col">User ID</th>
-                                        <th scope="col">Email</th>
-                                        <th scope="col">User Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {users.map(user => (
-                                        <tr className='table-success' key={user.user_id}>
-                                            <td>{user.user_id}</td>
-                                            <td>{user.email}</td>
-                                            <td>{user.user_status}</td>
+                            <div style={{display: show ? 'block':'none'}}>
+                                <h3>User Table</h3>
+                                <table className='table-success table-striped table-hover'>
+                                    <thead>
+                                        <tr className='table-success'>
+                                            <th scope="col">User ID</th>
+                                            <th scope="col">Email</th>
+                                            <th scope="col">User Status</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {users.map(user => (
+                                            <tr className='table-success' key={user.user_id}>
+                                                <td>{user.user_id}</td>
+                                                <td>{user.email}</td>
+                                                <td>{user.user_status}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
 
                         </div>
                     </main>

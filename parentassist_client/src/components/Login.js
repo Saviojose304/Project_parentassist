@@ -11,7 +11,6 @@ function Login() {
     const [role, setRole] = useState('');
     const [emailError, setEmailError] = useState('');
     const [passwordError, setPasswordError] = useState('');
-    const [roleError, setRoleError] = useState('');
     const [alertInfo, setAlertInfo] = useState({ variant: 'success', message: '', show: false });
 
 
@@ -34,7 +33,7 @@ function Login() {
         if (password.match(regex)) {
             return "Password is required"
         }
-        if (password.length <= 6) {
+        if (password.length <= 5) {
             return "Password minimum length is 6"
         }
         if (password.length >= 12) {
@@ -47,13 +46,6 @@ function Login() {
         }
     };
 
-    const validateRole = (role) => {
-        if (role === 'Select a role') {
-            return "Please enter role"
-        } else {
-            return ''
-        }
-    };
 
     const handleemail = (eventEmail) => {
         const newEmail = eventEmail.target.value;
@@ -82,18 +74,13 @@ function Login() {
 
     }
 
-    const handleRole = (eventRole) => {
-        const roleSelect = eventRole.target.value;
-        setRole(roleSelect);
-        const rolemessage = validateRole(roleSelect);
-        setRoleError(rolemessage);
-    }
 
     const navigate = useNavigate();
     const [submitClicked, setSubmitClicked] = useState(false);
 
     const handleAlertClose = () => {
         setAlertInfo({ ...alertInfo, show: false });
+        setSubmitClicked(false)
     };
 
     const login = useGoogleLogin({
@@ -207,6 +194,28 @@ function Login() {
         }
     };
 
+    const sendmail = async (e) => {
+        e.preventDefault();
+
+        setSubmitClicked(true);
+
+        try {
+            const response = await axios.post('http://localhost:9000/forgot-password', {email});
+            if(response.status === 200)
+            {
+                setAlertInfo({variant : 'success' , message:'Verification email sent', show:true});
+            }    
+        } catch (error) {
+            // console.error(error);
+            if (error.response && error.response.status === 400) {
+                setAlertInfo({ variant: 'danger', message: 'User Not Found', show: true });
+            } else {
+
+                setAlertInfo({ variant: 'danger', message: 'An error occurred. Please try again later.', show: true });
+            }
+        }
+    }
+
     return (
         <>
             <section className="vh-100 bg-img">
@@ -247,7 +256,7 @@ function Login() {
                                         )}
                                     </div>
                                     <p className="small fw-bold mt-2 pt-1 mb-0">
-                                        <a href="/Forgotpassmail" className="text-decoration-none">Forgot Password?</a>
+                                        <a style={{cursor:"pointer"}} onClick={sendmail} className="text-decoration-none ">Forgot Password?</a>
                                     </p>
                                     <p className="small fw-bold mt-2 pt-1 mb-0">
                                         Don't have an account?<a href="/Register" className="link-danger text-decoration-none">Register</a>

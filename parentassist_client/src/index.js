@@ -18,8 +18,9 @@ import ChildProfile from './components/Users/ChildProfile';
 import Parent from './components/Users/Parent';
 import Doctor from './components/Users/Doctor';
 import Admin from './components/Users/Admin';
-import Forgotpassmail from './components/forgotpass/Forgotpassmail';
 import Emailverification from './components/Emailverification/Emailverification';
+import Resetpass from './components/forgotpass/Resetpass';
+import ParentRegister from './components/Users/ParentRegister';
 
 const router = createBrowserRouter([
   {
@@ -55,8 +56,12 @@ const router = createBrowserRouter([
     element: <Admin />
   },
   {
-    path:"/Forgotpassmail",
-    element: <Forgotpassmail />
+    path:"/reset-password/:token",
+    element: <Resetpass />
+  },
+  {
+    path:"/ParentRegister",
+    element: <ParentRegister />
   }
   
 

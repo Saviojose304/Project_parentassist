@@ -1,5 +1,5 @@
 {
-  "name": "evergreen",
+  "name": "parentassist",
   "version": "0.1.0",
   "proxy": "http://localhost:9000/",
   "private": true,
@@ -52,10 +52,8 @@
     ]
   },
   "devDependencies": {
-    "autoprefixer": "^10.4.14",
     "eslint-plugin-react": "^7.31.0",
-    "postcss-cli": "^10.1.0",
-    "tailwindcss": "^3.2.7"
+    "postcss-cli": "^10.1.0"
   },
   "description": "This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).",
   "main": "tailwind.config.js",

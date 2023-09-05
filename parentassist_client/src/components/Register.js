@@ -210,6 +210,7 @@ function Register() {
 
     const handleAlertClose = () => {
         setAlertInfo({ ...alertInfo, show: false });
+        setSubmitClicked(false);
     };
 
 
