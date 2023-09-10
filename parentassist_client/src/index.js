@@ -6,6 +6,7 @@ import reportWebVitals from './reportWebVitals';
 import '../node_modules/react-bootstrap/dist/react-bootstrap.js';
 import '../node_modules/bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-icons/font/bootstrap-icons.css';
+
 import {
   createBrowserRouter,
   RouterProvider,
@@ -21,6 +22,13 @@ import Admin from './components/Users/Admin';
 import Emailverification from './components/Emailverification/Emailverification';
 import Resetpass from './components/forgotpass/Resetpass';
 import ParentRegister from './components/Users/ParentRegister';
+import DoctorRegister from './components/Users/DoctorRegister';
+import ChildProfileUpdate from './components/Users/ChildProfileUpdate';
+import ParentProfileUpdate from './components/Users/ParentProfileUpdate';
+import DoctorProfileUpdate from './components/Users/DoctorProfileUpdate';
+import ChildParentView from './components/UsersView/ChildParentView';
+import ChildDoctorView from './components/UsersView/ChildDoctorView';
+import DoctorBooking from './components/Booking/DoctorBooking';
 
 const router = createBrowserRouter([
   {
@@ -62,6 +70,34 @@ const router = createBrowserRouter([
   {
     path:"/ParentRegister",
     element: <ParentRegister />
+  },
+  {
+    path:"/DoctorRegister",
+    element: <DoctorRegister />
+  },
+  {
+    path:"/ChildProfileUpdate",
+    element: <ChildProfileUpdate />
+  },
+  {
+    path:"/ParentProfileUpdate",
+    element: <ParentProfileUpdate />
+  },
+  {
+    path:"/DoctorProfileUpdate",
+    element: <DoctorProfileUpdate />
+  },
+  {
+    path:"/ChildParentView",
+    element: <ChildParentView />
+  },
+  {
+    path:"/ChildDoctorView",
+    element: <ChildDoctorView />
+  },
+  {
+    path:"/DoctorBooking",
+    element: <DoctorBooking />
   }
   
 

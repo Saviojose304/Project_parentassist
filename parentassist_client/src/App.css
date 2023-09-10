@@ -1,4 +1,4 @@
-.bgclr {
+/* .bgclr {
   background-color: #ffffff;
 }
 nav .navbar-collapse.collapse {
@@ -15,12 +15,12 @@ nav .navbar-collapse.collapse {
 nav .navbar-collapse {
   transition: 0.6s all ease-in-out;
   height: 0 !important;
-}
+} */
 
 .navbar-brand {
   font-weight: 700;
 }
-.navbar-nav {
+/* .navbar-nav {
   font-weight: 700;
 }
 @keyframes fadeIn {
@@ -32,4 +32,4 @@ nav .navbar-collapse {
     opacity: 1;
     transform: translateY(0);
   }
-}
+} */

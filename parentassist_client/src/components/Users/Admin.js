@@ -71,17 +71,17 @@ function Admin() {
                                     <div className="d-grid  mx-auto ">
                                         <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleusers}>
                                             <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar">
-                                                <i className="bi bi-people-fill"></i><span>Users</span>
+                                                <i className="bi bi-people-fill"><span>Users</span></i>
                                             </a>
                                         </button>
                                         <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }}>
                                             <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline text-truncate" data-bs-parent="#sidebar">
-                                                <i className="bi bi-bootstrap"></i> <span>Providers</span>
+                                                <i className="bi bi-bootstrap"><span>Providers</span></i>
                                             </a>
                                         </button>
                                         <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={Logout}>
                                             <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline text-truncate" data-bs-parent="#sidebar">
-                                                <i className="bi bi-box-arrow-right"></i> <span >Logout</span>
+                                                <i className="bi bi-box-arrow-right"><span >Logout</span></i>
                                             </a>
                                         </button>
                                     </div>
@@ -97,7 +97,22 @@ function Admin() {
                         <div className="bg-light border rounded-3 p-5">
                             <h1>Admin Dashboard</h1>
 
-                            <div style={{display: show ? 'block':'none'}}>
+                            {/* <section className="vh-100 ">
+                                <div className="container-fluid" style={{ paddingTop: '5rem', paddingBottom: '3rem' }}>
+                                    <div className="row h-100">
+                                        <div className="col-12 col-md-4 col-lg-4 col-xl-4">
+                                            <div className="card shadow-2-strong" style={{ borderRadius: '1rem' }}>
+                                                <div className="card-body p-5 text-center">
+                                                    <h3 className="mb-5">Add Doctor</h3>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section> */}
+
+
+                            <div style={{ display: show ? 'block' : 'none' }}>
                                 <h3>User Table</h3>
                                 <table className='table-success table-striped table-hover'>
                                     <thead>

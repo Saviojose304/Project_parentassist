@@ -31,6 +31,18 @@ function ChildProfile() {
         }
     };
 
+    const handleprofile = () => {
+        navigate('/ChildProfileUpdate');
+    };
+
+    const handleparents = () => {
+        navigate('/ChildParentView')
+    };
+
+    const handledoctor = () => {
+        navigate('/ChildDoctorView')
+    };
+
     const toggleSidebar = () => {
         setSidebarOpen(!isSidebarOpen);
     };
@@ -47,10 +59,10 @@ function ChildProfile() {
                                 <button type="button" className="btn btn-success"><a className="text-decoration-none text-white" href="/ParentRegister"><i className="bi bi-plus-lg"></i>Add Parent</a></button>
                             </li>
                             <li className="nav-item px-3">
-                                <button type="button" className="btn btn-success"><i className="bi bi-plus-lg"></i>Add Doctor</button>
+                                <button type="button" className="btn btn-success"><a className="text-decoration-none text-white" href="/DoctorRegister"><i className="bi bi-plus-lg"></i>Add Doctor</a></button>
                             </li>
                             <li className="nav-item px-3 py-2">
-                                <a style={{ color: "white" }} href="#" data-bs-target="#sidebar" data-bs-toggle="collapse" className="text-decoration-none" onClick={toggleSidebar}>{parsedToken ? parsedToken.email:'Name'}</a>
+                                <a style={{ color: "white" }} href="#" data-bs-target="#sidebar" data-bs-toggle="collapse" className="text-decoration-none" onClick={toggleSidebar}>{parsedToken ? parsedToken.email : 'Name'}</a>
                             </li>
                         </ul>
                     </div>
@@ -63,20 +75,25 @@ function ChildProfile() {
                             <div className=" px-0">
                                 <div id="sidebar" className={isSidebarOpen ? 'collapse collapse-horizontal ' : 'show border-end pt-2'}>
                                     <div className="d-grid  mx-auto ">
-                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }}>
+                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleprofile} >
                                             <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar">
-                                                <i className="bi bi-people-fill"></i><span>Parents</span>
+                                                <i class="bi bi-gear-fill"><span>View Profile</span></i>
+                                            </a>
+                                        </button>
+                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleparents}>
+                                            <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar">
+                                                <i className="bi bi-people-fill"><span>Parents</span></i>
                                             </a>
                                         </button>
 
-                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }}>
+                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handledoctor}>
                                             <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline text-truncate" data-bs-parent="#sidebar">
-                                                <i class="bi bi-activity"></i><span>Doctors</span>
+                                                <i class="bi bi-activity"><span>Doctors</span></i>
                                             </a>
                                         </button>
                                         <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={logOut}>
                                             <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline text-truncate" data-bs-parent="#sidebar">
-                                                <i className="bi bi-box-arrow-right"></i> <span >Logout</span>
+                                                <i className="bi bi-box-arrow-right"><span>Logout</span></i>
                                             </a>
                                         </button>
                                     </div>
@@ -88,13 +105,9 @@ function ChildProfile() {
 
                 </div>
                 <div className={isSidebarOpen ? 'col-12' : 'col-10 pt-2'}>
-                    <main className="col overflow-auto h-100">
-                        <div className="bg-light border rounded-3 p-5">
-                            <h2>Main</h2>
-                            <p>Sriracha biodiesel taxidermy organic post-ironic, Intelligentsia salvia mustache 90's code editing brunch. Butcher polaroid VHS art party, hashtag Brooklyn deep v PBR narwhal sustainable mixtape swag wolf squid tote bag. Tote bag cronut semiotics, raw denim deep v taxidermy messenger bag. Tofu YOLO Etsy, direct trade ethical Odd Future jean shorts paleo. Forage Shoreditch tousled aesthetic irony, street art organic Bushwick artisan cliche semiotics ugh synth chillwave meditation. Shabby chic lomo plaid vinyl chambray Vice. Vice sustainable cardigan, Williamsburg master cleanse hella DIY 90's blog.</p>
-                            <p>Ethical Kickstarter PBR asymmetrical lo-fi. Dreamcatcher street art Carles, stumptown gluten-free Kickstarter artisan Wes Anderson wolf pug. Godard sustainable you probably haven't heard of them, vegan farm-to-table Williamsburg slow-carb readymade disrupt deep v. Meggings seitan Wes Anderson semiotics, cliche American Apparel whatever. Helvetica cray plaid, vegan brunch Banksy leggings +1 direct trade. Wayfarers codeply PBR selfies. Banh mi McSweeney's Shoreditch selfies, forage fingerstache food truck occupy YOLO Pitchfork fixie iPhone fanny pack art party Portland.</p>
-                        </div>
-                    </main>
+                    <h1 className="text-3xl font-bold underline">
+                        Hello world!
+                    </h1>
                 </div>
             </div>
         </>

@@ -254,7 +254,6 @@ function Register() {
                                             <div className="red-text" id="name_err">{nameError}</div> <br />
                                         </div>
                                         <div className="col-6 col-md-6">
-
                                             <span><i className="bi bi-house-fill icon"></i></span>
                                             <input type="text" placeholder="Enter your address" name="address" value={address} onChange={handleaddress} required />
                                             <div className="red-text" id="name_err">{addressError}</div> <br />

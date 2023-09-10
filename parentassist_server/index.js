@@ -145,7 +145,7 @@ app.post('/login', async (req, res) => {
         } else {
             const token = jwt.sign({ userId: user.user_id, role: user.role, email: user.email }, SECRET_KEY, { expiresIn: '1h' });
 
-            res.status(200).json({ data: token, role: user.role, email: user.email, message: 'Login successful' });
+            res.status(200).json({ data: token, userId: user.user_id, role: user.role, email: user.email, message: 'Login successful' });
         }
     } catch (error) {
         console.error('Login error:', error);
@@ -182,7 +182,7 @@ app.post('/google-signup', async (req, res) => {
             console.log('Registration successful');
             // Create a JWT token with user's information
             const token = jwt.sign({ userId: user_id, email: gemail }, SECRET_KEY, { expiresIn: '1h' });
-            res.json({ data: token, userId:user_id, email: gemail });
+            res.json({ data: token, userId: user_id, email: gemail });
         });
     } catch (error) {
         console.error('Google Sign-In error:', error);
@@ -205,7 +205,7 @@ app.post('/google-signin', async (req, res) => {
         const user = rows[0];
 
         const token = jwt.sign({ userId: user.user_id, email: user.email, role: user.role }, SECRET_KEY, { expiresIn: '1h' });
-        res.json({ data: token, userId: user.user_id,  role: user.role, email: user.email });
+        res.json({ data: token, userId: user.user_id, role: user.role, email: user.email });
     } catch (error) {
         console.error('Google Sign-In error:', error);
         res.status(500).json({ error: 'Error during Google Sign-In' });
@@ -285,7 +285,7 @@ app.post('/reset-password/:token', async (req, res) => {
 //Parent-Register API endpoint
 app.post('/parent-register', async (req, res) => {
     try {
-        const { name, address, gender, age, email, phone ,user_child_id } = req.body;
+        const { name, address, gender, age, email, phone, user_child_id } = req.body;
         const password = generateRandomPassword();
 
         const checkEmailQuery = 'SELECT * FROM users WHERE email = ?';
@@ -296,21 +296,21 @@ app.post('/parent-register', async (req, res) => {
             return res.status(400).json({ error: 'Email already registered' });
         }
 
-         // Retrieve the child's ID
-         const getChildIdQuery = 'SELECT adult_child_id FROM adult_child WHERE user_id = ?';
-         const [childResult] = await db.promise().query(getChildIdQuery, [user_child_id]);
+        // Retrieve the child's ID
+        const getChildIdQuery = 'SELECT adult_child_id FROM adult_child WHERE user_id = ?';
+        const [childResult] = await db.promise().query(getChildIdQuery, [user_child_id]);
 
-         if (childResult.length === 0) {
-             return res.status(400).json({ error: 'Child not found' });
-         }
+        if (childResult.length === 0) {
+            return res.status(400).json({ error: 'Child not found' });
+        }
 
-         const child_id = childResult[0].adult_child_id;
+        const child_id = childResult[0].adult_child_id;
 
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
         const userSql = 'INSERT INTO users (email, password, role,user_status) VALUES (?, ?, "Parent","ACTIVE")';
-        db.query(userSql, [email, hashedPassword], (err, userResult)  => {
+        db.query(userSql, [email, hashedPassword], (err, userResult) => {
             if (err) {
                 console.error('Error inserting user data:', err);
                 return res.status(500).json({ message: 'Error registering user' });
@@ -359,6 +359,96 @@ app.post('/parent-register', async (req, res) => {
     }
 });
 
+//Doctor-Register API endpoint
+app.post('/doctor-register', async (req, res) => {
+    try {
+        const { name, email, specialization, hospital, phone, gender, user_child_id } = req.body;
+        const password = generateRandomPassword();
+
+        const checkEmailQuery = 'SELECT * FROM users WHERE email = ?';
+        const [existingUser] = await db.promise().query(checkEmailQuery, [email]);
+
+        if (existingUser.length > 0) {
+
+            return res.status(400).json({ error: 'Email already registered' });
+        }
+
+        // // Retrieve the child's ID
+        // const getChildIdQuery = 'SELECT adult_child_id FROM adult_child WHERE user_id = ?';
+        // const [childResult] = await db.promise().query(getChildIdQuery, [user_child_id]);
+
+        // if (childResult.length === 0) {
+        //     return res.status(400).json({ error: 'Child not found' });
+        // }
+
+        // const child_id = childResult[0].adult_child_id;
+
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+        const userSql = 'INSERT INTO users (email, password, role,user_status) VALUES (?, ?, "Doctor","ACTIVE")';
+        db.query(userSql, [email, hashedPassword], (err, userResult) => {
+            if (err) {
+                console.error('Error inserting user data:', err);
+                return res.status(500).json({ message: 'Error registering user' });
+            }
+
+            const user_id = userResult.insertId;
+
+            // Insert the parent data into the 'parents' table
+            const doctorSql = 'INSERT INTO doctors (name, phone, specialization, hospital, user_id) VALUES (?, ?, ?, ?, ?)';
+            db.query(doctorSql, [name, phone, specialization, hospital, user_id], (doctorErr, doctorResult) => {
+                if (doctorErr) {
+                    console.error('Error inserting parent data:', parentErr);
+                    return res.status(500).json({ message: 'Error registering user' });
+                }
+
+                // const doctor_id = doctorResult.insertId;
+
+                // const updateParentSql = 'UPDATE parents SET doctor_id = ? WHERE Gender = ?';
+                // db.query(updateParentSql, [doctor_id, gender], (updateErr) => {
+                //     if (updateErr) {
+                //         console.error('Error updating parent data:', updateErr);
+                //         return res.status(500).json({ message: 'Error updating parent data' });
+                //     }
+
+                    res.status(200).json({ message: 'Registration successful' });
+                // });
+            });
+
+
+
+            const mailOptions = {
+                from: process.env.GMAIL,
+                to: email,
+                subject: 'Welcome to ParentAssist',
+                html: `<p>Hello Dr. ${name},</p> <br>
+                <p>Welcome to ParentAssist! Your account has been created, and we're excited to have you on board.</p> <br>
+                <p>ParentAssist is an application designed to streamline communication and organization for senior parents.</p><br>
+                <p>Your registered email: ${email}</p><br>
+                <p>Your password: ${password}</p><br>
+                <p>We're here to support you every step of the way. If you have any questions or need assistance, feel free to reach out to our support team.</p><br>
+                <p>Thank you for choosing ParentAssist!</p><br>`,
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    console.error('Error sending verification email:', error);
+                    return res.status(500).json({ message: 'Error sending verification email' });
+                } else {
+                    console.log('Verification email sent:', info.response);
+                    res.status(200).json({ message: 'Registration successful. Email sent with details.' });
+                }
+            });
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'An error occurred. Please try again later.' });
+    }
+});
+
+
 app.get('/users', (req, res) => {
     const query = 'SELECT user_id, email, user_status FROM users WHERE user_id > 1';
     db.query(query, (err, result) => {
@@ -371,15 +461,366 @@ app.get('/users', (req, res) => {
     });
 });
 
-function generateRandomPassword() {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-    const passwordLength = 6;
-    let password = '';
-    for (let i = 0; i < passwordLength; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        password += characters[randomIndex];
+//Child Profile GetData API Endpoint
+
+app.get('/getUserData', (req, res) => {
+    const { user_child_id } = req.query;
+
+    // Query the database to fetch user data by username
+    const query = 'SELECT name, address, phone FROM adult_child WHERE user_id = ?';
+
+    db.query(query, [user_child_id], (err, result) => {
+        if (err) {
+            console.error('Error fetching user data from database:', err);
+            res.status(500).json({ error: 'Internal Server Error' });
+        } else {
+            if (result.length === 0) {
+                res.status(404).json({ error: 'User not found' });
+            } else {
+                const userData = result[0];
+                res.json(userData);
+            }
+        }
+    });
+});
+
+//Child Profile Update API Endpoint
+
+app.put('/Childprofileupdate', (req, res) => {
+    const { name, address, phone, user_child_id } = req.body;
+
+    const updateQuery = 'UPDATE adult_child SET name=?, address=?, phone=? WHERE user_id=?';
+
+    db.query(updateQuery, [name, address, phone, user_child_id], (err, result) => {
+        if (err) {
+            console.error('Error updating child profile:', err);
+            res.status(500).json({ error: 'Internal Server Error' });
+        } else {
+            res.status(200).json({ message: 'Profile Update Successfully' });
+        }
+    });
+});
+
+//Parent Profile GetData API Endpoint
+app.get('/getParentData', (req, res) => {
+    const { user_child_id } = req.query;
+
+    // Query the database to fetch user data by username
+    const query = 'SELECT name, age, address, phone FROM parents WHERE user_id = ?';
+
+    db.query(query, [user_child_id], (err, result) => {
+        if (err) {
+            console.error('Error fetching user data from database:', err);
+            res.status(500).json({ error: 'Internal Server Error' });
+        } else {
+            if (result.length === 0) {
+                res.status(404).json({ error: 'User not found' });
+            } else {
+                const userData = result[0];
+                res.json(userData);
+            }
+        }
+    });
+});
+
+//Parent Profile Update API Endpoint
+
+app.put('/Parentprofileupdate', (req, res) => {
+    const { name, age, address, phone, user_child_id } = req.body;
+
+    const updateQuery = 'UPDATE parents SET name=?, age=?, address=?, phone=? WHERE user_id=?';
+
+    db.query(updateQuery, [name, age, address, phone, user_child_id], (err, result) => {
+        if (err) {
+            console.error('Error updating child profile:', err);
+            res.status(500).json({ error: 'Internal Server Error' });
+        } else {
+            res.status(200).json({ message: 'Profile Update Successfully' });
+        }
+    });
+});
+
+//Doctor Profile GetData API Endpoint
+app.get('/getDoctorData', (req, res) => {
+    const { user_child_id } = req.query;
+
+    // Query the database to fetch user data by username
+    const query = 'SELECT name, phone, specialization, hospital FROM doctors WHERE user_id = ?';
+
+    db.query(query, [user_child_id], (err, result) => {
+        if (err) {
+            console.error('Error fetching user data from database:', err);
+            res.status(500).json({ error: 'Internal Server Error' });
+        } else {
+            if (result.length === 0) {
+                res.status(404).json({ error: 'User not found' });
+            } else {
+                const userData = result[0];
+                res.json(userData);
+            }
+        }
+    });
+});
+
+//Doctor Profile Update API Endpoint
+
+app.put('/Doctorprofileupdate', (req, res) => {
+    const { name, specialization, hospital, phone, user_child_id } = req.body;
+
+    const updateQuery = 'UPDATE doctors SET name=?, phone=?, specialization=?, hospital=? WHERE user_id=?';
+
+    db.query(updateQuery, [name, phone, specialization, hospital, user_child_id], (err, result) => {
+        if (err) {
+            console.error('Error updating child profile:', err);
+            res.status(500).json({ error: 'Internal Server Error' });
+        } else {
+            res.status(200).json({ message: 'Profile Update Successfully' });
+        }
+    });
+});
+
+//Profile Password Update API Endpoint
+
+app.put('/ProfilePassUpdate', async (req, res) => {
+    const { password, user_child_id } = req.body;
+
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const updateQuery = 'UPDATE users SET password=? WHERE user_id=?';
+
+    db.query(updateQuery, [hashedPassword, user_child_id], (err, result) => {
+        if (err) {
+            console.error('Error updating child profile:', err);
+            res.status(500).json({ error: 'Internal Server Error' });
+        } else {
+            res.status(200).json({ message: 'Password Update Successfully' });
+        }
+    });
+});
+
+// Get Parent Data for ChildView API Endpoint
+app.get('/getParentViewData', async (req, res) => {
+    try {
+        const { user_child_id } = req.query;
+
+        // Retrieve the child's ID
+        const getChildIdQuery = 'SELECT adult_child_id FROM adult_child WHERE user_id = ?';
+        const [childResult] = await db.promise().query(getChildIdQuery, [user_child_id]);
+
+        if (childResult.length === 0) {
+            return res.status(400).json({ error: 'Child not found' });
+        }
+
+        const child_id = childResult[0].adult_child_id;
+
+
+        // Select the parent data from the 'parents' table
+        const selectParentSql = 'SELECT name, age, phone FROM parents WHERE adult_child_id = ?'; // Add conditions as needed
+        db.query(selectParentSql, [child_id], (selectErr, results) => {
+            if (selectErr) {
+                console.error('Error selecting parent data:', selectErr);
+                return res.status(500).json({ message: 'Error retrieving parent data' });
+            }
+
+            // Check if any results were found
+            if (results.length === 0) {
+                return res.status(404).json({ message: 'Parent data not found' });
+            }
+
+            // const parentData = results[0]; // Assuming there's only one matching record
+            res.status(200).json({ results });
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'An error occurred. Please try again later.' });
     }
+});
+
+// Doctors List API endpoint
+
+app.get("/doctorslist", (req, res) => {
+    const query = "SELECT * FROM doctors";
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error("Error fetching doctors: ", err);
+            return res.status(500).json({ error: "Error fetching doctors" });
+        }
+
+        res.json(results);
+    });
+});
+
+//Doctors Details for Booking API endpoint
+app.get("/doctorslist/:id", (req, res) => {
+    const { id } = req.params;
+    console.log(id);
+    const query = "SELECT * FROM doctors WHERE doctor_id = ?";
+
+    db.query(query, [id], (err, results) => {
+        if (err) {
+            console.error("Error fetching doctor details: ", err);
+            return res.status(500).json({ error: "Error fetching doctor details" });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ error: "Doctor not found" });
+        }
+
+        res.json(results[0]);
+    });
+});
+
+//Doctor Appointment Booking API endpoint
+app.post("/doctorbooking", async (req, res) => {
+    const { selectedDate, gender, time, doctorid } = req.body;
+    // console.log('selected date', selectedDate,'gender:',gender,"time:",time,"doctorId:",doctorid );
+    // console.log(time);
+
+    // Fetch the count of appointments for the same doctor on the same date
+    const countAppointmentsQuery = "SELECT COUNT(*) AS appointmentCount FROM doctor_booking WHERE doctor_id = ? AND date = ?";
+    db.query(countAppointmentsQuery, [doctorid, selectedDate], (countErr, countResults) => {
+        if (countErr) {
+            console.error("Error counting appointments: ", countErr);
+            return res.status(500).json({ error: "Error counting appointments" });
+        }
+
+        const appointmentCount = countResults[0].appointmentCount;
+
+        if (appointmentCount >= 50) {
+            return res.status(400).json({ error: "Doctor's appointments are fully booked for this date" });
+        }
+
+        // Generate the token as the next available number
+        const token = appointmentCount + 1;
+
+        const selectedTime = `${time}:00`;
+
+        // const appointmentTime = calculateAppointmentTime(appointmentCount);
+
+        // Fetch parent_id and adult_child_id based on doctor_id
+        const fetchParentQuery = "SELECT parent_id, adult_child_id FROM parents WHERE Gender = ?";
+        db.query(fetchParentQuery, [gender], (fetchErr, fetchResults) => {
+            if (fetchErr) {
+                console.error("Error fetching parent data: ", fetchErr);
+                return res.status(500).json({ error: "Error fetching parent data" });
+            }
+
+            if (fetchResults.length === 0) {
+                return res.status(404).json({ error: "Parent data not found for the given doctor_id" });
+            }
+
+            const { parent_id, adult_child_id } = fetchResults[0];
+
+            const checkExistingAppointmentQuery = "SELECT COUNT(*) AS existingAppointmentCount FROM doctor_booking WHERE doctor_id = ? AND date = ? AND parent_id = ?";
+            db.query(checkExistingAppointmentQuery, [doctorid, selectedDate, parent_id], (checkErr, checkResults) => {
+                if (checkErr) {
+                    console.error("Error checking existing appointment: ", checkErr);
+                    return res.status(500).json({ error: "Error checking existing appointment" });
+                }
+
+                const existingAppointmentCount = checkResults[0].existingAppointmentCount;
+
+                if (existingAppointmentCount > 0) {
+                    return res.status(400).json({ error: "You already have an appointment with this doctor on the same date" });
+                }
+
+                const bookedTimeSlotsQuery = "SELECT time FROM doctor_booking WHERE doctor_id = ? AND date = ?";
+                db.query(bookedTimeSlotsQuery, [doctorid, selectedDate], (err, results) => {
+                    if (err) {
+                        console.error("Error fetching booked time slots: ", err);
+                        return res.status(500).json({ error: "Error fetching booked time slots" });
+                    }
+
+                    const bookedTimeSlots = results.map((result) => result.time);
+                    // console.log(bookedTimeSlots);
+                    const availableTimeSlots = calculateAppointmentTime().filter((slot) => !bookedTimeSlots.includes(slot));
+                    // console.log("Available Time Slots:", availableTimeSlots);
+                    
+                    if (availableTimeSlots.includes(selectedTime)) {
+                        // Time slot is available, proceed with booking
+                        const appointmentTime = time; // You can customize this as needed
+                        
+
+                        // Insert the booking record into the database
+                        const bookingDoctorQuery = "INSERT INTO doctor_booking (date, time, doctor_id, parent_id, adult_child_id) VALUES (?, ?, ?, ?, ?)";
+                        db.query(bookingDoctorQuery, [selectedDate, appointmentTime, doctorid, parent_id, adult_child_id], (bookingErr) => {
+                            if (bookingErr) {
+                                console.error("Error creating booking_doctor record: ", bookingErr);
+                                return res.status(500).json({ error: "Error creating booking_doctor record" });
+                            }
+
+                            res.json({ message: "Appointment Booked successfully",token, appointmentTime });
+                        });
+                    } else {
+                        // Time slot is not available, return a list of available time slots
+                        res.status(400).json({ error_code: 3445, error_message: "Selected time slot is not available", availableTimeSlots });
+                    }
+                });
+            });
+        });
+    });
+});
+
+function generateRandomPassword() {
+    const uppercaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const lowercaseChars = 'abcdefghijklmnopqrstuvwxyz';
+    const digitChars = '0123456789';
+    const specialChars = '!@#$%^&*';
+    const passwordLength = 8;
+
+    let password = '';
+
+    // Include at least one uppercase letter, one lowercase letter, one digit, and one special character
+    password += uppercaseChars[Math.floor(Math.random() * uppercaseChars.length)];
+    password += lowercaseChars[Math.floor(Math.random() * lowercaseChars.length)];
+    password += digitChars[Math.floor(Math.random() * digitChars.length)];
+    password += specialChars[Math.floor(Math.random() * specialChars.length)];
+
+    // Generate the remaining characters
+    for (let i = 4; i < passwordLength; i++) {
+        const allChars = uppercaseChars + lowercaseChars + digitChars + specialChars;
+        password += allChars[Math.floor(Math.random() * allChars.length)];
+    }
+
+    // Shuffle the password characters to randomize their order
+    password = shuffleString(password);
+
     return password;
+}
+
+function shuffleString(str) {
+    const array = str.split('');
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array.join('');
+}
+
+// Define a function to calculate available time slots
+function calculateAppointmentTime() {
+    const timeSlots = [];
+    const startTime = new Date();
+    startTime.setHours(9, 30, 0, 0); // Set the start time to 9:30 AM
+
+    const endTime = new Date();
+    endTime.setHours(17, 0, 0, 0); // Set the end time to 5:00 PM
+
+    const incrementMinutes = 30;
+
+    while (startTime <= endTime) {
+        const hours = startTime.getHours().toString().padStart(2, '0');
+        const minutes = startTime.getMinutes().toString().padStart(2, '0');
+        const seconds = startTime.getSeconds().toString().padStart(2, '0');
+        const formattedTime = `${hours}:${minutes}:${seconds}`;
+        timeSlots.push(formattedTime);
+        startTime.setTime(startTime.getTime() + incrementMinutes * 60000);
+    }
+
+    return timeSlots;
 }
 
 app.listen(port, () => {
