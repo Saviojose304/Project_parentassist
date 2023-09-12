@@ -1,17 +1,21 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import '../Register.css'
+import format from "date-fns/format";
 function Doctor() {
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [isshowgeneral, setShowGeneral] = useState(true);
     const [isshowpass, setShowPass] = useState(false);
     const token = localStorage.getItem('token');
     const parsedToken = JSON.parse(token); // Parse the token string to an object
+    const doctor_user_id = parsedToken.userId;
 
     const navigate = useNavigate();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [parents, setParents] = useState([]); // State to hold the list of parents
+    const [filteredParents, setFilteredParents] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
+    const [todaysAppointments, setTodaysAppointments] = useState([]);
 
     useEffect(() => {
         const token = JSON.parse(localStorage.getItem('token'));
@@ -22,6 +26,54 @@ function Doctor() {
             navigate('/Login'); // Navigate to login if no token is present
         }
     }, [navigate]);
+
+    useEffect(() => {
+        // Fetch the list of parents when the component mounts
+        fetchParents();
+        fetchTodaysAppointments();
+    }, []);
+
+    useEffect(() => {
+        // Update the filteredParents when the searchQuery changes
+        const filtered = parents.filter((parent) =>
+            parent.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setFilteredParents(filtered);
+    }, [searchQuery, parents]);
+
+
+    const fetchParents = async () => {
+        try {
+            // Fetch parent data from your backend API
+            const response = await fetch(`http://localhost:9000/DoctorViewParents?userId=${doctor_user_id}`);
+            if (response.ok) {
+                const data = await response.json();
+                setParents(data); // Update the parents state with the fetched data
+                setFilteredParents(data);
+            } else {
+                console.error("Failed to fetch parent data");
+            }
+        } catch (error) {
+            console.error("Error fetching parent data:", error);
+        }
+    };
+
+    const fetchTodaysAppointments = async () => {
+        try {
+            const currentDate = format(new Date(), "yyyy-MM-dd");
+            // Fetch today's appointments for the current doctor from your backend API
+            const response = await fetch(`http://localhost:9000/DoctorViewAppointments?userId=${doctor_user_id}&date=${currentDate}`);
+            if (response.ok) {
+                const data = await response.json();
+                setTodaysAppointments(data); // Update the todaysAppointments state with the fetched data
+            } else {
+                console.error("Failed to fetch today's appointments");
+            }
+        } catch (error) {
+            console.error("Error fetching today's appointments:", error);
+        }
+    };
+
 
     const handleprofile = () => {
         navigate('/DoctorProfileUpdate');
@@ -114,16 +166,58 @@ function Doctor() {
                                                 <span><i className="bi bi-search icon"></i></span>
                                                 <input
                                                     type="text"
-                                                    placeholder="Search parents"
+                                                    placeholder="Search Patients"
                                                     value={searchQuery}
                                                     onChange={(e) => setSearchQuery(e.target.value)}
                                                 />
                                             </div>
 
+                                            <div style={{ paddingLeft: '75px' }} className="row">
+                                                {filteredParents.map((parent) => (
+                                                    <div key={parent.id} className="col-lg-4 col-md-4 mb-3">
+                                                        <div className="card">
+                                                            <div className="card-body">
+                                                                <h5 className="card-title">{parent.name}</h5>
+                                                                <p className="card-text">Age:{parent.age}</p>
+                                                                <p className="card-text">Phone:{parent.phone}</p>
+                                                                <div className="mb-2">
+                                                                    <a href="#" className="btn w-100 btn-outline-primary">View Details</a>
+                                                                </div>
+                                                                <a href="#" className="btn w-100 btn-primary">Edit Details</a>
+
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+
                                         </div>
                                         <div className={isshowpass ? 'tab-pane fade active show' : 'tab-pane fade'}>
-                                            <h3 className="mb-3 text-center">Today Appointment</h3>
-
+                                            <h3 className="mb-3 text-center">Todays Appointment</h3>
+                                            {todaysAppointments.length === 0 ? (
+                                                <div className="d-flex justify-content-center align-items-center">
+                                                    <p className="p-2">No appointments for today</p>
+                                                </div>
+                                            ) : (
+                                                <div style={{ paddingLeft: '75px' }} className="row">
+                                                    {todaysAppointments.map((appointment) => (
+                                                        <div key={appointment.appointment_id} className="col-lg-4 col-md-4 mb-3">
+                                                            <div className="card">
+                                                                <div className="card-body">
+                                                                    <h5 className="card-title">Patient: {appointment.parent_name}</h5>
+                                                                    <p className="card-text">Age: {appointment.parent_age}</p>
+                                                                    <p className="card-text">Phone: {appointment.parent_phone}</p>
+                                                                    <p className="card-text">Time: {appointment.time}</p>
+                                                                    <div className="mb-2">
+                                                                        <a href="#" className="btn w-100 btn-outline-primary">View Details</a>
+                                                                    </div>
+                                                                    <a href="#" className="btn w-100 btn-primary">Edit Details</a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

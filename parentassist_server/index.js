@@ -6,6 +6,7 @@ const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const format = require('date-fns/format');
 const cors = require('cors');
 const { log } = require("console");
 
@@ -412,7 +413,7 @@ app.post('/doctor-register', async (req, res) => {
                 //         return res.status(500).json({ message: 'Error updating parent data' });
                 //     }
 
-                    res.status(200).json({ message: 'Registration successful' });
+                res.status(200).json({ message: 'Registration successful' });
                 // });
             });
 
@@ -676,8 +677,8 @@ app.get("/doctorslist/:id", (req, res) => {
 //Doctor Appointment Booking API endpoint
 app.post("/doctorbooking", async (req, res) => {
     const { selectedDate, gender, time, doctorid } = req.body;
-    // console.log('selected date', selectedDate,'gender:',gender,"time:",time,"doctorId:",doctorid );
-    // console.log(time);
+    //console.log('selected date', selectedDate,'gender:',gender,"time:",time,"doctorId:",doctorid );
+    //console.log(time);
 
     // Fetch the count of appointments for the same doctor on the same date
     const countAppointmentsQuery = "SELECT COUNT(*) AS appointmentCount FROM doctor_booking WHERE doctor_id = ? AND date = ?";
@@ -689,14 +690,14 @@ app.post("/doctorbooking", async (req, res) => {
 
         const appointmentCount = countResults[0].appointmentCount;
 
-        if (appointmentCount >= 50) {
+        if (appointmentCount >= 20) {
             return res.status(400).json({ error: "Doctor's appointments are fully booked for this date" });
         }
 
         // Generate the token as the next available number
         const token = appointmentCount + 1;
 
-        const selectedTime = `${time}:00`;
+        //const selectedTime = `${time}:00`;
 
         // const appointmentTime = calculateAppointmentTime(appointmentCount);
 
@@ -734,15 +735,20 @@ app.post("/doctorbooking", async (req, res) => {
                         return res.status(500).json({ error: "Error fetching booked time slots" });
                     }
 
-                    const bookedTimeSlots = results.map((result) => result.time);
-                    // console.log(bookedTimeSlots);
-                    const availableTimeSlots = calculateAppointmentTime().filter((slot) => !bookedTimeSlots.includes(slot));
-                    // console.log("Available Time Slots:", availableTimeSlots);
-                    
-                    if (availableTimeSlots.includes(selectedTime)) {
+                    const bookedTimeSlots = results.map((result) => {
+                        // Extract hour and minute components and format them as 'HH:mm'
+                        const timeComponents = result.time.split(':');
+                        return `${timeComponents[0]}:${timeComponents[1]}`;
+                    });
+                    //console.log(bookedTimeSlots);
+                    const availableTimeSlots = calculateAvailableTimeSlots(selectedDate).filter((slot) => !bookedTimeSlots.includes(slot));
+                    //console.log("Available Time Slots:", availableTimeSlots);
+
+
+                    if (availableTimeSlots.includes(time)) {
                         // Time slot is available, proceed with booking
                         const appointmentTime = time; // You can customize this as needed
-                        
+
 
                         // Insert the booking record into the database
                         const bookingDoctorQuery = "INSERT INTO doctor_booking (date, time, doctor_id, parent_id, adult_child_id) VALUES (?, ?, ?, ?, ?)";
@@ -752,7 +758,7 @@ app.post("/doctorbooking", async (req, res) => {
                                 return res.status(500).json({ error: "Error creating booking_doctor record" });
                             }
 
-                            res.json({ message: "Appointment Booked successfully",token, appointmentTime });
+                            res.json({ message: "Appointment Booked successfully", token, appointmentTime });
                         });
                     } else {
                         // Time slot is not available, return a list of available time slots
@@ -761,6 +767,332 @@ app.post("/doctorbooking", async (req, res) => {
                 });
             });
         });
+    });
+});
+
+// Doctor View Parents API endpoint
+app.get("/DoctorViewParents", (req, res) => {
+    const userId = req.query.userId; // Extract user ID from query parameters
+
+    // First, retrieve the doctor_id associated with the user_id
+    const doctorIdQuery = `SELECT doctor_id FROM doctors WHERE user_id = ?`;
+    db.query(doctorIdQuery, [userId], (err, doctorIdResult) => {
+        if (err) {
+            console.error("Error fetching doctor_id: ", err);
+            return res.status(500).json({ error: "Error fetching doctor data" });
+        }
+
+        // Check if a doctor with the specified user_id exists
+        if (doctorIdResult.length === 0) {
+            // No doctor found with the specified user_id
+            return res.status(404).json({ error: "Doctor not found" });
+        }
+
+        const doctorId = doctorIdResult[0].doctor_id; // Extract the doctor_id
+
+        //   console.log(doctorId);
+
+        const query = `SELECT DISTINCT parent_id FROM doctor_booking WHERE doctor_id = ?`;
+        db.query(query, [doctorId], (err, parentIds) => {
+            if (err) {
+                console.error("Error fetching parent data: ", err);
+                return res.status(500).json({ error: "Error fetching parent data" });
+            }
+
+            // Extract the parent_ids from the results
+            const parentIdsArray = parentIds.map((result) => result.parent_id);
+
+            // Now, use the extracted parent_ids to fetch parent data from the parent table
+            const parentQuery = `SELECT * FROM parents WHERE parent_id IN (?)`;
+            db.query(parentQuery, [parentIdsArray], (err, parentResults) => {
+                if (err) {
+                    console.error("Error fetching parent data: ", err);
+                    return res.status(500).json({ error: "Error fetching parent data" });
+                }
+
+                res.json(parentResults);
+            });
+        });
+    });
+});
+
+// Todays Appointment APPI endpoint
+app.get("/DoctorViewAppointments", (req, res) => {
+    const { userId, date } = req.query; // Extract doctorId and date from query parameters
+
+    // Format the current date in the format YYYY-MM-DD
+    const currentDate = format(new Date(), "yyyy-MM-dd");
+
+    // Check if the provided date is today's date; if not, return an empty array
+    if (date !== currentDate) {
+        return res.json([]);
+    }
+
+    const doctorIdQuery = `SELECT doctor_id FROM doctors WHERE user_id = ?`;
+    db.query(doctorIdQuery, [userId], (err, doctorIdResult) => {
+        if (err) {
+            console.error("Error fetching doctor_id: ", err);
+            return res.status(500).json({ error: "Error fetching doctor data" });
+        }
+
+        // Check if a doctor with the specified user_id exists
+        if (doctorIdResult.length === 0) {
+            // No doctor found with the specified user_id
+            return res.status(404).json({ error: "Doctor not found" });
+        }
+
+        const doctorId = doctorIdResult[0].doctor_id; // Extract the doctor_id
+        const query = `SELECT doctor_booking.*, parents.name AS parent_name, parents.age AS parent_age, parents.phone AS parent_phone
+                        FROM doctor_booking
+                        JOIN parents ON doctor_booking.parent_id = parents.parent_id
+                        WHERE doctor_booking.doctor_id = ? AND doctor_booking.date = ?
+                        ORDER BY doctor_booking.time ASC`;
+
+        db.query(query, [doctorId, date], (err, results) => {
+            if (err) {
+                console.error("Error fetching appointments:", err);
+                return res.status(500).json({ error: "Error fetching appointments" });
+            }
+
+            res.json(results);
+        });
+    });
+});
+
+// Parent View Appoinment API endpoint
+app.get("/ParentViewAppointments", (req, res) => {
+    const parent_user_id = req.query.parent_user_id; // Extract parent_user_id and date from query parameters
+    const date = req.query.date;
+
+    // Format the current date in the format YYYY-MM-DD
+    const currentDate = format(new Date(), "yyyy-MM-dd");
+
+    // Check if the provided date is today's date; if not, return an empty array
+    if (date !== currentDate) {
+        return res.json([]);
+    }
+
+    // Query to fetch the parent_id based on parent_user_id
+    const getParentIdQuery = "SELECT parent_id FROM parents WHERE user_id = ?";
+
+    db.query(getParentIdQuery, [parent_user_id], (getParentIdErr, parentIdResults) => {
+        if (getParentIdErr) {
+            console.error("Error fetching parent_id:", getParentIdErr);
+            return res.status(500).json({ error: "Error fetching parent_id" });
+        }
+
+        if (parentIdResults.length === 0) {
+            return res.status(404).json({ error: "Parent not found" });
+        }
+
+        const parent_id = parentIdResults[0].parent_id;
+
+        // Construct a query to fetch appointments for the specified parent_id and date
+        const query = `
+        SELECT
+        doctor_booking.*,
+        parents.name AS parent_name,
+        parents.age AS parent_age,
+        parents.phone AS parent_phone,
+        parents.Gender AS parent_gender,
+        doctors.name AS doctor_name,
+        DATE_FORMAT(doctor_booking.date, '%Y-%m-%d') AS formatted_date,
+        doctor_booking.time
+        FROM doctor_booking
+        JOIN parents ON doctor_booking.parent_id = parents.parent_id
+        JOIN doctors ON doctor_booking.doctor_id = doctors.doctor_id
+        WHERE doctor_booking.parent_id = ? AND doctor_booking.date = ? 
+        ORDER BY doctor_booking.time ASC;`;
+
+        db.query(query, [parent_id, date], (err, results) => {
+            if (err) {
+                console.error("Error fetching appointments:", err);
+                return res.status(500).json({ error: "Error fetching appointments" });
+            }
+
+            res.json(results);
+        });
+    });
+});
+
+// Child Doctor View API endpoint
+app.get('/ChildDoctorList', (req, res) => {
+    const query = 'SELECT * FROM doctors';
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching doctors:', err);
+            res.status(500).json({ error: 'Internal Server Error' });
+        } else {
+            res.json(results);
+        }
+    });
+});
+
+// Child Appointment List API endpoint
+app.get('/ChildTodaysAppointments', (req, res) => {
+    const user_id = req.query.user_id; // Get the user_id from the request query parameters
+
+    if (!user_id) {
+        return res.status(400).json({ error: 'User ID is required' });
+    }
+
+
+    // Query the 'doctor_booking' table for today's appointments for the child
+    const appointmentQuery = `
+    SELECT
+        db.time,
+        DATE_FORMAT(db.date, '%Y-%m-%d') AS formatted_date,
+        db.parent_id,
+        p.name AS parent_name,
+        p.age AS parent_age,
+        p.phone AS parent_phone,
+        p.Gender AS parent_gender,
+        db.doctor_id,
+        d.name AS doctor_name
+    FROM
+        doctor_booking db
+    INNER JOIN parents p ON db.parent_id = p.parent_id
+    INNER JOIN adult_child ac ON p.adult_child_id = ac.adult_child_id
+    INNER JOIN doctors d ON db.doctor_id = d.doctor_id
+    WHERE 
+        ac.user_id = ?`;
+
+    db.query(appointmentQuery, [user_id], (err, appointmentResults) => {
+        if (err) {
+            console.error("Error fetching today's appointments:", err);
+            return res.status(500).json({ error: 'Internal Server Error' });
+        }
+
+        res.json(appointmentResults);
+    });
+});
+
+// Edit Click DoctorList API endpoint
+app.get('/editdoctorslist/:doctorId', async (req, res) => {
+    const doctorId = req.params.doctorId;
+
+    // Check if doctorId is provided and is a valid number
+    if (!doctorId || isNaN(doctorId)) {
+        return res.status(400).json({ error: 'Invalid doctorId' });
+    }
+
+    try {
+        // Query the database for doctor details based on the provided doctorId
+        const query = 'SELECT * FROM doctors WHERE doctor_id = ?';
+        db.query(query, [doctorId], (err, results) => {
+            if (err) {
+                console.error(`Error fetching doctor details: ${err}`);
+                return res.status(500).json({ error: 'Internal Server Error' });
+            }
+
+            // Check if a doctor with the provided doctorId was found
+            if (results.length === 0) {
+                return res.status(404).json({ error: 'Doctor not found' });
+            }
+
+            // Return the doctor details as JSON response
+            const doctorDetails = results[0]; // Assuming doctor_id is unique
+            res.json(doctorDetails);
+        });
+    } catch (error) {
+        console.error(`Error fetching doctor details: ${error}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+//update Booking API endpoint
+app.put("/updatedoctorbooking/:doctorId/:appointmentDate", async (req, res) => {
+    const doctorId = req.params.doctorId;
+    const appointmentDate = req.params.appointmentDate;
+    const { selectedDate, gender, time } = req.body;
+
+    //console.log(time);
+    // Fetch parent_id based on the gender
+    const fetchParentQuery = "SELECT parent_id FROM parents WHERE Gender = ?";
+    db.query(fetchParentQuery, [gender], (fetchErr, fetchResults) => {
+        if (fetchErr) {
+            console.error("Error fetching parent data: ", fetchErr);
+            return res.status(500).json({ error: "Error fetching parent data" });
+        }
+
+        if (fetchResults.length === 0) {
+            return res.status(404).json({ error: "Parent data not found for the given gender" });
+        }
+
+        const { parent_id } = fetchResults[0];
+
+        const bookedTimeSlotsQuery = "SELECT time FROM doctor_booking WHERE doctor_id = ? AND date = ?";
+        db.query(bookedTimeSlotsQuery, [doctorId, selectedDate], (err, results) => {
+            if (err) {
+                console.error("Error fetching booked time slots: ", err);
+                return res.status(500).json({ error: "Error fetching booked time slots" });
+            }
+
+            const bookedTimeSlots = results.map((result) => {
+                // Extract hour and minute components and format them as 'HH:mm'
+                const timeComponents = result.time.split(':');
+                return `${timeComponents[0]}:${timeComponents[1]}`;
+            });
+            //console.log(bookedTimeSlots);
+            //const selectedTime = `${time}:00`;
+            const availableTimeSlots = calculateAvailableTimeSlots(selectedDate).filter((slot) => !bookedTimeSlots.includes(slot));
+            //console.log(availableTimeSlots);
+            if (availableTimeSlots.includes(time)) {
+                // Time slot is not available, return a list of available time slots
+                const updateDoctorBookingQuery =
+                    "UPDATE doctor_booking SET date = ?, time = ? WHERE doctor_id = ? AND parent_id = ? AND date = ?";
+
+                db.query( updateDoctorBookingQuery,[selectedDate, time, doctorId, parent_id, appointmentDate],(updateErr, updateResults) => {
+                        if (updateErr) {
+                            console.error("Error updating doctor_booking: ", updateErr);
+                            return res.status(500).json({ error: "Error updating doctor_booking" });
+                        }
+
+                        if (updateResults.affectedRows === 0) {
+                            // No rows were affected, meaning there was no appointment to update
+                            return res.status(404).json({ error: "Appointment not found" });
+                        }
+
+                        res.status(200).json({ message: "Appointment Updated Successfully" });
+                    }
+                );
+
+            }
+            else {
+                return res.status(400).json({ error_code: 3445, error_message: "Selected time slot is not available", availableTimeSlots });
+            }
+
+
+        });
+    });
+});
+
+//Cancel Doctor Appointment API endpoint
+app.delete("/cancelappointment/:doctorId/:parentId/:appointmentDate", async (req, res) => {
+    const doctorId = req.params.doctorId;
+    const parentId = req.params.parentId;
+    const appointmentDate = req.params.appointmentDate;
+
+    // Check if the appointment date is equal to or greater than today's date
+    const today = new Date().toISOString().split('T')[0];
+    if (appointmentDate < today) {
+        return res.status(400).json({ error: "Cannot cancel past appointments" });
+    }
+
+    // Perform the appointment cancellation by deleting the appointment record
+    const cancelAppointmentQuery = "DELETE FROM doctor_booking WHERE doctor_id = ? AND parent_id = ? AND date = ?";
+    db.query(cancelAppointmentQuery, [doctorId, parentId, appointmentDate], (err, results) => {
+        if (err) {
+            console.error("Error cancelling appointment: ", err);
+            return res.status(500).json({ error: "Error cancelling appointment" });
+        }
+
+        if (results.affectedRows === 0) {
+            return res.status(404).json({ error: "Appointment not found" });
+        }
+
+        res.status(200).json({ message: "Appointment Cancelled Successfully" });
     });
 });
 
@@ -801,28 +1133,51 @@ function shuffleString(str) {
 }
 
 // Define a function to calculate available time slots
-function calculateAppointmentTime() {
-    const timeSlots = [];
-    const startTime = new Date();
-    startTime.setHours(9, 30, 0, 0); // Set the start time to 9:30 AM
+function calculateAvailableTimeSlots(selectedDate) {
+    const currentDateTime = new Date();
+    const currentHour = currentDateTime.getHours();
+    const currentMinute = currentDateTime.getMinutes();
 
-    const endTime = new Date();
-    endTime.setHours(17, 0, 0, 0); // Set the end time to 5:00 PM
+    // Create an array to store available time slots
+    const availableTimeSlots = [];
+
+    // Initialize the start time to 9:30 AM for the selected date
+    const startTime = new Date(selectedDate);
+    startTime.setHours(9, 30, 0, 0);
+
+    // Initialize the end time to 5:00 PM for the selected date
+    const endTime = new Date(selectedDate);
+    endTime.setHours(17, 0, 0, 0);
 
     const incrementMinutes = 30;
 
+    // If the selected date is the current date, consider the current time
+    if (selectedDate === currentDateTime.toISOString().split('T')[0]) {
+        // Check if the current time is later than 5:00 PM
+        if (currentHour > 17 || (currentHour === 17 && currentMinute >= 0)) {
+            // If it's later than 5:00 PM, don't add any time slots
+            return availableTimeSlots;
+        }
+
+        // If it's the current date and the current time is earlier than 5:00 PM,
+        // start with the current time
+        startTime.setHours(currentHour, currentMinute, 0, 0);
+    }
+
+    // Iterate through time slots
     while (startTime <= endTime) {
-        const hours = startTime.getHours().toString().padStart(2, '0');
-        const minutes = startTime.getMinutes().toString().padStart(2, '0');
-        const seconds = startTime.getSeconds().toString().padStart(2, '0');
-        const formattedTime = `${hours}:${minutes}:${seconds}`;
-        timeSlots.push(formattedTime);
+        const slotHour = startTime.getHours();
+        const slotMinute = startTime.getMinutes();
+
+        const formattedTime = `${slotHour.toString().padStart(2, '0')}:${slotMinute.toString().padStart(2, '0')}`;
+        availableTimeSlots.push(formattedTime);
+
+        // Increment the time by 30 minutes
         startTime.setTime(startTime.getTime() + incrementMinutes * 60000);
     }
 
-    return timeSlots;
+    return availableTimeSlots;
 }
-
 app.listen(port, () => {
     console.log('listening');
 })

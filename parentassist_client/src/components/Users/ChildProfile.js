@@ -68,7 +68,7 @@ function ChildProfile() {
                     </div>
                 </nav>
             </header>
-            <div className='row d-flex'>
+            <div className='row  d-flex'>
                 <div className='col-2' id="sidebar-nav">
                     <div className="container pt-5">
                         <div className="row flex-nowrap" >
@@ -105,9 +105,7 @@ function ChildProfile() {
 
                 </div>
                 <div className={isSidebarOpen ? 'col-12' : 'col-10 pt-2'}>
-                    <h1 className="text-3xl font-bold underline">
-                        Hello world!
-                    </h1>
+                    
                 </div>
             </div>
         </>

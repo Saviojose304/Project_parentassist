@@ -2,16 +2,23 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import '../Register.css'
 import AlertBox from "../Alert";
+import { useLocation } from "react-router-dom";
+
 
 function DoctorBooking() {
+    const location = useLocation();
+    const appointmentDetails = location.state ? location.state.appointmentDetails : null;
+    const doctorDetails = location.state ? location.state.doctorDetails : null;
     const [doctorList, setDoctorList] = useState([]);
-    const [selectedDoctor, setSelectedDoctor] = useState("");
+    const [selectedDoctor, setSelectedDoctor] = useState(
+        appointmentDetails ? appointmentDetails.doctor_name : ""
+    );
     const [specialization, setSpecialization] = useState("");
     const [hospital, setHospital] = useState("");
     const [time, setTime] = useState();
     const [specializationerror, setSpecializationerror] = useState('');
     const [hospitalerror, setHospitalError] = useState('');
-    const [gender, setGender] = useState('');
+    const [gender, setGender] = useState(" ");
     const [timeerror, setTimeerror] = useState('');
     const [doctorid, setDoctorid] = useState('');
     const [bookingtoken, setBookingToken] = useState('');
@@ -20,10 +27,8 @@ function DoctorBooking() {
     const [alertInfo, setAlertInfo] = useState({ variant: 'success', message: '', show: false });
     const currentDate = new Date().toISOString().split('T')[0];
     const [selectedDate, setSelectedDate] = useState(currentDate);
+    const [editMode, setEditMode] = useState(false);
     const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
-
-
-
 
     useEffect(() => {
         // console.log("Fetching data...");
@@ -36,6 +41,18 @@ function DoctorBooking() {
                 console.error("Error fetching data:", error);
             });
     }, []);
+
+    useEffect(() => {
+        if (appointmentDetails) {
+            setEditMode(true);
+            setSpecialization(doctorDetails.specialization);
+            setHospital(doctorDetails.hospital);
+            setTime(appointmentDetails.time);
+            setGender(appointmentDetails.parent_gender);
+            setSelectedDate(appointmentDetails.formatted_date);
+
+        }
+    }, [appointmentDetails]);
 
     // console.log(doctorList);
 
@@ -88,13 +105,13 @@ function DoctorBooking() {
 
     useEffect(() => {
         if (doctorid) { // Check if doctorid is truthy
-          axios.get(`http://localhost:9000/doctorslist/${doctorid}`).then((response) => {
-            const doctorDetails = response.data;
-            setSpecialization(doctorDetails.specialization);
-            setHospital(doctorDetails.hospital);
-          });
+            axios.get(`http://localhost:9000/doctorslist/${doctorid}`).then((response) => {
+                const doctorDetails = response.data;
+                setSpecialization(doctorDetails.specialization);
+                setHospital(doctorDetails.hospital);
+            });
         }
-      }, [doctorid]); 
+    }, [doctorid]);
 
     const handleSpecialization = (eventspcl) => {
         const specilanew = eventspcl.target.value;
@@ -145,15 +162,32 @@ function DoctorBooking() {
         e.preventDefault();
 
         setSubmitClicked(true);
-        
-        console.log(selectedDate,time,gender,doctorid);
+
+        console.log(gender);
 
         try {
-            const response = await axios.post('http://localhost:9000/doctorbooking', { selectedDate, time, gender, doctorid });
-            if (response.status === 200) {
-                setAlertInfo({ variant: 'success', message: 'Appointment Booked Successfully', show: true });
-                setBookingToken(response.data.token)
-                setBookingTime(response.data.appointmentTime)
+            if (editMode) {
+                // Handle update appointment logic
+                const response = await axios.put(`http://localhost:9000/updatedoctorbooking/${doctorDetails.doctor_id}/${appointmentDetails.formatted_date}`,
+                    {
+                      selectedDate,
+                      time,
+                      gender
+                    }
+                  );
+                if (response.status === 200) {
+                    setAlertInfo({ variant: 'success', message: 'Appointment Updated Successfully', show: true });
+                    // You may handle other state updates or actions here
+                }
+            } else {
+                // Handle create appointment logic (as you were doing before)
+                const response = await axios.post('http://localhost:9000/doctorbooking', { selectedDate, time, gender, doctorid });
+                console.log(selectedDate,time,gender,doctorid);
+                if (response.status === 200) {
+                    setAlertInfo({ variant: 'success', message: 'Appointment Booked Successfully', show: true });
+                    setBookingToken(response.data.token)
+                    setBookingTime(response.data.appointmentTime)
+                }
             }
         } catch (error) {
 
@@ -183,18 +217,38 @@ function DoctorBooking() {
                         <div className="col-12 col-md-4 col-lg-4 col-xl-4">
                             <div className="card shadow-2-strong" style={{ borderRadius: '1rem' }}>
                                 <div className="card-body p-5 text-center">
-                                    <h3 className="mb-5">Add Doctor</h3>
+                                    <h3 className="mb-5">Book Appoinment</h3>
                                     <form onSubmit={handleSubmit} autoComplete="off" className="row">
-                                        <div className="">
-                                            <select class="form-select" onChange={(e) => setGender(e.target.value)} required >
-                                                <option selected>For Whom</option>
-                                                <option value="male">Father</option>
-                                                <option value="female">Mother</option>
+                                        {editMode ? (
+                                            <div className="">
+                                            <select
+                                              class="form-select"
+                                              onChange={(e) => setGender(e.target.value)}
+                                              required
+                                              aria-readonly
+                                              value={gender} // Set the selected value to the gender state
+                                            >
+                                              <option value="male">Father</option>
+                                              <option value="female">Mother</option>
                                             </select>
-                                        </div> <br />
+                                          </div>
+                                        ) : (
+                                            <div className="">
+                                                <select
+                                                    class="form-select"
+                                                    onChange={(e) => setGender(e.target.value)}
+                                                    required
+                                                >
+                                                    <option selected>For Whom</option>
+                                                    <option value="male">Father</option>
+                                                    <option value="female">Mother</option>
+                                                </select>
+                                            </div>
+                                        )}
+                                        <br />
                                         <div className="">
                                             <span><i className="bi bi-person-fill icon"></i></span>
-                                            <select value={selectedDoctor} onChange={handleDoctorChange}
+                                            <select aria-readonly value={selectedDoctor} onChange={handleDoctorChange}
                                                 required >
                                                 <option value="">Select a doctor</option>
                                                 {doctorList.map((doctor) => (
@@ -206,20 +260,28 @@ function DoctorBooking() {
                                         </div>
                                         <div className="">
                                             <span><i class="bi bi-award-fill icon"></i></span>
-                                            <input type="text" placeholder="Specialization (eg:General Medicine)" name="specialization" value={specialization} onChange={handleSpecialization} required />
+                                            {editMode ? (
+                                                <input type="text" placeholder="Specialization (eg:General Medicine)" readOnly  name="specialization" value={specialization} onChange={handleSpecialization} required />
+                                            ) : (
+                                                <input type="text" placeholder="Specialization (eg:General Medicine)" name="specialization" value={specialization} onChange={handleSpecialization} required />
+                                            )}
                                             <div className="red-text" id="name_err">{specializationerror}</div> <br />
                                         </div>
 
                                         <div className="">
                                             <span><i className="bi bi-hospital-fill icon"></i></span>
-                                            <input type="text" placeholder="Enter doctor hospital name" name="hospital" value={hospital} onChange={handleHospital} required />
+                                            {editMode ? (
+                                                <input type="text" placeholder="Enter doctor hospital name" readOnly  name="hospital" value={hospital} onChange={handleHospital} required />
+                                            ) : (
+                                                <input type="text" placeholder="Enter doctor hospital name" name="hospital" value={hospital} onChange={handleHospital} required />
+                                            )}
                                             <div className="red-text" id="name_err">{hospitalerror}</div> <br />
                                         </div>
                                         <div className="">
                                             <input type="date" min={currentDate} value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} required />
                                         </div>
                                         <div className="">
-                                            <input type="time" placeholder="Enter Time" name="time" value={time}  min="09:30" max="17:00" onChange={handletime} required />
+                                            <input type="time" placeholder="Enter Time" name="time" value={time} min="09:30" max="17:00" onChange={handletime} required />
                                             <div className="red-text" id="name_err">{timeerror}</div> <br />
                                         </div>
                                         <div className="col-12">
@@ -230,7 +292,7 @@ function DoctorBooking() {
                                                 id="submit"
                                                 name="submit"
                                             >
-                                                Book Appointment
+                                                {editMode ? "Update Appointment" : "Book Appointment"}
                                             </button>
 
                                         </div>
