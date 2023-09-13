@@ -183,7 +183,7 @@ function Doctor() {
                                                                 <div className="mb-2">
                                                                     <a href="#" className="btn w-100 btn-outline-primary">View Details</a>
                                                                 </div>
-                                                                <a href="#" className="btn w-100 btn-primary">Edit Details</a>
+                                                                <a href="/DoctorPatientDetails" className="btn w-100 btn-primary">Edit Details</a>
 
                                                             </div>
                                                         </div>
@@ -211,7 +211,7 @@ function Doctor() {
                                                                     <div className="mb-2">
                                                                         <a href="#" className="btn w-100 btn-outline-primary">View Details</a>
                                                                     </div>
-                                                                    <a href="#" className="btn w-100 btn-primary">Edit Details</a>
+                                                                    <a href="/DoctorPatientDetails" className="btn w-100 btn-primary">Edit Details</a>
                                                                 </div>
                                                             </div>
                                                         </div>

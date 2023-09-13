@@ -29,6 +29,7 @@ import DoctorProfileUpdate from './components/Users/DoctorProfileUpdate';
 import ChildParentView from './components/UsersView/ChildParentView';
 import ChildDoctorView from './components/UsersView/ChildDoctorView';
 import DoctorBooking from './components/Booking/DoctorBooking';
+import DoctorsPatientDetails from './components/Booking/DoctorPatientDetails';
 
 const router = createBrowserRouter([
   {
@@ -98,6 +99,10 @@ const router = createBrowserRouter([
   {
     path:"/DoctorBooking",
     element: <DoctorBooking />
+  },
+  {
+    path:"/DoctorPatientDetails",
+    element: <DoctorsPatientDetails />
   }
   
 

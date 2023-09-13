@@ -742,7 +742,7 @@ app.post("/doctorbooking", async (req, res) => {
                     });
                     //console.log(bookedTimeSlots);
                     const availableTimeSlots = calculateAvailableTimeSlots(selectedDate).filter((slot) => !bookedTimeSlots.includes(slot));
-                    //console.log("Available Time Slots:", availableTimeSlots);
+                    console.log("Available Time Slots:", availableTimeSlots);
 
 
                     if (availableTimeSlots.includes(time)) {
@@ -901,10 +901,10 @@ app.get("/ParentViewAppointments", (req, res) => {
         FROM doctor_booking
         JOIN parents ON doctor_booking.parent_id = parents.parent_id
         JOIN doctors ON doctor_booking.doctor_id = doctors.doctor_id
-        WHERE doctor_booking.parent_id = ? AND doctor_booking.date = ? 
+        WHERE doctor_booking.parent_id = ? 
         ORDER BY doctor_booking.time ASC;`;
 
-        db.query(query, [parent_id, date], (err, results) => {
+        db.query(query, [parent_id], (err, results) => {
             if (err) {
                 console.error("Error fetching appointments:", err);
                 return res.status(500).json({ error: "Error fetching appointments" });
@@ -1043,19 +1043,19 @@ app.put("/updatedoctorbooking/:doctorId/:appointmentDate", async (req, res) => {
                 const updateDoctorBookingQuery =
                     "UPDATE doctor_booking SET date = ?, time = ? WHERE doctor_id = ? AND parent_id = ? AND date = ?";
 
-                db.query( updateDoctorBookingQuery,[selectedDate, time, doctorId, parent_id, appointmentDate],(updateErr, updateResults) => {
-                        if (updateErr) {
-                            console.error("Error updating doctor_booking: ", updateErr);
-                            return res.status(500).json({ error: "Error updating doctor_booking" });
-                        }
-
-                        if (updateResults.affectedRows === 0) {
-                            // No rows were affected, meaning there was no appointment to update
-                            return res.status(404).json({ error: "Appointment not found" });
-                        }
-
-                        res.status(200).json({ message: "Appointment Updated Successfully" });
+                db.query(updateDoctorBookingQuery, [selectedDate, time, doctorId, parent_id, appointmentDate], (updateErr, updateResults) => {
+                    if (updateErr) {
+                        console.error("Error updating doctor_booking: ", updateErr);
+                        return res.status(500).json({ error: "Error updating doctor_booking" });
                     }
+
+                    if (updateResults.affectedRows === 0) {
+                        // No rows were affected, meaning there was no appointment to update
+                        return res.status(404).json({ error: "Appointment not found" });
+                    }
+
+                    res.status(200).json({ message: "Appointment Updated Successfully" });
+                }
                 );
 
             }
@@ -1151,18 +1151,30 @@ function calculateAvailableTimeSlots(selectedDate) {
 
     const incrementMinutes = 30;
 
-    // If the selected date is the current date, consider the current time
-    if (selectedDate === currentDateTime.toISOString().split('T')[0]) {
-        // Check if the current time is later than 5:00 PM
-        if (currentHour > 17 || (currentHour === 17 && currentMinute >= 0)) {
-            // If it's later than 5:00 PM, don't add any time slots
+    if (selectedDate > currentDateTime.toISOString().split('T')[0]) {
+        // If selected date is in the future, set start time to 9:00 AM and end time to 5:00 PM
+        startTime.setHours(9, 30, 0, 0);
+        endTime.setHours(17, 0, 0, 0);
+    } else {
+        // If selected date is today, consider the current time
+        if (currentHour < 9 || (currentHour === 9 && currentMinute < 30)) {
+            // If it's earlier than 9:30 AM, start with 9:30 AM
+            startTime.setHours(9, 30, 0, 0);
+        } else if (currentHour === 17 && currentMinute >= 0) {
+            // If it's 5:00 PM or later, there are no available slots
             return availableTimeSlots;
+        } else {
+            // Otherwise, start with the next available slot
+            let slotHour = Math.floor(currentHour / 1) * 1;
+            let slotMinute = 30;
+            if (currentMinute >= 30) {
+                slotHour += 1;
+                slotMinute = 0;
+            }
+            startTime.setHours(slotHour, slotMinute, 0, 0);
         }
-
-        // If it's the current date and the current time is earlier than 5:00 PM,
-        // start with the current time
-        startTime.setHours(currentHour, currentMinute, 0, 0);
     }
+
 
     // Iterate through time slots
     while (startTime <= endTime) {
