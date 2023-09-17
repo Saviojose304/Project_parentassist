@@ -184,7 +184,7 @@ function Login() {
             // console.error(error);
             if (error.response && error.response.status === 401) {
                 // Email already registered
-                setAlertInfo({ variant: 'danger', message: 'User not found/Invalid password', show: true });
+                setAlertInfo({ variant: 'danger', message: 'User not found/Invalid password/Account is Deactive', show: true });
             } else if (error.response && error.response.status === 500) {
                 // Other error occurred
                 setAlertInfo({ variant: 'danger', message: 'Login Failed', show: true });

@@ -97,11 +97,13 @@ function ChildDoctorView() {
         }
     };
 
-    function isToday(appointmentDate) {
+    function isToday(appointmentDate,appointmentTime) {
         const today = new Date().toISOString().split('T')[0];
-        // return appointmentDate === today;
-        if (appointmentDate >= today) {
-            return true;
+        const todaytime = new Date().toLocaleTimeString('en-US', { hour12: false });
+        if (appointmentDate > today) {
+            return true; // Appointment date is in the future
+        } else if (appointmentDate === today && appointmentTime >= todaytime) {
+            return true; // Appointment date is today, and time is in the future
         }
     }
 
@@ -138,7 +140,7 @@ function ChildDoctorView() {
             <header>
                 <nav className="navbar navbar-expand-md fixed-top" style={{ backgroundColor: "#116396" }}>
                     <div className="container-fluid">
-                        <a style={{ color: "white" }} className="navbar-brand ms-5" href="/">ParentAssist</a>
+                        <a style={{ color: "white" }} className="navbar-brand ms-5" href="/ChildProfile">ParentAssist</a>
                         <ul className="navbar-nav ms-auto me-5">
                             <li className="nav-item px-3">
                                 {userRole === 'Parent' ? (null) :
@@ -195,8 +197,8 @@ function ChildDoctorView() {
                                         <div style={{ paddingLeft: '75px' }} className="row">
                                             {filteredDoctors.map((doctor) => (
                                                 <div key={doctor.id} className="col-lg-4 col-md-4 mb-3">
-                                                    <div className="card">
-                                                        <div className="card-body">
+                                                    <div className="card d-flex flex-column h-100">
+                                                        <div className="card-body flex-grow-1">
                                                             <h5 className="card-title">{doctor.name}</h5>
                                                             <p className="card-text">Specialization:{doctor.specialization}</p>
                                                             <p className="card-text">Hospital:{doctor.hospital}</p>
@@ -225,8 +227,8 @@ function ChildDoctorView() {
                                             <div style={{ paddingLeft: '75px' }} className="row">
                                                 {todaysAppointments.map((appointment) => (
                                                     <div key={appointment.parent_id} className="col-lg-4 col-md-4 mb-3">
-                                                        <div className="card">
-                                                            <div className="card-body">
+                                                        <div className="card d-flex flex-column h-100 ">
+                                                            <div className="card-body flex-grow-1">
                                                                 {userRole === 'Parent' ? (
                                                                     <>
                                                                         <h5 className="card-title">{appointment.parent_name}</h5>
@@ -244,7 +246,7 @@ function ChildDoctorView() {
                                                                         <p className="card-text">Date: {appointment.formatted_date}</p>
                                                                     </>
                                                                 )}
-                                                                {isToday(appointment.formatted_date) && (
+                                                                {isToday(appointment.formatted_date,appointment.time) && (
                                                                     <>
                                                                         <button className="btn w-100 mb-2 btn-primary" onClick={async () => {
                                                                             const doctorDetails = await fetchDoctorDetails(appointment.doctor_id);

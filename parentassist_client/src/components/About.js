@@ -1,6 +1,8 @@
 import React from "react";
 import './About.css';
 import picss from './about-us-bg.png'
+import healthpic from './HMO-2-1.jpg'
+import stresspic from './stress-relief.jpg'
 function About() {
     return (
         <>
@@ -67,7 +69,63 @@ function About() {
 
             <section className="py-5">
                 <div className="bg-holder bg-size bg-img-service">
-                    <div className="container">
+                    <div className="container mb-4">
+                        <div className="card">
+                            <div className="row no-gutters">
+                                <div className="col-md-6">
+                                    <img src={healthpic} className="card-img" alt="health_maintain_image" />
+                                </div>
+                                <div className="col-md-6">
+                                    <div className="card-body">
+                                        <h2 className="fw-bold mb-4" style={{ color: "#116396" }}>
+                                            Health Maintenance
+                                        </h2>
+                                        <p>
+                                            Health Maintenance empowers parents to take charge of their well-being
+                                            <br className="d-none d-sm-block" />
+                                            by adding their medical information, personalized doctor details, and
+                                            <br className="d-none d-sm-block" />
+                                            managing appointments. The Medication Reminders feature ensures timely
+                                            <br className="d-none d-sm-block" />
+                                            intake of prescribed medicines through email or WhatsApp notifications and dosage instructions.
+                                        </p>
+                                        <a href="/Login" className="btn btn-primary">
+                                            Get Service
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div><div className="container">
+                        <div className="card">
+                            <div className="row no-gutters">
+                                <div className="col-md-6">
+                                    <img src={stresspic} className="card-img" alt="health_maintain_image" />
+                                </div>
+                                <div className="col-md-6">
+                                    <div className="card-body">
+                                        <h2 className="fw-bold mb-4" style={{ color: "#116396" }}>
+                                            Stress Relief Techniques
+                                        </h2>
+                                        <p>
+                                            Experience ultimate tranquility through our Stress Relief Techniques service.
+                                            <br className="d-none d-sm-block" />
+                                            Our carefully crafted relaxation methods and therapy sections with well talented
+                                            <br className="d-none d-sm-block" />
+                                            doctors are designed to alleviate stress,promote a peaceful state of mind,
+                                            <br className="d-none d-sm-block" />
+                                            and rejuvenate your spirit,helping you navigate life's challenges with calmness and clarity.
+                                        </p>
+                                        <a href="/Login" className="btn btn-primary">
+                                            Get Service
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* <div className="container">
                         <div className="row align-items-center">
                             <div className="col-md-6 text-center text-md-start">
                                 <section className="icons_prop">
@@ -104,7 +162,7 @@ function About() {
                                 </p>
                             </div>
                         </div>
-                    </div>
+                    </div> */}
                 </div>
             </section>
         </>

@@ -1,11 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { Modal } from "react-bootstrap";
 import '../Register.css'
 import format from "date-fns/format";
 function Doctor() {
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [isshowgeneral, setShowGeneral] = useState(true);
     const [isshowpass, setShowPass] = useState(false);
+    const [isshowAppoint, setShowAppoint] = useState(false);
     const token = localStorage.getItem('token');
     const parsedToken = JSON.parse(token); // Parse the token string to an object
     const doctor_user_id = parsedToken.userId;
@@ -16,6 +18,7 @@ function Doctor() {
     const [filteredParents, setFilteredParents] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [todaysAppointments, setTodaysAppointments] = useState([]);
+    const [nextAppointments, setnextAppointments] = useState([]);
 
     useEffect(() => {
         const token = JSON.parse(localStorage.getItem('token'));
@@ -61,11 +64,21 @@ function Doctor() {
     const fetchTodaysAppointments = async () => {
         try {
             const currentDate = format(new Date(), "yyyy-MM-dd");
+            const todaytime = new Date().toLocaleTimeString('en-US', { hour12: false });
             // Fetch today's appointments for the current doctor from your backend API
             const response = await fetch(`http://localhost:9000/DoctorViewAppointments?userId=${doctor_user_id}&date=${currentDate}`);
             if (response.ok) {
                 const data = await response.json();
-                setTodaysAppointments(data); // Update the todaysAppointments state with the fetched data
+
+
+                // Filter appointments for today and future dates
+                const todayAppointments = data.filter(appointment => appointment.formatted_date === currentDate && appointment.formatted_time > todaytime);
+                const futureAppointments = data.filter(appointment => appointment.formatted_date > currentDate);
+
+                // Update the state with the filtered data
+                setTodaysAppointments(todayAppointments);
+                setnextAppointments(futureAppointments);
+                //setTodaysAppointments(data); // Update the todaysAppointments state with the fetched data
             } else {
                 console.error("Failed to fetch today's appointments");
             }
@@ -84,14 +97,23 @@ function Doctor() {
     };
 
     const toggleParent = () => {
-        setShowGeneral(!isshowgeneral);
-        setShowPass(!isshowpass);
+        setShowGeneral(true);
+        setShowPass(false);
+        setShowAppoint(false);
     };
 
     const toggleTodayAppointment = () => {
-        setShowPass(!isshowpass);
-        setShowGeneral(!isshowgeneral);
+        setShowGeneral(false);
+        setShowPass(true);
+        setShowAppoint(false);
     };
+
+    const toggleAppoint = () => {
+        setShowGeneral(false);
+        setShowPass(false);
+        setShowAppoint(true);
+    };
+
 
     const logOut = async () => {
         try {
@@ -145,14 +167,19 @@ function Doctor() {
                     <div className="container pt-5 light-style flex-grow-1 container-p-y">
                         <div className="card w-100 overflow-hidden">
                             <div className="row d-flex  pt-0">
-                                <div className="col-6 col-md-6">
+                                <div className="col-4 col-md-4">
                                     <div className="list-group fw-bold  list-group-flush account-settings-links">
                                         <div className={isshowgeneral ? 'list-group-item  w-100 list-group-item-action active' : 'list-group-item w-100 list-group-item-action'} onClick={toggleParent} style={{ cursor: 'pointer' }} >Patients List</div>
                                     </div>
                                 </div>
-                                <div className="col-6 col-md-6">
+                                <div className="col-4 col-md-4">
                                     <div className="list-group fw-bold  list-group-flush account-settings-links">
                                         <div className={isshowpass ? 'list-group-item w-100 list-group-item-action active' : 'list-group-item w-100 list-group-item-action'} onClick={toggleTodayAppointment} style={{ cursor: 'pointer' }}>Todays Appointment</div>
+                                    </div>
+                                </div>
+                                <div className="col-4 col-md-4">
+                                    <div className="list-group fw-bold  list-group-flush account-settings-links">
+                                        <div className={isshowAppoint ? 'list-group-item w-100 list-group-item-action active' : 'list-group-item w-100 list-group-item-action'} onClick={toggleAppoint} style={{ cursor: 'pointer' }}>Next Appointment</div>
                                     </div>
                                 </div>
 
@@ -175,16 +202,15 @@ function Doctor() {
                                             <div style={{ paddingLeft: '75px' }} className="row">
                                                 {filteredParents.map((parent) => (
                                                     <div key={parent.id} className="col-lg-4 col-md-4 mb-3">
-                                                        <div className="card">
-                                                            <div className="card-body">
+                                                        <div className="card d-flex flex-column h-100">
+                                                            <div className="card-body flex-grow-1">
                                                                 <h5 className="card-title">{parent.name}</h5>
                                                                 <p className="card-text">Age:{parent.age}</p>
                                                                 <p className="card-text">Phone:{parent.phone}</p>
                                                                 <div className="mb-2">
-                                                                    <a href="#" className="btn w-100 btn-outline-primary">View Details</a>
+                                                                <button className="btn w-100 btn-outline-primary" onClick={() => navigate(`/DoctorPatientDetails/${parent.parent_id}`)}>View Details</button>
                                                                 </div>
-                                                                <a href="/DoctorPatientDetails" className="btn w-100 btn-primary">Edit Details</a>
-
+                                                                <button className="btn w-100 btn-primary" onClick={() => navigate(`/DoctorPatientDetails/${parent.parent_id}`)}>Edit Details</button>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -202,22 +228,45 @@ function Doctor() {
                                                 <div style={{ paddingLeft: '75px' }} className="row">
                                                     {todaysAppointments.map((appointment) => (
                                                         <div key={appointment.appointment_id} className="col-lg-4 col-md-4 mb-3">
-                                                            <div className="card">
-                                                                <div className="card-body">
+                                                            <div className="card d-flex flex-column h-100">
+                                                                <div className="card-body flex-grow-1">
                                                                     <h5 className="card-title">Patient: {appointment.parent_name}</h5>
                                                                     <p className="card-text">Age: {appointment.parent_age}</p>
                                                                     <p className="card-text">Phone: {appointment.parent_phone}</p>
-                                                                    <p className="card-text">Time: {appointment.time}</p>
+                                                                    <p className="card-text">Time: {appointment.formatted_time}</p>
                                                                     <div className="mb-2">
-                                                                        <a href="#" className="btn w-100 btn-outline-primary">View Details</a>
+                                                                    <button className="btn w-100 btn-outline-primary" onClick={() => navigate(`/DoctorPatientDetails/${appointment.parent_id}`)}>View Details</button>
                                                                     </div>
-                                                                    <a href="/DoctorPatientDetails" className="btn w-100 btn-primary">Edit Details</a>
+                                                                    <button className="btn w-100 btn-primary" onClick={() => navigate(`/DoctorPatientDetails/${appointment.parent_id}`)}>Edit Details</button>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     ))}
                                                 </div>
                                             )}
+                                        </div>
+                                        <div className={isshowAppoint ? 'tab-pane fade active show' : 'tab-pane fade'}>
+                                            <h3 className="mb-3 text-center">Appointments</h3>
+
+                                            <div style={{ paddingLeft: '75px' }} className="row">
+                                                {nextAppointments.map((appointment) => (
+                                                    <div key={appointment.appointment_id} className="col-lg-4 col-md-4 mb-3">
+                                                        <div className="card d-flex flex-column h-100">
+                                                            <div className="card-body flex-grow-1">
+                                                                <h5 className="card-title">Patient: {appointment.parent_name}</h5>
+                                                                <p className="card-text">Age: {appointment.parent_age}</p>
+                                                                <p className="card-text">Phone: {appointment.parent_phone}</p>
+                                                                <p className="card-text">Time: {appointment.formatted_time}</p>
+                                                                <p className="card-text">Date: {appointment.formatted_date}</p>
+                                                                <div className="mb-2">
+                                                                <button className="btn w-100 btn-outline-primary" onClick={() => navigate(`/DoctorPatientDetails/${appointment.parent_id}`)}>View Details</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+
                                         </div>
                                     </div>
                                 </div>

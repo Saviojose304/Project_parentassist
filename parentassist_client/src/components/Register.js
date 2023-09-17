@@ -105,10 +105,7 @@ function Register() {
         const newName = event.target.value;
         setName(newName);
         const errorMessage = validateName(newName);
-        setNameError(errorMessage);
-
-
-
+        setNameError(errorMessage)
     }
 
     const handleaddress = (eventadrs) => {

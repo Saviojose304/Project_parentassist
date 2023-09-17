@@ -30,6 +30,8 @@ import ChildParentView from './components/UsersView/ChildParentView';
 import ChildDoctorView from './components/UsersView/ChildDoctorView';
 import DoctorBooking from './components/Booking/DoctorBooking';
 import DoctorsPatientDetails from './components/Booking/DoctorPatientDetails';
+import AdminUserView from './components/UsersView/AdminUserView';
+import AdminAddServices from './components/UsersView/AdminAddServices';
 
 const router = createBrowserRouter([
   {
@@ -103,6 +105,18 @@ const router = createBrowserRouter([
   {
     path:"/DoctorPatientDetails",
     element: <DoctorsPatientDetails />
+  },
+  {
+    path:"/DoctorPatientDetails/:parentId",
+    element: <DoctorsPatientDetails />
+  },
+  {
+    path:"/AdminUserView",
+    element: <AdminUserView />
+  },
+  {
+    path:"/AdminAddServices",
+    element: <AdminAddServices />
   }
   
 

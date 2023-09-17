@@ -170,11 +170,11 @@ function DoctorBooking() {
                 // Handle update appointment logic
                 const response = await axios.put(`http://localhost:9000/updatedoctorbooking/${doctorDetails.doctor_id}/${appointmentDetails.formatted_date}`,
                     {
-                      selectedDate,
-                      time,
-                      gender
+                        selectedDate,
+                        time,
+                        gender,
                     }
-                  );
+                );
                 if (response.status === 200) {
                     setAlertInfo({ variant: 'success', message: 'Appointment Updated Successfully', show: true });
                     // You may handle other state updates or actions here
@@ -182,7 +182,7 @@ function DoctorBooking() {
             } else {
                 // Handle create appointment logic (as you were doing before)
                 const response = await axios.post('http://localhost:9000/doctorbooking', { selectedDate, time, gender, doctorid });
-                console.log(selectedDate,time,gender,doctorid);
+                console.log(selectedDate, time, gender, doctorid);
                 if (response.status === 200) {
                     setAlertInfo({ variant: 'success', message: 'Appointment Booked Successfully', show: true });
                     setBookingToken(response.data.token)
@@ -193,7 +193,7 @@ function DoctorBooking() {
 
             if (error.response && error.response.status === 400) {
                 //Already registered
-                setAlertInfo({ variant: 'danger', message: 'You already have an appointment with this doctor on the same date', show: true });
+                setAlertInfo({ variant: 'danger', message: error.response.data.error, show: true });
 
             } else {
                 // Other error occurred
@@ -205,6 +205,9 @@ function DoctorBooking() {
                 setAlertInfo({ variant: 'danger', message: 'Selected time slot is not available', show: true });
                 customErrorCode && setAvailableTimeSlots(error.response.data.availableTimeSlots);
             }
+            // if (error.response.data.error_code === 3446) {
+            //     setAlertInfo({ variant: 'danger', message: "You already have an appointment at the same date and time", show: true });
+            // }
         }
 
 
@@ -221,17 +224,18 @@ function DoctorBooking() {
                                     <form onSubmit={handleSubmit} autoComplete="off" className="row">
                                         {editMode ? (
                                             <div className="">
-                                            <select
-                                              class="form-select"
-                                              onChange={(e) => setGender(e.target.value)}
-                                              required
-                                              aria-readonly
-                                              value={gender} // Set the selected value to the gender state
-                                            >
-                                              <option value="male">Father</option>
-                                              <option value="female">Mother</option>
-                                            </select>
-                                          </div>
+                                                <select
+                                                    className="form-select"
+                                                    onChange={(e) => setGender(e.target.value)}
+                                                    required
+                                                    aria-readonly
+                                                    value={gender}
+                                                    style={{ pointerEvents: 'none', paddingRight: '1rem' }}
+                                                >
+                                                    <option value="male">Father</option>
+                                                    <option value="female">Mother</option>
+                                                </select>
+                                            </div>
                                         ) : (
                                             <div className="">
                                                 <select
@@ -246,22 +250,35 @@ function DoctorBooking() {
                                             </div>
                                         )}
                                         <br />
+
                                         <div className="">
                                             <span><i className="bi bi-person-fill icon"></i></span>
-                                            <select aria-readonly value={selectedDoctor} onChange={handleDoctorChange}
-                                                required >
-                                                <option value="">Select a doctor</option>
-                                                {doctorList.map((doctor) => (
-                                                    <option key={doctor.id} value={doctor.id}>
-                                                        {doctor.name}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                            {editMode ? (
+                                                <select style={{ pointerEvents: 'none', paddingRight: '1rem' }} value={selectedDoctor} onChange={handleDoctorChange}
+                                                    required aria-readonly >
+                                                    <option value="">Select a doctor</option>
+                                                    {doctorList.map((doctor) => (
+                                                        <option key={doctor.id} value={doctor.id}>
+                                                            {doctor.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            ) : (
+                                                <select value={selectedDoctor} onChange={handleDoctorChange}
+                                                    required >
+                                                    <option value="">Select a doctor</option>
+                                                    {doctorList.map((doctor) => (
+                                                        <option key={doctor.id} value={doctor.id}>
+                                                            {doctor.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            )}
                                         </div>
                                         <div className="">
                                             <span><i class="bi bi-award-fill icon"></i></span>
                                             {editMode ? (
-                                                <input type="text" placeholder="Specialization (eg:General Medicine)" readOnly  name="specialization" value={specialization} onChange={handleSpecialization} required />
+                                                <input type="text" placeholder="Specialization (eg:General Medicine)" readOnly name="specialization" value={specialization} required />
                                             ) : (
                                                 <input type="text" placeholder="Specialization (eg:General Medicine)" name="specialization" value={specialization} onChange={handleSpecialization} required />
                                             )}
@@ -271,7 +288,7 @@ function DoctorBooking() {
                                         <div className="">
                                             <span><i className="bi bi-hospital-fill icon"></i></span>
                                             {editMode ? (
-                                                <input type="text" placeholder="Enter doctor hospital name" readOnly  name="hospital" value={hospital} onChange={handleHospital} required />
+                                                <input type="text" placeholder="Enter doctor hospital name" readOnly name="hospital" value={hospital} onChange={handleHospital} required />
                                             ) : (
                                                 <input type="text" placeholder="Enter doctor hospital name" name="hospital" value={hospital} onChange={handleHospital} required />
                                             )}
