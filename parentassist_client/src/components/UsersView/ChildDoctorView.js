@@ -97,7 +97,7 @@ function ChildDoctorView() {
         }
     };
 
-    function isToday(appointmentDate,appointmentTime) {
+    function isToday(appointmentDate, appointmentTime) {
         const today = new Date().toISOString().split('T')[0];
         const todaytime = new Date().toLocaleTimeString('en-US', { hour12: false });
         if (appointmentDate > today) {
@@ -140,7 +140,9 @@ function ChildDoctorView() {
             <header>
                 <nav className="navbar navbar-expand-md fixed-top" style={{ backgroundColor: "#116396" }}>
                     <div className="container-fluid">
-                        <a style={{ color: "white" }} className="navbar-brand ms-5" href="/ChildProfile">ParentAssist</a>
+                        {userRole == 'Parent' ? <a style={{ color: "white" }} className="navbar-brand ms-5" href="/Parent">Home</a> :
+                            <a style={{ color: "white" }} className="navbar-brand ms-5" href="/ChildProfile">Home</a>
+                        }
                         <ul className="navbar-nav ms-auto me-5">
                             <li className="nav-item px-3">
                                 {userRole === 'Parent' ? (null) :
@@ -246,7 +248,7 @@ function ChildDoctorView() {
                                                                         <p className="card-text">Date: {appointment.formatted_date}</p>
                                                                     </>
                                                                 )}
-                                                                {isToday(appointment.formatted_date,appointment.time) && (
+                                                                {isToday(appointment.formatted_date, appointment.time) && (
                                                                     <>
                                                                         <button className="btn w-100 mb-2 btn-primary" onClick={async () => {
                                                                             const doctorDetails = await fetchDoctorDetails(appointment.doctor_id);

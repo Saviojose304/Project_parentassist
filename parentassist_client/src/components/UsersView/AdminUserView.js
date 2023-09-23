@@ -10,6 +10,7 @@ function AdminUserView() {
     const token = localStorage.getItem('token');
     const parsedToken = JSON.parse(token); // Parse the token string to an object
     const [userDetails, setUserDetails] = useState({});
+    const [fileUrl, setFileUrl] = useState('');
 
     useEffect(() => {
         const token = JSON.parse(localStorage.getItem('token'));
@@ -35,6 +36,9 @@ function AdminUserView() {
             console.error('Error fetching user details: ', error);
         }
     };
+
+    console.log(userDetails);
+
 
     const handleCancel = () => {
         navigate('/Admin')
@@ -71,7 +75,7 @@ function AdminUserView() {
                     </div>
                 </nav>
             </header>
-            <div style={{marginTop:'5rem'}} className="container">
+            <div style={{ marginTop: '5rem' }} className="container">
                 <h2 className="text-center mb-4">Details of {userDetails.email}</h2>
                 <div className="row justify-content-center">
                     <div className="col-md-12 d-flex justify-content-center align-items-center">
@@ -83,6 +87,13 @@ function AdminUserView() {
                                 <p className="card-text">{userDetails.specialization}</p>
                                 <p className="card-text">{userDetails.hospital}</p>
                                 <p className="card-text">{userDetails.phone}</p>
+                                <p className="card-text">License:
+                                    {userDetails.role === 'MedSeller' && (
+                                        <a href={`http://localhost:9000/${userDetails.med_license}`} target="_blank" rel="noopener noreferrer" className="btn btn-danger mx-2 w-20  mt-3">
+                                           <i class="bi bi-file-arrow-down-fill"></i>
+                                        </a>
+                                    )}
+                                </p>
                                 <p className="card-text">{userDetails.user_status}</p>
                                 <button className="btn w-50 btn-outline-primary" onClick={handleCancel}>
                                     Back

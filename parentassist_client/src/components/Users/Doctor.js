@@ -2,15 +2,18 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Modal } from "react-bootstrap";
 import '../Register.css'
+import AlertBox from "../Alert";
 import format from "date-fns/format";
 function Doctor() {
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [isshowgeneral, setShowGeneral] = useState(true);
     const [isshowpass, setShowPass] = useState(false);
     const [isshowAppoint, setShowAppoint] = useState(false);
+    const [showForm, setShowForm] = useState(false);
     const token = localStorage.getItem('token');
     const parsedToken = JSON.parse(token); // Parse the token string to an object
     const doctor_user_id = parsedToken.userId;
+
 
     const navigate = useNavigate();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -19,6 +22,11 @@ function Doctor() {
     const [searchQuery, setSearchQuery] = useState("");
     const [todaysAppointments, setTodaysAppointments] = useState([]);
     const [nextAppointments, setnextAppointments] = useState([]);
+    const [submitClicked, setSubmitClicked] = useState(false);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [alertInfo, setAlertInfo] = useState({ variant: 'success', message: '', show: false });
 
     useEffect(() => {
         const token = JSON.parse(localStorage.getItem('token'));
@@ -44,6 +52,10 @@ function Doctor() {
         setFilteredParents(filtered);
     }, [searchQuery, parents]);
 
+    const handleAlertClose = () => {
+        setAlertInfo({ ...alertInfo, show: false });
+        setSubmitClicked(false);
+    };
 
     const fetchParents = async () => {
         try {
@@ -114,6 +126,14 @@ function Doctor() {
         setShowAppoint(true);
     };
 
+    const handleStartDateChange = (e) => {
+        setStartDate(e.target.value);
+    };
+
+    const handleEndDateChange = (e) => {
+        setEndDate(e.target.value);
+    };
+
 
     const logOut = async () => {
         try {
@@ -124,13 +144,48 @@ function Doctor() {
             console.log(error);
         }
     };
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSubmitClicked(true);
+
+        try {
+            const response = await fetch('http://localhost:9000/saveLeaveDays', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    startDate,
+                    endDate,
+                    doctor_user_id, 
+                }),
+            });
+
+            if (response.ok) {
+                console.log('Leave days saved successfully');
+                setAlertInfo({ variant: 'success', message: 'Leave days saved successfully', show: true });
+            } else {
+                console.error('Failed to save leave days');
+                setAlertInfo({ variant: 'danger', message: 'Failed to save leave days', show: true });
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+
+        setEndDate('');
+        setStartDate('');
+
+    };
     return (
         <>
             <header>
                 <nav className="navbar navbar-expand-md fixed-top" style={{ backgroundColor: "#116396" }}>
                     <div className="container-fluid">
-                        <a style={{ color: "white" }} className="navbar-brand ms-5" href="#">ParentAssist</a>
+                        <a style={{ color: "white" }} className="navbar-brand ms-5" href="/Doctor">Home</a>
                         <ul className="navbar-nav ms-auto me-5">
+                            <li className="nav-item px-3 py-2">
+                                <button className="btn btn-success" onClick={() => setShowForm(true)}>Add Leave Days</button>
+                            </li>
                             <li className="nav-item px-3 py-2">
                                 <a style={{ color: "white" }} href="#" data-bs-target="#sidebar" data-bs-toggle="collapse" className="text-decoration-none" onClick={toggleSidebar}>{parsedToken ? parsedToken.email : 'Name'}</a>
                             </li>
@@ -140,7 +195,7 @@ function Doctor() {
             </header>
             <div className='row d-flex'>
                 <div className='col-2' id="sidebar-nav">
-                    <div className="container pt-5">
+                    <div className="container mt-5 pt-2">
                         <div className="row flex-nowrap" >
                             <div className=" px-0">
                                 <div id="sidebar" className={isSidebarOpen ? 'collapse collapse-horizontal ' : 'show border-end pt-2'}>
@@ -208,7 +263,7 @@ function Doctor() {
                                                                 <p className="card-text">Age:{parent.age}</p>
                                                                 <p className="card-text">Phone:{parent.phone}</p>
                                                                 <div className="mb-2">
-                                                                <button className="btn w-100 btn-outline-primary" onClick={() => navigate(`/DoctorPatientDetails/${parent.parent_id}`)}>View Details</button>
+                                                                    <button className="btn w-100 btn-outline-primary" onClick={() => navigate(`/DoctorPatientDetails/${parent.parent_id}`)}>View Details</button>
                                                                 </div>
                                                                 <button className="btn w-100 btn-primary" onClick={() => navigate(`/DoctorPatientDetails/${parent.parent_id}`)}>Edit Details</button>
                                                             </div>
@@ -235,7 +290,7 @@ function Doctor() {
                                                                     <p className="card-text">Phone: {appointment.parent_phone}</p>
                                                                     <p className="card-text">Time: {appointment.formatted_time}</p>
                                                                     <div className="mb-2">
-                                                                    <button className="btn w-100 btn-outline-primary" onClick={() => navigate(`/DoctorPatientDetails/${appointment.parent_id}`)}>View Details</button>
+                                                                        <button className="btn w-100 btn-outline-primary" onClick={() => navigate(`/DoctorPatientDetails/${appointment.parent_id}`)}>View Details</button>
                                                                     </div>
                                                                     <button className="btn w-100 btn-primary" onClick={() => navigate(`/DoctorPatientDetails/${appointment.parent_id}`)}>Edit Details</button>
                                                                 </div>
@@ -259,7 +314,7 @@ function Doctor() {
                                                                 <p className="card-text">Time: {appointment.formatted_time}</p>
                                                                 <p className="card-text">Date: {appointment.formatted_date}</p>
                                                                 <div className="mb-2">
-                                                                <button className="btn w-100 btn-outline-primary" onClick={() => navigate(`/DoctorPatientDetails/${appointment.parent_id}`)}>View Details</button>
+                                                                    <button className="btn w-100 btn-outline-primary" onClick={() => navigate(`/DoctorPatientDetails/${appointment.parent_id}`)}>View Details</button>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -275,6 +330,61 @@ function Doctor() {
                     </div>
                 </div>
             </div>
+
+            <Modal show={showForm} onHide={() => {
+                setShowForm(false);
+            }}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Add Leave Days</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <div className="popup-form">
+                        <form onSubmit={handleSubmit}>
+                            <div className="mb-3">
+                                <label htmlFor="description" className="form-label">
+                                    Start Date
+                                </label>
+                                <input
+                                    type="date"
+                                    id="startDate"
+                                    value={startDate}
+                                    min={date}
+                                    placeholder="Start Date"
+                                    onChange={handleStartDateChange}
+                                    required
+                                />
+                            </div>
+                            <div className="mb-3">
+                                <label htmlFor="description" className="form-label">
+                                    End Date
+                                </label>
+                                <input
+                                    type="date"
+                                    id="endDate"
+                                    placeholder="End Date"
+                                    min={date}
+                                    value={endDate}
+                                    onChange={handleEndDateChange}
+                                    required
+                                />
+                            </div>
+                            <div className="text-center mb-3">
+                                <button type="submit" className="btn btn-success">Submit</button>
+                            </div>
+                        </form>
+                        <div className="p-2">
+                            {submitClicked && (
+                                <AlertBox
+                                    variant={alertInfo.variant}
+                                    message={alertInfo.message}
+                                    onClose={handleAlertClose}
+                                />
+                            )}
+                        </div>
+                    </div>
+                </Modal.Body>
+            </Modal>
+
         </>
     );
 }

@@ -68,7 +68,7 @@ app.post('/signup', async (req, res) => {
     // console.log('Received data:', { name, address, email, password, phone });
     // Insert user data into 'user' table
     const verificationToken = crypto.randomBytes(20).toString('hex');
-    const userSql = 'INSERT INTO users (email, password, role,user_status,token_verification) VALUES (?, ?, "Child","INACTIVE",?)';
+    const userSql = 'INSERT INTO users (email, password, role,user_status,token_verification) VALUES (?, ?, "Child","DEACTIVE",?)';
     db.query(userSql, [email, hashedPassword, verificationToken], (err, userResult) => {
         if (err) {
             console.error('Error inserting user data:', err);
@@ -504,7 +504,9 @@ app.get('/users/:userId', async (req, res) => {
                 userDetailsQuery = 'SELECT * FROM doctors WHERE user_id = ?';
             } else if (role === 'Child') {
                 userDetailsQuery = 'SELECT * FROM adult_child WHERE user_id = ?';
-            }
+            } else if (role === 'MedSeller') {
+                userDetailsQuery = 'SELECT * FROM medicine_seller WHERE user_id = ?';
+            } 
 
             // Fetch user details from the respective table
             db.query(userDetailsQuery, [userId], (err, result) => {
@@ -741,6 +743,44 @@ app.put('/Doctorprofileupdate', (req, res) => {
     });
 });
 
+// Get Medicine Seller Data API endpoint
+app.get('/getSellerData', (req, res) => {
+    const { user_child_id } = req.query;
+
+    // Query the database to fetch user data by username
+    const query = 'SELECT name, address, phone FROM medicine_seller WHERE user_id = ?';
+
+    db.query(query, [user_child_id], (err, result) => {
+        if (err) {
+            console.error('Error fetching user data from database:', err);
+            res.status(500).json({ error: 'Internal Server Error' });
+        } else {
+            if (result.length === 0) {
+                res.status(404).json({ error: 'User not found' });
+            } else {
+                const userData = result[0];
+                res.json(userData);
+            }
+        }
+    });
+});
+
+//Update Seller Profile API endpoint
+app.put('/Sellerprofileupdate', (req, res) => {
+    const { name, address, phone, user_child_id } = req.body;
+
+    const updateQuery = 'UPDATE medicine_seller SET name=?, address=?, phone=? WHERE user_id=?';
+
+    db.query(updateQuery, [name, address, phone, user_child_id], (err, result) => {
+        if (err) {
+            console.error('Error updating child profile:', err);
+            res.status(500).json({ error: 'Internal Server Error' });
+        } else {
+            res.status(200).json({ message: 'Profile Update Successfully' });
+        }
+    });
+});
+
 //Profile Password Update API Endpoint
 
 app.put('/ProfilePassUpdate', async (req, res) => {
@@ -818,23 +858,40 @@ app.get("/doctorslist", (req, res) => {
 //Doctors Details for Booking API endpoint
 app.get("/doctorslist/:id", (req, res) => {
     const { id } = req.params;
-    console.log(id);
-    const query = "SELECT * FROM doctors WHERE doctor_id = ?";
 
-    db.query(query, [id], (err, results) => {
+    // Fetch doctor details
+    const queryDoctorDetails = "SELECT * FROM doctors WHERE doctor_id = ?";
+
+    db.query(queryDoctorDetails, [id], (err, doctorResults) => {
         if (err) {
             console.error("Error fetching doctor details: ", err);
             return res.status(500).json({ error: "Error fetching doctor details" });
         }
 
-        if (results.length === 0) {
+        if (doctorResults.length === 0) {
             return res.status(404).json({ error: "Doctor not found" });
         }
 
-        res.json(results[0]);
+        // Fetch leave days for the selected doctor
+        const queryLeaveDays = "SELECT start_date, end_date FROM doctor_leave_days WHERE doctor_id = ?";
+
+        db.query(queryLeaveDays, [id], (err, leaveDaysResults) => {
+            if (err) {
+                console.error("Error fetching leave days: ", err);
+                return res.status(500).json({ error: "Error fetching leave days" });
+            }
+
+            const doctorDetails = doctorResults[0];
+            const leaveDays = leaveDaysResults.map((leaveDay) => ({
+                start: new Date(leaveDay.start_date).toLocaleDateString(),
+                end: new Date(leaveDay.end_date).toLocaleDateString(),
+            }));
+            // Send both doctor details and leave days as a response
+            res.json({ doctorDetails, leaveDays });
+
+        });
     });
 });
-
 //Doctor Appointment Booking API endpoint
 app.post("/doctorbooking", async (req, res) => {
     const { selectedDate, gender, time, doctorid } = req.body;
@@ -1420,30 +1477,49 @@ app.delete('/deletevideos/:id', async (req, res) => {
 
 //Add medicine API endpoint
 app.post('/addMedicine', (req, res) => {
-    const { name, sellerDetails, expiryDate } = req.body;
+    const { name, expiryDate, userId } = req.body;
 
-    const selectQuery = 'SELECT * FROM medicine WHERE name = ?';
+    // SQL query to find medicine_seller_id based on userId
+    const findMedicineSellerIdQuery = 'SELECT medicine_seller_id FROM medicine_seller WHERE user_id = ?';
 
-    // Check if the medicine with the same name already exists
-    db.query(selectQuery, [name], (err, result) => {
+    // Execute the query to find medicine_seller_id
+    db.query(findMedicineSellerIdQuery, [userId], (err, result) => {
         if (err) {
-            console.error('Error checking medicine details:', err);
-            res.status(500).json({ message: 'Failed to check medicine details' });
+            console.error('Error finding medicine seller:', err);
+            res.status(500).json({ message: 'Failed to find medicine seller' });
         } else {
-            if (result.length > 0) {
-                // Medicine with the same name already exists
-                res.status(409).json({ message: 'Medicine already exists' });
+            if (result.length === 0) {
+                // Medicine seller not found for the given userId
+                res.status(404).json({ message: 'Medicine seller not found for the user' });
             } else {
-                // Medicine doesn't exist, so insert it
-                const insertQuery = 'INSERT INTO medicine (name, seller_details, exp_date) VALUES (?, ?, ?)';
+                // Medicine seller found, get the medicine_seller_id
+                const medicineSellerId = result[0].medicine_seller_id;
 
-                db.query(insertQuery, [name, sellerDetails, expiryDate], (err, result) => {
+                // Check if the medicine with the same name already exists
+                const selectQuery = 'SELECT * FROM medicine WHERE name = ?';
+
+                db.query(selectQuery, [name], (err, result) => {
                     if (err) {
-                        console.error('Error inserting medicine details:', err);
-                        res.status(500).json({ message: 'Failed to insert medicine details' });
+                        console.error('Error checking medicine details:', err);
+                        res.status(500).json({ message: 'Failed to check medicine details' });
                     } else {
-                        console.log('Medicine details added successfully');
-                        res.status(200).json({ message: 'Medicine details added successfully' });
+                        if (result.length > 0) {
+                            // Medicine with the same name already exists
+                            res.status(409).json({ message: 'Medicine already exists' });
+                        } else {
+                            // Medicine doesn't exist, so insert it
+                            const insertQuery = 'INSERT INTO medicine (name, exp_date, medicine_seller_id) VALUES (?, ?, ?)';
+
+                            db.query(insertQuery, [name, expiryDate, medicineSellerId], (err, result) => {
+                                if (err) {
+                                    console.error('Error inserting medicine details:', err);
+                                    res.status(500).json({ message: 'Failed to insert medicine details' });
+                                } else {
+                                    console.log('Medicine details added successfully');
+                                    res.status(200).json({ message: 'Medicine details added successfully' });
+                                }
+                            });
+                        }
                     }
                 });
             }
@@ -1451,21 +1527,270 @@ app.post('/addMedicine', (req, res) => {
     });
 });
 
+
 //Get Medicine Names API endpoint
 app.get('/medicineNames', (req, res) => {
     // SQL query to select all unique medicine names from the medicine table
     const selectQuery = 'SELECT DISTINCT name FROM medicine';
-  
+
     db.query(selectQuery, (err, results) => {
-      if (err) {
-        console.error('Error fetching medicine names:', err);
-        res.status(500).json({ message: 'Failed to fetch medicine names' });
-      } else {
-        const medicineNames = results.map((row) => row.name);
-        res.status(200).json(medicineNames);
+        if (err) {
+            console.error('Error fetching medicine names:', err);
+            res.status(500).json({ message: 'Failed to fetch medicine names' });
+        } else {
+            const medicineNames = results.map((row) => row.name);
+            res.status(200).json(medicineNames);
+        }
+    });
+});
+
+//Leave Days API endpoint
+app.post('/saveLeaveDays', (req, res) => {
+    const { startDate, endDate, doctor_user_id } = req.body;
+    // Use the userId to fetch the doctor_id from the doctors table
+    const findDoctorIdQuery = 'SELECT doctor_id FROM doctors WHERE user_id = ?';
+
+    db.query(findDoctorIdQuery, [doctor_user_id], (err, doctorResults) => {
+        if (err) {
+            console.error('Error finding doctor_id:', err);
+            return res.status(500).json({ message: 'Failed to save leave days' });
+        }
+        const doctorId = doctorResults[0].doctor_id;
+
+        // Insert the start date, end date, and doctor_id into the doctor_leave_days table
+        const insertQuery = 'INSERT INTO doctor_leave_days (start_date, end_date, doctor_id) VALUES (?, ?, ?)';
+
+        db.query(insertQuery, [startDate, endDate, doctorId], (err, result) => {
+            if (err) {
+                console.error('Error inserting leave days:', err);
+                return res.status(500).json({ message: 'Failed to save leave days' });
+            }
+
+            console.log('Leave days saved successfully');
+            res.status(200).json({ message: 'Leave days saved successfully' });
+        });
+    });
+});
+
+//Parent General Info API endpoint
+
+// Configure multer for handling file uploads
+const pdfStorage = multer.diskStorage({
+    destination: 'public/pdf_uploads/', // Specify the destination folder for PDFs
+    filename: (req, file, callback) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        const fileExtension = path.extname(file.originalname).toLowerCase();
+        if (fileExtension === '.pdf') {
+            callback(null, uniqueSuffix + fileExtension);
+        } else {
+            callback(new Error('Invalid file type. Please upload a PDF file.'));
+        }
+    },
+});
+
+const pdfUpload = multer({ storage: pdfStorage });
+
+// Route to handle form submission
+app.post("/parentGeneralInfo",pdfUpload.fields([{ name: "file1", maxCount: 1 }, { name: "file2", maxCount: 1 }]), (req, res) => {
+    const { date, medicalCondition, currentDiseases, bp, sugar, weight, height, parentbmi, allergies, pastSurgeries,
+        file1,
+        file2,
+        nextCheckupDate,
+        description,
+        parentId,
+        doctor_user_id,
+    } = req.body;
+
+    if (pastSurgeries === "No" && !req.files.file2) {
+        return res.status(400).json({ message: "Please upload file2 for past surgeries." });
+    }
+
+    // Check if pastSurgeries is "Yes" and both file1 and file2 are uploaded
+    if (pastSurgeries === "Yes" && (!req.files.file1 || !req.files.file2)) {
+        return res.status(400).json({ message: "Please upload both file1 and file2 for past surgeries." });
+    }
+
+    let pastSurgeriesFile = null;
+    let testResultFile = null;
+
+    if (pastSurgeries === "No" && req.files.file2) {
+        const testResultFilePath = req.files.file2[0].path;
+        const relativeTestResultPath = path.normalize(testResultFilePath).replace(/^public[\\/]+/, '');
+        testResultFile = relativeTestResultPath;
+    } else if (pastSurgeries === "Yes" && req.files.file1 && req.files.file2) {
+        const pastSurgeriesFilePath = req.files.file1[0].path;
+        const testResultFilePath = req.files.file2[0].path;
+
+        const relativePastSurgeriesPath = path.normalize(pastSurgeriesFilePath).replace(/^public[\\/]+/, '');
+        const relativeTestResultPath = path.normalize(testResultFilePath).replace(/^public[\\/]+/, '');
+
+        pastSurgeriesFile = relativePastSurgeriesPath;
+        testResultFile = relativeTestResultPath;
+    } else {
+        return res.status(400).json({ message: "Invalid combination of inputs." });
+    }
+
+
+    // Retrieve the doctor_id based on doctor_user_id
+    const findDoctorIdQuery = "SELECT doctor_id FROM doctors WHERE user_id = ?";
+    db.query(findDoctorIdQuery, [doctor_user_id], (err, results) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ message: "Database error" });
+        }
+
+        if (results.length === 0) {
+            return res.status(400).json({ message: "Doctor not found" });
+        }
+
+        const doctor_id = results[0].doctor_id;
+
+        // Insert the data into the MySQL database
+        const insertQuery =
+            "INSERT INTO doctor_visit (date, medical_condition, current_diseases, BP, sugar, weight, height, BMI, allergies, past_surgeries, test_result, description, next_visit_date, parent_id, doctor_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        db.query(
+            insertQuery,
+            [
+                date,
+                medicalCondition,
+                currentDiseases,
+                bp,
+                sugar,
+                weight,
+                height,
+                parentbmi,
+                allergies,
+                pastSurgeriesFile ? pastSurgeriesFile : 'No',
+                testResultFile,
+                description,
+                nextCheckupDate,
+                parentId,
+                doctor_id,
+            ],
+            (err, results) => {
+                if (err) {
+                    console.error(err);
+                    return res.status(500).json({ message: "Database error" });
+                }
+
+                return res.status(200).json({ message: "Data inserted successfully" });
+            }
+        );
+    });
+});
+
+// Admin Add Medicine Seller
+
+// Send Terms and Condition
+app.post('/send-terms-email', (req, res) => {
+    const { recipientEmail } = req.body;
+  
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    const resetLink = `${process.env.CLIENT_URL}/term-condition/${resetToken}`;
+    const mailOptions = {
+        from: process.env.GMAIL,
+        to: recipientEmail,
+        subject: 'Terms and Conditions',
+        html: `<p>Please click the following link to accept the terms and conditions:</p>
+        <p>Click <a href="${resetLink}">here</a></p>`,
+    };
+  
+    // Send the email
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+        return res.status(500).json({ message: 'Email sending failed' });
       }
+      console.log('Email sent:', info.response);
+      res.status(200).json({ message: 'Email sent successfully' });
     });
   });
+
+ //Seller Registration
+ app.post('/sellerRegister', pdfUpload.single('testResultFile'), async (req, res) => {
+    const { name, address, email, phone, password } = req.body;
+
+    const checkEmailQuery = 'SELECT * FROM users WHERE email = ?';
+    const [existingUser] = await db.promise().query(checkEmailQuery, [email]);
+
+
+
+    if (existingUser.length > 0) {
+
+        return res.status(400).json({ error: 'Email already registered' });
+    }
+
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    let testResultFile = null;
+
+    const testResultFilePath = req.file.path;
+    const relativeTestResultPath = path.normalize(testResultFilePath).replace(/^public[\\/]+/, '');
+    testResultFile = relativeTestResultPath;
+
+    // console.log('Received data:', { name, address, email, password, phone });
+    // Insert user data into 'user' table
+    const userSql = 'INSERT INTO users (email, password, role,user_status) VALUES (?, ?, "MedSeller","DEACTIVE")';
+    db.query(userSql, [email, hashedPassword], (err, userResult) => {
+        if (err) {
+            console.error('Error inserting user data:', err);
+            return res.status(500).json({ message: 'Error registering user' });
+        }
+
+        // Insert additional data into 'adult_child' table
+        const adultChildSql = 'INSERT INTO medicine_seller (name, address, phone, med_license, user_id) VALUES (?, ?, ?, ?, ?)';
+        const user_id = userResult.insertId;
+        db.query(adultChildSql, [name, address, phone, testResultFile, user_id], err => {
+            if (err) {
+                console.error('Error inserting adult_child data:', err);
+                return res.status(500).json({ message: 'Error registering user' });
+            }
+
+            res.status(200).json({ message: 'Registration successful' });
+        });
+    });
+});
+
+// Seller Medicine View API endpoint
+app.get('/sellerMedicineView/:seller_user_id', (req, res) => {
+    const { seller_user_id } = req.params;
+
+    // SQL query to select medicine details with corresponding medicine seller
+    const selectQuery = `
+        SELECT m.medicine_id, m.name AS medicine_name, DATE_FORMAT(m.exp_date, '%Y-%m-%d') AS formatted_date
+        FROM medicine AS m
+        INNER JOIN medicine_seller AS ms ON m.medicine_seller_id = ms.medicine_seller_id
+        WHERE ms.user_id = ?`;
+
+    db.query(selectQuery, [seller_user_id], (err, results) => {
+        if (err) {
+            console.error('Error fetching medicine details:', err);
+            res.status(500).json({ message: 'Failed to fetch medicine details' });
+        } else {
+            res.status(200).json(results);
+        }
+    });
+});
+
+//Seller Expiry Edit API endpoint
+app.put('/updateMedicine/:medicine_id', async (req, res) => {
+    const { expiryDate } = req.body;
+    const { medicine_id } = req.params;
+
+
+    // Update the medicine's expiry date in the database
+    const updateQuery = 'UPDATE medicine SET exp_date = ? WHERE medicine_id = ?';
+
+    db.query(updateQuery, [expiryDate, medicine_id], (err, result) => {
+        if (err) {
+            console.error('Error updating medicine:', err);
+            res.status(500).json({ message: 'Failed to update medicine' });
+        } else {
+            res.status(200).json({ message: 'Medicine updated successfully' });
+        }
+    });
+});
 
 function generateRandomPassword() {
     const uppercaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';

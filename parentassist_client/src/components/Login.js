@@ -122,6 +122,9 @@ function Login() {
                             case 'Admin':
                                 navigate('/Admin');
                                 break;
+                            case 'MedSeller':
+                                navigate('/MedicineSeller');
+                                break;
                             default:
                                 alert("Invalid Credentials");
                         }
@@ -175,7 +178,9 @@ function Login() {
                 navigate('/Parent');
             } else if (userRole === 'Admin') {
                 navigate('/Admin');
-            } else {
+            } else if(userRole === 'MedSeller'){
+                navigate('/MedicineSeller')
+            }else {
                 alert("Invalid Credentials")
             }
 
@@ -200,11 +205,10 @@ function Login() {
         setSubmitClicked(true);
 
         try {
-            const response = await axios.post('http://localhost:9000/forgot-password', {email});
-            if(response.status === 200)
-            {
-                setAlertInfo({variant : 'success' , message:'Verification email sent', show:true});
-            }    
+            const response = await axios.post('http://localhost:9000/forgot-password', { email });
+            if (response.status === 200) {
+                setAlertInfo({ variant: 'success', message: 'Verification email sent', show: true });
+            }
         } catch (error) {
             // console.error(error);
             if (error.response && error.response.status === 400) {
@@ -256,7 +260,7 @@ function Login() {
                                         )}
                                     </div>
                                     <p className="small fw-bold mt-2 pt-1 mb-0">
-                                        <a style={{cursor:"pointer"}} onClick={sendmail} className="text-decoration-none ">Forgot Password?</a>
+                                        <a style={{ cursor: "pointer" }} onClick={sendmail} className="text-decoration-none ">Forgot Password?</a>
                                     </p>
                                     <p className="small fw-bold mt-2 pt-1 mb-0">
                                         Don't have an account?<a href="/Register" className="link-danger text-decoration-none">Register</a>

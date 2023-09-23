@@ -31,9 +31,9 @@ function AddVideoForm() {
 
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
-        setVideoFile(selectedFile);
-        const videoErrorMessage = validateFile(videoFile);
-        setVideoError(videoErrorMessage);
+        if (validateFile(selectedFile)) {
+            setVideoFile(selectedFile);
+        }
 
     };
 
@@ -46,9 +46,8 @@ function AddVideoForm() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        setSubmitClicked(true);
-
         if (videoFile) {
+            setSubmitClicked(true);
             const formData = new FormData();
             formData.append('video', videoFile);
             formData.append('description', description);

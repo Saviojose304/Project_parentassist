@@ -32,6 +32,11 @@ import DoctorBooking from './components/Booking/DoctorBooking';
 import DoctorsPatientDetails from './components/Booking/DoctorPatientDetails';
 import AdminUserView from './components/UsersView/AdminUserView';
 import AdminAddServices from './components/UsersView/AdminAddServices';
+import ParentServiceView from './components/UsersView/ParentServiceView';
+import TermsCondition from './components/UsersView/TermsContion';
+import SellerRegister from './components/SellerRegister';
+import MedicineSeller from './components/Users/MedicineSeller';
+import MedSellerProfileUpdate from './components/Users/MedSellerProfileUpdate';
 
 const router = createBrowserRouter([
   {
@@ -117,6 +122,25 @@ const router = createBrowserRouter([
   {
     path:"/AdminAddServices",
     element: <AdminAddServices />
+  },{
+    path:"/ParentServiceView",
+    element: <ParentServiceView />
+  },
+  {
+    path:"/term-condition/:token",
+    element: <TermsCondition />
+  },
+  {
+    path:"/seller-registration",
+    element: <SellerRegister />
+  },
+  {
+    path:"/MedicineSeller",
+    element: <MedicineSeller />
+  },
+  {
+    path:"/MedSellerProfileUpdate",
+    element: <MedSellerProfileUpdate />
   }
   
 

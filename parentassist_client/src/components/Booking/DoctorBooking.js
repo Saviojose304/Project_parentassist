@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import '../Register.css'
+import '../Register.css';
 import AlertBox from "../Alert";
 import { useLocation } from "react-router-dom";
 
@@ -28,6 +28,7 @@ function DoctorBooking() {
     const currentDate = new Date().toISOString().split('T')[0];
     const [selectedDate, setSelectedDate] = useState(currentDate);
     const [editMode, setEditMode] = useState(false);
+    const [disabledDates, setDisabledDates] = useState([]);
     const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
 
     useEffect(() => {
@@ -106,12 +107,18 @@ function DoctorBooking() {
     useEffect(() => {
         if (doctorid) { // Check if doctorid is truthy
             axios.get(`http://localhost:9000/doctorslist/${doctorid}`).then((response) => {
-                const doctorDetails = response.data;
+                const { doctorDetails, leaveDays } = response.data;
                 setSpecialization(doctorDetails.specialization);
                 setHospital(doctorDetails.hospital);
-            });
+                setDisabledDates(leaveDays);
+            })
+                .catch((error) => {
+                    console.error("Error fetching doctor details:", error);
+                });
         }
     }, [doctorid]);
+
+    console.log(disabledDates);
 
     const handleSpecialization = (eventspcl) => {
         const specilanew = eventspcl.target.value;
@@ -217,145 +224,163 @@ function DoctorBooking() {
             <section className="vh-100 bg-img">
                 <div className="container-fluid" style={{ paddingTop: '5rem', paddingBottom: '3rem' }}>
                     <div className="row d-flex justify-content-center align-items-center h-100">
-                        <div className="col-12 col-md-4 col-lg-4 col-xl-4">
-                            <div className="card shadow-2-strong" style={{ borderRadius: '1rem' }}>
-                                <div className="card-body p-5 text-center">
-                                    <h3 className="mb-5">Book Appoinment</h3>
-                                    <form onSubmit={handleSubmit} autoComplete="off" className="row">
-                                        {editMode ? (
+                            <div  className={selectedDoctor ? (disabledDates.length > 0 ? 'col-md-4' : 'col-12 col-md-4 col-lg-4') : 'col-12 col-md-4 col-lg-4 col-xl-4'}>
+                                <div className="card shadow-2-strong" style={{ borderRadius: '1rem' }}>
+                                    <div className="card-body p-5 text-center">
+                                        <h3 className="mb-5">Book Appoinment</h3>
+                                        <form onSubmit={handleSubmit} autoComplete="off" className="row">
+                                            {editMode ? (
+                                                <div className="">
+                                                    <select
+                                                        className="form-select"
+                                                        onChange={(e) => setGender(e.target.value)}
+                                                        required
+                                                        aria-readonly
+                                                        value={gender}
+                                                        style={{ pointerEvents: 'none', paddingRight: '1rem' }}
+                                                    >
+                                                        <option value="male">Father</option>
+                                                        <option value="female">Mother</option>
+                                                    </select>
+                                                </div>
+                                            ) : (
+                                                <div className="">
+                                                    <select
+                                                        class="form-select"
+                                                        onChange={(e) => setGender(e.target.value)}
+                                                        required
+                                                    >
+                                                        <option selected>For Whom</option>
+                                                        <option value="male">Father</option>
+                                                        <option value="female">Mother</option>
+                                                    </select>
+                                                </div>
+                                            )}
+                                            <br />
+
                                             <div className="">
-                                                <select
-                                                    className="form-select"
-                                                    onChange={(e) => setGender(e.target.value)}
-                                                    required
-                                                    aria-readonly
-                                                    value={gender}
-                                                    style={{ pointerEvents: 'none', paddingRight: '1rem' }}
-                                                >
-                                                    <option value="male">Father</option>
-                                                    <option value="female">Mother</option>
-                                                </select>
+                                                <span><i className="bi bi-person-fill icon"></i></span>
+                                                {editMode ? (
+                                                    <select style={{ pointerEvents: 'none', paddingRight: '1rem' }} value={selectedDoctor} onChange={handleDoctorChange}
+                                                        required aria-readonly >
+                                                        <option value="">Select a doctor</option>
+                                                        {doctorList.map((doctor) => (
+                                                            <option key={doctor.id} value={doctor.id}>
+                                                                {doctor.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <select value={selectedDoctor} onChange={handleDoctorChange}
+                                                        required >
+                                                        <option value="">Select a doctor</option>
+                                                        {doctorList.map((doctor) => (
+                                                            <option key={doctor.id} value={doctor.id}>
+                                                                {doctor.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                )}
                                             </div>
-                                        ) : (
                                             <div className="">
-                                                <select
-                                                    class="form-select"
-                                                    onChange={(e) => setGender(e.target.value)}
-                                                    required
+                                                <span><i class="bi bi-award-fill icon"></i></span>
+                                                {editMode ? (
+                                                    <input type="text" placeholder="Specialization (eg:General Medicine)" readOnly name="specialization" value={specialization} required />
+                                                ) : (
+                                                    <input type="text" placeholder="Specialization (eg:General Medicine)" name="specialization" value={specialization} onChange={handleSpecialization} required />
+                                                )}
+                                                <div className="red-text" id="name_err">{specializationerror}</div> <br />
+                                            </div>
+
+                                            <div className="">
+                                                <span><i className="bi bi-hospital-fill icon"></i></span>
+                                                {editMode ? (
+                                                    <input type="text" placeholder="Enter doctor hospital name" readOnly name="hospital" value={hospital} onChange={handleHospital} required />
+                                                ) : (
+                                                    <input type="text" placeholder="Enter doctor hospital name" name="hospital" value={hospital} onChange={handleHospital} required />
+                                                )}
+                                                <div className="red-text" id="name_err">{hospitalerror}</div> <br />
+                                            </div>
+                                            <div className="">
+                                                <input type="date" min={currentDate} value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} required />
+                                            </div>
+                                            <div className="">
+                                                <input type="time" placeholder="Enter Time" name="time" value={time} min="09:30" max="17:00" onChange={handletime} required />
+                                                <div className="red-text" id="name_err">{timeerror}</div> <br />
+                                            </div>
+                                            <div className="col-12">
+                                                <button
+                                                    style={{ width: '70%' }}
+                                                    className="btn btn-primary btn-lg btn-block"
+                                                    type="submit"
+                                                    id="submit"
+                                                    name="submit"
                                                 >
-                                                    <option selected>For Whom</option>
-                                                    <option value="male">Father</option>
-                                                    <option value="female">Mother</option>
-                                                </select>
-                                            </div>
-                                        )}
-                                        <br />
+                                                    {editMode ? "Update Appointment" : "Book Appointment"}
+                                                </button>
 
-                                        <div className="">
-                                            <span><i className="bi bi-person-fill icon"></i></span>
-                                            {editMode ? (
-                                                <select style={{ pointerEvents: 'none', paddingRight: '1rem' }} value={selectedDoctor} onChange={handleDoctorChange}
-                                                    required aria-readonly >
-                                                    <option value="">Select a doctor</option>
-                                                    {doctorList.map((doctor) => (
-                                                        <option key={doctor.id} value={doctor.id}>
-                                                            {doctor.name}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            ) : (
-                                                <select value={selectedDoctor} onChange={handleDoctorChange}
-                                                    required >
-                                                    <option value="">Select a doctor</option>
-                                                    {doctorList.map((doctor) => (
-                                                        <option key={doctor.id} value={doctor.id}>
-                                                            {doctor.name}
-                                                        </option>
-                                                    ))}
-                                                </select>
+                                            </div>
+                                        </form>
+                                        <div className="p-2">
+                                            {submitClicked && (
+                                                <AlertBox
+                                                    variant={alertInfo.variant}
+                                                    message={alertInfo.message}
+                                                    onClose={handleAlertClose}
+                                                />
+                                            )}
+                                            {bookingtoken && (
+                                                <div className={`alert alert-success alert-dismissible`} role="alert">
+                                                    Your appointment token: {bookingtoken} and time : {bookingtime}
+                                                    <button
+                                                        type="button"
+                                                        className="btn-close"
+                                                        data-bs-dismiss="alert"
+                                                        aria-label="Close"
+                                                        onClick={() => setBookingToken(null)}
+                                                    ></button>
+                                                </div>
+                                            )}
+                                            {/* Display available time slots */}
+                                            {availableTimeSlots.length > 0 && (
+                                                <div className="alert alert-info">
+                                                    Available Time Slots:
+                                                    <ul>
+                                                        {availableTimeSlots.map((slot, index) => (
+                                                            <li key={index}>{slot}</li>
+                                                        ))}
+                                                    </ul>
+                                                    <button
+                                                        type="button"
+                                                        className="btn-close"
+                                                        data-bs-dismiss="alert"
+                                                        aria-label="Close"
+                                                        onClick={() => setAvailableTimeSlots([])}
+                                                    ></button>
+                                                </div>
                                             )}
                                         </div>
-                                        <div className="">
-                                            <span><i class="bi bi-award-fill icon"></i></span>
-                                            {editMode ? (
-                                                <input type="text" placeholder="Specialization (eg:General Medicine)" readOnly name="specialization" value={specialization} required />
-                                            ) : (
-                                                <input type="text" placeholder="Specialization (eg:General Medicine)" name="specialization" value={specialization} onChange={handleSpecialization} required />
-                                            )}
-                                            <div className="red-text" id="name_err">{specializationerror}</div> <br />
-                                        </div>
-
-                                        <div className="">
-                                            <span><i className="bi bi-hospital-fill icon"></i></span>
-                                            {editMode ? (
-                                                <input type="text" placeholder="Enter doctor hospital name" readOnly name="hospital" value={hospital} onChange={handleHospital} required />
-                                            ) : (
-                                                <input type="text" placeholder="Enter doctor hospital name" name="hospital" value={hospital} onChange={handleHospital} required />
-                                            )}
-                                            <div className="red-text" id="name_err">{hospitalerror}</div> <br />
-                                        </div>
-                                        <div className="">
-                                            <input type="date" min={currentDate} value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} required />
-                                        </div>
-                                        <div className="">
-                                            <input type="time" placeholder="Enter Time" name="time" value={time} min="09:30" max="17:00" onChange={handletime} required />
-                                            <div className="red-text" id="name_err">{timeerror}</div> <br />
-                                        </div>
-                                        <div className="col-12">
-                                            <button
-                                                style={{ width: '70%' }}
-                                                className="btn btn-primary btn-lg btn-block"
-                                                type="submit"
-                                                id="submit"
-                                                name="submit"
-                                            >
-                                                {editMode ? "Update Appointment" : "Book Appointment"}
-                                            </button>
-
-                                        </div>
-                                    </form>
-                                    <div className="p-2">
-                                        {submitClicked && (
-                                            <AlertBox
-                                                variant={alertInfo.variant}
-                                                message={alertInfo.message}
-                                                onClose={handleAlertClose}
-                                            />
-                                        )}
-                                        {bookingtoken && (
-                                            <div className={`alert alert-success alert-dismissible`} role="alert">
-                                                Your appointment token: {bookingtoken} and time : {bookingtime}
-                                                <button
-                                                    type="button"
-                                                    className="btn-close"
-                                                    data-bs-dismiss="alert"
-                                                    aria-label="Close"
-                                                    onClick={() => setBookingToken(null)}
-                                                ></button>
-                                            </div>
-                                        )}
-                                        {/* Display available time slots */}
-                                        {availableTimeSlots.length > 0 && (
-                                            <div className="alert alert-info">
-                                                Available Time Slots:
-                                                <ul>
-                                                    {availableTimeSlots.map((slot, index) => (
-                                                        <li key={index}>{slot}</li>
-                                                    ))}
-                                                </ul>
-                                                <button
-                                                    type="button"
-                                                    className="btn-close"
-                                                    data-bs-dismiss="alert"
-                                                    aria-label="Close"
-                                                    onClick={() => setAvailableTimeSlots([])}
-                                                ></button>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        {selectedDoctor && (
+                            <div className="col-md-4">
+                                {disabledDates.length > 0 && (
+                                        <div className="card mt-4">
+                                            <div className="card-header">Doctor Leave Dates</div>
+                                            <div className="card-body">
+                                                <ul>
+                                                    {disabledDates.map((leaveDate, index) => (
+                                                        <li key={index}>
+                                                            {leaveDate.start} {leaveDate.start !== leaveDate.end && `to ${leaveDate.end}`}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    )}
+                            </div>
+                        )}
                     </div>
                 </div>
             </section>

@@ -24,6 +24,7 @@
     "react": "^18.2.0",
     "react-bootstrap": "^2.5.0",
     "react-bootstrap-time-picker": "^2.0.1",
+    "react-datepicker": "^4.18.0",
     "react-dom": "^18.2.0",
     "react-icons": "^4.7.1",
     "react-image-carousel-viewer": "^0.0.11",

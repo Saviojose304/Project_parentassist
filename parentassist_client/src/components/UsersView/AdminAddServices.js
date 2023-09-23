@@ -37,7 +37,7 @@ function AdminAddServices() {
 
     const handleDeleteVideo = async (videoId) => {
         // Make an API request to delete the video by videoId
-        const confirmed = window.confirm("Are you sure you want to Deactivate the user?");
+        const confirmed = window.confirm("Are you sure you want to Delete the video?");
         if (confirmed) {
             // Make an API request to deactivate the user
             axios.delete(`http://localhost:9000/deletevideos/${videoId}`)
@@ -46,7 +46,7 @@ function AdminAddServices() {
                     setVideos((prevVideos) => prevVideos.filter((video) => video.id !== videoId));
                     console.log("User Deactivated successfully");
                     // Show a success alert
-                    alert("User Deactivated successfully");
+                    alert("Video Deleted successfully");
                     window.location.reload();
                 })
                 .catch((error) => {

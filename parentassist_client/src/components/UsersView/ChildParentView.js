@@ -39,7 +39,7 @@ function ChildParentView() {
             <header>
                 <nav className="navbar navbar-expand-md fixed-top" style={{ backgroundColor: "#116396" }}>
                     <div className="container-fluid">
-                        <a style={{ color: "white" }} className="navbar-brand ms-5" href="/">ParentAssist</a>
+                        <a style={{ color: "white" }} className="navbar-brand ms-5" href="/ChildProfile">Home</a>
                         <ul className="navbar-nav ms-auto me-5">
                             <li className="nav-item px-3 py-2">
                                 <Dropdown>
