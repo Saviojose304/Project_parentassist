@@ -218,7 +218,7 @@ function ParentGeneralInfo(props) {
                 setAlertInfo({ variant: 'success', message: 'Subimitted successfully', show: true });
 
             } else {
-                setAlertInfo({ variant: 'danger', message: 'submission  Failed', show: true });
+                setAlertInfo({ variant: 'danger', message: 'Submission  Failed', show: true });
             }
             setMedicalCondition('');
             setCurrentDiseases('');

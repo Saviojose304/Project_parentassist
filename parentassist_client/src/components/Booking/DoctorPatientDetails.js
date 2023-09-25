@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { Dropdown } from 'react-bootstrap';
 import { useNavigate, useParams } from "react-router-dom";
 import ParentGeneralInfo from "../Forms/ParentGeneralInfo";
-import MedicineDetails from "../Forms/MedicineDetails";
 import MedicineRoutineDetails from "../Forms/MedicineRoutineDetails";
 import './DoctorPatientDetails.css'
 function DoctorsPatientDetails() {
@@ -97,7 +96,6 @@ function DoctorsPatientDetails() {
                                     <div className={isshowpass ? 'tab-pane fade active show flex-grow-1' : 'tab-pane fade'}>
                                         <h3 className="mb-3 text-center">Medicines</h3>
 
-                                        <MedicineDetails  />
                                         <MedicineRoutineDetails parentId={parentId} />
 
                                     </div>

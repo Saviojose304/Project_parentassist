@@ -1,21 +1,71 @@
 import React, { useState } from "react";
-
-function MedicineRoutineDetails() {
+import axios from 'axios';
+import AlertBox from "../Alert";
+import MedicineDetails from "../Forms/MedicineDetails";
+function MedicineRoutineDetails(props) {
+    const { parentId } = props;
     const [morning, setMorning] = useState(false);
     const [noon, setNoon] = useState(false);
     const [night, setNight] = useState(false);
     const [description, setDescription] = useState("");
     const [numberOfDays, setNumberOfDays] = useState("");
+    const [submitClicked, setSubmitClicked] = useState(false);
+    const [alertInfo, setAlertInfo] = useState({ variant: 'success', message: '', show: false });
+    const [selectedMedicineId, setSelectedMedicineId] = useState("");
 
-    const handleSubmit = (e) => {
+
+    const handleMedicineData = (medicineId) => {
+        setSelectedMedicineId(medicineId);
+    };
+
+    const handleAlertClose = () => {
+        setAlertInfo({ ...alertInfo, show: false });
+        setSubmitClicked(false);
+    };
+
+
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Handle form submission, you can send the data to the server or perform any other action here
+
+        const requestData = {
+            morning,
+            noon,
+            night,
+            description,
+            numberOfDays,
+            parentId,
+            selectedMedicineId,
+        };
+
+        try {
+            setSubmitClicked(true);
+            // Send a POST request to save the data to your database
+            const response = await axios.post('http://localhost:9000/saveMedicineRoutine', requestData);
+            if (response.status === 200) {
+                setAlertInfo({ variant: 'success', message: 'Subimitted successfully', show: true });
+            }
+            else{
+                setAlertInfo({ variant: 'danger', message: 'Submission  Failed', show: true });
+            }
+            setMorning(false);
+            setNoon(false);
+            setNight(false);
+            setDescription('');
+            setNumberOfDays('');
+        } catch (error) {
+            console.error("Error saving medicine routine:", error);
+            // Handle errors, e.g., show an error message to the user
+            setAlertInfo({ variant: 'danger', message: 'Submission  Failed', show: true });
+        }
+
     };
 
     return (
         <>
+            <MedicineDetails onMedicineData={handleMedicineData} />
             <form onSubmit={handleSubmit}>
-                <div style={{marginLeft:'15px'}}>
+                <div style={{ marginLeft: '15px' }}>
                     <table className="table table-bordered">
                         <tbody>
                             <tr>
@@ -77,9 +127,18 @@ function MedicineRoutineDetails() {
                     </table>
                 </div>
                 <div className="text-center mb-5">
-                        <button type="submit" className="btn btn-primary">Submit</button>
-                    </div>
+                    <button type="submit" className="btn btn-primary">Submit</button>
+                </div>
             </form>
+            <div className="p-2">
+                {submitClicked && (
+                    <AlertBox
+                        variant={alertInfo.variant}
+                        message={alertInfo.message}
+                        onClose={handleAlertClose}
+                    />
+                )}
+            </div>
         </>
     );
 }

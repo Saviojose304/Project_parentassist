@@ -872,10 +872,12 @@ app.get("/doctorslist/:id", (req, res) => {
             return res.status(404).json({ error: "Doctor not found" });
         }
 
-        // Fetch leave days for the selected doctor
-        const queryLeaveDays = "SELECT start_date, end_date FROM doctor_leave_days WHERE doctor_id = ?";
+        const currentDate = new Date().toISOString().split('T')[0];
 
-        db.query(queryLeaveDays, [id], (err, leaveDaysResults) => {
+        // Fetch leave days for the selected doctor
+        const queryLeaveDays = "SELECT start_date, end_date FROM doctor_leave_days WHERE doctor_id = ? AND start_date > ?";
+
+        db.query(queryLeaveDays, [id, currentDate], (err, leaveDaysResults) => {
             if (err) {
                 console.error("Error fetching leave days: ", err);
                 return res.status(500).json({ error: "Error fetching leave days" });
@@ -1531,15 +1533,19 @@ app.post('/addMedicine', (req, res) => {
 //Get Medicine Names API endpoint
 app.get('/medicineNames', (req, res) => {
     // SQL query to select all unique medicine names from the medicine table
-    const selectQuery = 'SELECT DISTINCT name FROM medicine';
+    const selectQuery = 'SELECT medicine_id, name FROM medicine';
 
     db.query(selectQuery, (err, results) => {
         if (err) {
             console.error('Error fetching medicine names:', err);
             res.status(500).json({ message: 'Failed to fetch medicine names' });
         } else {
-            const medicineNames = results.map((row) => row.name);
-            res.status(200).json(medicineNames);
+            const medicineData = results.map((row) => ({
+                medicine_id: row.medicine_id,
+                name: row.name,
+            }));
+
+            res.status(200).json(medicineData);
         }
     });
 });
@@ -1790,6 +1796,129 @@ app.put('/updateMedicine/:medicine_id', async (req, res) => {
             res.status(200).json({ message: 'Medicine updated successfully' });
         }
     });
+});
+
+// Medicine Routine API endpoint
+app.post('/saveMedicineRoutine', async (req, res) => {
+    const {
+        morning,
+        noon,
+        night,
+        description,
+        numberOfDays,
+        parentId,
+        selectedMedicineId,
+    } = req.body;
+
+    //console.log(morning, noon, night, description,numberOfDays, parentId,selectedMedicineId);
+
+    // Fetch the doctor_visit_id based on the current date and parent_id
+    const currentDate = new Date().toISOString().slice(0, 10); // Get current date in YYYY-MM-DD format
+    //console.log(currentDate);
+    const selectQuery = 'SELECT doctor_visit_id FROM doctor_visit WHERE date = ? AND parent_id = ?';
+
+    db.query(selectQuery, [currentDate, parentId], (err, results) => {
+        if (err) {
+            console.error('Error retrieving doctor_visit_id:', err);
+            res.status(500).json({ message: 'Failed to retrieve doctor_visit_id' });
+        } else {
+            if (results.length > 0) {
+                const doctorVisitId = results[0].doctor_visit_id;
+                //console.log(doctorVisitId);
+                // Insert the medicine routine data into the medicine_routine table
+                const insertQuery = `
+                    INSERT INTO medicine_routine
+                    (morning, noon, night, rout_descp, days, doctor_visit_id, medicine_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)`;
+
+                db.query(
+                    insertQuery,
+                    [morning, noon, night, description, numberOfDays, doctorVisitId, selectedMedicineId],
+                    (err, result) => {
+                        if (err) {
+                            console.error('Error saving medicine routine:', err);
+                            res.status(500).json({ message: 'Failed to save medicine routine' });
+                        } else {
+                            res.status(200).json({ message: 'Medicine routine saved successfully' });
+                        }
+                    }
+                );
+            } else {
+                res.status(404).json({ message: 'Doctor visit not found' });
+            }
+        }
+    });
+});
+
+// API to fetch Latest Doctor Visit Details
+app.get('/getLatestDoctorVisitDetails', (req, res) => {
+    try {
+        const userId = req.query.user_id; 
+        //console.log(userId);
+        const latestDoctorVisitQuery = `
+            SELECT 
+                dv.*, 
+                DATE_FORMAT(dv.date, '%d/%m/%Y') AS formatted_date,
+                DATE_FORMAT(dv.next_visit_date, '%d/%m/%Y') AS formatted_next_visit_date,
+                d.name AS doctor_name
+            FROM doctor_visit dv
+            JOIN (
+                SELECT parent_id, doctor_id, MAX(date) AS max_date
+                FROM doctor_visit
+                WHERE parent_id = (SELECT parent_id FROM parents WHERE user_id = ?)
+                GROUP BY parent_id, doctor_id
+            ) grouped
+            ON dv.parent_id = grouped.parent_id
+            AND dv.doctor_id = grouped.doctor_id
+            AND dv.date = grouped.max_date
+            JOIN doctors d ON dv.doctor_id = d.doctor_id;
+        `;
+
+        db.query(latestDoctorVisitQuery, [userId], (error, doctorVisitResults) => {
+            if (error) {
+                console.error('Error fetching latest doctor visit details:', error);
+                res.status(500).json({ message: 'Failed to fetch latest doctor visit details' });
+            } else {
+                const latestDoctorVisitDetails = doctorVisitResults;
+                res.status(200).json(latestDoctorVisitDetails);
+            }
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Failed to fetch latest doctor visit details' });
+    }
+});
+
+// API to fetch Medicine Routine Details
+app.get('/getMedicineRoutineDetails', (req, res) => {
+    try {
+        const userId = req.query.user_id; // Assuming you have user_id in your JWT token
+
+        const medicineRoutineQuery = `
+            SELECT dv.doctor_visit_id, m.medicine_id, m.name AS medicine_name, 
+                   mr.morning, mr.noon, mr.night, mr.rout_descp, mr.days,
+                   DATE_FORMAT(dv.date, '%d/%m/%Y') AS formatted_doctor_visit_date,
+                   DATE_ADD(dv.date, INTERVAL mr.days DAY) AS medicine_expiry_date
+            FROM doctor_visit dv
+            LEFT JOIN medicine_routine mr ON dv.doctor_visit_id = mr.doctor_visit_id
+            LEFT JOIN medicine m ON mr.medicine_id = m.medicine_id
+            WHERE dv.parent_id = (SELECT parent_id FROM parents WHERE user_id = ?)
+            AND DATE_ADD(dv.date, INTERVAL mr.days DAY) >= CURDATE();  -- Filter out expired medicines
+        `;
+
+        db.query(medicineRoutineQuery, [userId], (error, medicineRoutineResults) => {
+            if (error) {
+                console.error('Error fetching medicine routine details:', error);
+                res.status(500).json({ message: 'Failed to fetch medicine routine details' });
+            } else {
+                const medicineRoutineDetails = medicineRoutineResults;
+                res.status(200).json(medicineRoutineDetails);
+            }
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Failed to fetch medicine routine details' });
+    }
 });
 
 function generateRandomPassword() {

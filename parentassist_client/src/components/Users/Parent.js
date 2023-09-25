@@ -1,10 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import axios from 'axios';
 
 function Parent() {
     const [isSidebarOpen, setSidebarOpen] = useState(true);
+    const [doctorVisits, setDoctorVisits] = useState([]);
+    const [medicineRoutine, setMedicineRoutine] = useState([]);
     const token = localStorage.getItem('token');
     const parsedToken = JSON.parse(token); // Parse the token string to an object
+    const user_id = parsedToken.userId;
+
 
     const navigate = useNavigate();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -18,6 +23,33 @@ function Parent() {
             navigate('/Login'); // Navigate to login if no token is present
         }
     }, [navigate]);
+
+    useEffect(() => {
+        // Fetch latest doctor visit details for the parent
+        axios.get(`http://localhost:9000/getLatestDoctorVisitDetails?user_id=${user_id}`)
+            .then((response) => {
+                if (response.status === 200) {
+                    setDoctorVisits(response.data);
+                }
+            })
+            .catch((error) => {
+                console.error("Error fetching doctor visit details:", error);
+            });
+    }, []);
+
+    useEffect(() => {
+        // Fetch medicine routine details for the parent's doctor visits
+        axios.get(`http://localhost:9000/getMedicineRoutineDetails?user_id=${user_id}`)
+            .then((response) => {
+                if (response.status === 200) {
+                    setMedicineRoutine(response.data);
+                }
+            })
+            .catch((error) => {
+                console.error("Error fetching medicine routine details:", error);
+            });
+    }, [user_id]);
+
 
     const logOut = async () => {
         try {
@@ -44,6 +76,17 @@ function Parent() {
     const toggleSidebar = () => {
         setSidebarOpen(!isSidebarOpen);
     };
+
+    const handleMoreDetailsClick = (doctor_visit_id) => {
+        // Toggle the expanded state for the selected doctor visit card
+        const updatedDoctorVisits = doctorVisits.map((visit) => ({
+            ...visit,
+            expanded: visit.doctor_visit_id === doctor_visit_id ? !visit.expanded : visit.expanded,
+        }));
+        setDoctorVisits(updatedDoctorVisits);
+    };
+
+
     return (
         <>
             <header>
@@ -97,9 +140,94 @@ function Parent() {
                 <div className={isSidebarOpen ? 'col-12' : 'col-10 pt-2'}>
                     <main className="col overflow-auto h-100">
                         <div className="bg-light border rounded-3 p-5">
-                            <h2>Main</h2>
-                            <p>Sriracha biodiesel taxidermy organic post-ironic, Intelligentsia salvia mustache 90's code editing brunch. Butcher polaroid VHS art party, hashtag Brooklyn deep v PBR narwhal sustainable mixtape swag wolf squid tote bag.</p>
-                            <p>Ethical Kickstarter PBR asymmetrical lo-fi. Dreamcatcher street art Carles, stumptown gluten-free Kickstarter artisan Wes Anderson wolf pug.</p>
+                            <h2>Doctor Visits</h2>
+                            {doctorVisits.map((visit, index) => (
+                                <div className="card mb-3" key={visit.doctor_visit_id}>
+                                    <div className="card-header">
+                                        <div className="d-flex justify-content-between">
+                                            <span>Visited Date: {visit.formatted_date}</span>
+                                            <span>Doctor Name: {visit.doctor_name}</span>
+                                        </div>
+                                    </div>
+                                    <div className="card-body">
+                                        <button
+                                            className="btn btn-primary mb-3"
+                                            onClick={() => handleMoreDetailsClick(visit.doctor_visit_id)}
+                                        >
+                                            {visit.expanded ? "Less Details" : "More Details"}
+                                        </button>
+                                        {visit.expanded && (
+                                            <div className="row">
+                                                <div className="col-md-6">
+                                                    <div>
+                                                        <p>Medical Condition: {visit.medical_condition}</p>
+                                                        <p>Current Disease: {visit.current_diseases}</p>
+                                                        <p>BP: {visit.BP}</p>
+                                                        <p>Sugar: {visit.sugar}</p>
+                                                        <p>Weight: {visit.weight}</p>
+                                                        <p>Height: {visit.height}</p>
+                                                        <p>BMI: {visit.BMI}</p>
+                                                        <p>Allergies: {visit.allergies}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <div>
+                                                        <p>
+                                                            Past Surgeries:
+                                                            {visit.past_surgeries === "No" ? (
+                                                                <span>No</span>
+                                                            ) : (
+                                                                <a href={`http://localhost:9000/${visit.past_surgeries}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20 mt-3">
+                                                                    <i className="bi bi-file-arrow-down-fill"></i>
+                                                                </a>
+                                                            )}
+                                                        </p>
+                                                        <p>
+                                                            Test Results:
+                                                            <a href={`http://localhost:9000/${visit.test_result}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20 mt-3">
+                                                                <i className="bi bi-file-arrow-down-fill"></i>
+                                                            </a>
+                                                        </p>
+                                                        <p>Description: {visit.description}</p>
+                                                        <p>Next Visit: {visit.formatted_next_visit_date}</p>
+                                                    </div>
+                                                </div>
+                                                <h2 className="m-2 text-center">Medicine Routine</h2>
+                                                <div className="table-responsive">
+                                                    <table className="table table-bordered">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Medicine Name</th>
+                                                                <th>Morning</th>
+                                                                <th>Noon</th>
+                                                                <th>Night</th>
+                                                                <th>Route Description</th>
+                                                                <th>Prescribed Date</th>
+                                                                <th>Days</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {medicineRoutine
+                                                                .filter((medRoutine) => medRoutine.doctor_visit_id === visit.doctor_visit_id)
+                                                                .map((filteredMedRoutine) => (
+                                                                    <tr key={filteredMedRoutine.doctor_visit_id}>
+                                                                        <td>{filteredMedRoutine.medicine_name}</td>
+                                                                        <td>{filteredMedRoutine.morning}</td>
+                                                                        <td>{filteredMedRoutine.noon}</td>
+                                                                        <td>{filteredMedRoutine.night}</td>
+                                                                        <td>{filteredMedRoutine.rout_descp}</td>
+                                                                        <td>{filteredMedRoutine.formatted_doctor_visit_date}</td>
+                                                                        <td>{filteredMedRoutine.days}</td>
+                                                                    </tr>
+                                                                ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </main>
                 </div>
