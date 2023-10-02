@@ -37,6 +37,9 @@ import TermsCondition from './components/UsersView/TermsContion';
 import SellerRegister from './components/SellerRegister';
 import MedicineSeller from './components/Users/MedicineSeller';
 import MedSellerProfileUpdate from './components/Users/MedSellerProfileUpdate';
+import ParentTherapyBooking from './components/Booking/ParentTherapyBooking';
+import TherapyBookingBilling from './components/Billing Page/TherapyBookingBilling';
+import ParentBookedTherapyView from './components/UsersView/ParentBookedTherapyView';
 
 const router = createBrowserRouter([
   {
@@ -141,6 +144,18 @@ const router = createBrowserRouter([
   {
     path:"/MedSellerProfileUpdate",
     element: <MedSellerProfileUpdate />
+  },
+  {
+    path:"/ParentTherapyBooking",
+    element: <ParentTherapyBooking />
+  },
+  {
+    path:"/therapy-booking-billing/:selectedDate/:parentUserId/:doctorId",
+    element: <TherapyBookingBilling />
+  },
+  {
+    path:"/ParentBookedTherapyView",
+    element: <ParentBookedTherapyView />
   }
   
 

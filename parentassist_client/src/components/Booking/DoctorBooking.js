@@ -30,6 +30,9 @@ function DoctorBooking() {
     const [editMode, setEditMode] = useState(false);
     const [disabledDates, setDisabledDates] = useState([]);
     const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
+    const token = localStorage.getItem('token');
+    const parsedToken = JSON.parse(token); // Parse the token string to an object
+    const user_id = parsedToken.userId;
 
     useEffect(() => {
         // console.log("Fetching data...");
@@ -118,7 +121,7 @@ function DoctorBooking() {
         }
     }, [doctorid]);
 
-    console.log(disabledDates);
+    //console.log(disabledDates);
 
     const handleSpecialization = (eventspcl) => {
         const specilanew = eventspcl.target.value;
@@ -170,7 +173,7 @@ function DoctorBooking() {
 
         setSubmitClicked(true);
 
-        console.log(gender);
+        //console.log(gender);
 
         try {
             if (editMode) {
@@ -194,6 +197,7 @@ function DoctorBooking() {
                     setAlertInfo({ variant: 'success', message: 'Appointment Booked Successfully', show: true });
                     setBookingToken(response.data.token)
                     setBookingTime(response.data.appointmentTime)
+
                 }
             }
         } catch (error) {
@@ -216,15 +220,15 @@ function DoctorBooking() {
             //     setAlertInfo({ variant: 'danger', message: "You already have an appointment at the same date and time", show: true });
             // }
         }
-
-
     };
+
+
     return (
         <>
             <section className="vh-100 bg-img">
                 <div className="container-fluid" style={{ paddingTop: '5rem', paddingBottom: '3rem' }}>
                     <div className="row d-flex justify-content-center align-items-center h-100">
-                            <div  className={selectedDoctor ? (disabledDates.length > 0 ? 'col-md-4' : 'col-12 col-md-4 col-lg-4') : 'col-12 col-md-4 col-lg-4 col-xl-4'}>
+                            <div  className={selectedDoctor ? (disabledDates.length > 0 ? 'col-md-4' : 'col-12 col-md-4 col-lg-4 col-xl-4') : 'col-12 col-md-4 col-lg-4 col-xl-4'}>
                                 <div className="card shadow-2-strong" style={{ borderRadius: '1rem' }}>
                                     <div className="card-body p-5 text-center">
                                         <h3 className="mb-5">Book Appoinment</h3>
@@ -287,7 +291,7 @@ function DoctorBooking() {
                                                 {editMode ? (
                                                     <input type="text" placeholder="Specialization (eg:General Medicine)" readOnly name="specialization" value={specialization} required />
                                                 ) : (
-                                                    <input type="text" placeholder="Specialization (eg:General Medicine)" name="specialization" value={specialization} onChange={handleSpecialization} required />
+                                                    <input type="text" placeholder="Specialization (eg:General Medicine)" readOnly name="specialization" value={specialization} onChange={handleSpecialization} required />
                                                 )}
                                                 <div className="red-text" id="name_err">{specializationerror}</div> <br />
                                             </div>
@@ -297,7 +301,7 @@ function DoctorBooking() {
                                                 {editMode ? (
                                                     <input type="text" placeholder="Enter doctor hospital name" readOnly name="hospital" value={hospital} onChange={handleHospital} required />
                                                 ) : (
-                                                    <input type="text" placeholder="Enter doctor hospital name" name="hospital" value={hospital} onChange={handleHospital} required />
+                                                    <input type="text" placeholder="Enter doctor hospital name" readOnly name="hospital" value={hospital} onChange={handleHospital} required />
                                                 )}
                                                 <div className="red-text" id="name_err">{hospitalerror}</div> <br />
                                             </div>
@@ -364,7 +368,7 @@ function DoctorBooking() {
                                 </div>
                             </div>
                         {selectedDoctor && (
-                            <div className="col-md-4">
+                            <div className={selectedDoctor ? (disabledDates.length > 0 ? 'col-md-4' : ' ') : 'col-12 col-md-4 col-lg-4 col-xl-4'}>
                                 {disabledDates.length > 0 && (
                                         <div className="card mt-4">
                                             <div className="card-header">Doctor Leave Dates</div>

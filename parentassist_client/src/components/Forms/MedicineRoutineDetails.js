@@ -7,6 +7,7 @@ function MedicineRoutineDetails(props) {
     const [morning, setMorning] = useState(false);
     const [noon, setNoon] = useState(false);
     const [night, setNight] = useState(false);
+    const [checkboxError, setCheckboxError] = useState('');
     const [description, setDescription] = useState("");
     const [numberOfDays, setNumberOfDays] = useState("");
     const [submitClicked, setSubmitClicked] = useState(false);
@@ -28,6 +29,12 @@ function MedicineRoutineDetails(props) {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        if (!morning && !noon && !night) {
+            setCheckboxError('Please check at least one checkbox');
+            //setAlertInfo({ variant: 'danger', message: 'Please check at least one checkbox', show: true });
+            return;
+        }
+
         const requestData = {
             morning,
             noon,
@@ -40,6 +47,7 @@ function MedicineRoutineDetails(props) {
 
         try {
             setSubmitClicked(true);
+            setCheckboxError('');
             // Send a POST request to save the data to your database
             const response = await axios.post('http://localhost:9000/saveMedicineRoutine', requestData);
             if (response.status === 200) {
@@ -63,7 +71,7 @@ function MedicineRoutineDetails(props) {
 
     return (
         <>
-            <MedicineDetails onMedicineData={handleMedicineData} />
+            <MedicineDetails onMedicineData={handleMedicineData} parentId={parentId} />
             <form onSubmit={handleSubmit}>
                 <div style={{ marginLeft: '15px' }}>
                     <table className="table table-bordered">
@@ -75,6 +83,7 @@ function MedicineRoutineDetails(props) {
                                         type="checkbox"
                                         checked={morning}
                                         onChange={() => setMorning(!morning)}
+                                        
                                     />
                                 </td>
                             </tr>
@@ -85,6 +94,7 @@ function MedicineRoutineDetails(props) {
                                         type="checkbox"
                                         checked={noon}
                                         onChange={() => setNoon(!noon)}
+                                        
                                     />
                                 </td>
                             </tr>
@@ -95,9 +105,11 @@ function MedicineRoutineDetails(props) {
                                         type="checkbox"
                                         checked={night}
                                         onChange={() => setNight(!night)}
+                                        
                                     />
                                 </td>
                             </tr>
+                            <div className="d-flex justify-content-center align-content-center text-red-500">{checkboxError}</div> <br />
                             <tr>
                                 <td>Description</td>
                                 <td>
@@ -105,6 +117,7 @@ function MedicineRoutineDetails(props) {
                                         className="form-select"
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
+                                        required
                                     >
                                         <option value="">Select</option>
                                         <option value="beforeFood">Before Food</option>
@@ -119,7 +132,9 @@ function MedicineRoutineDetails(props) {
                                         type="number"
                                         className="form-control"
                                         value={numberOfDays}
+                                        min={1}
                                         onChange={(e) => setNumberOfDays(e.target.value)}
+                                        required
                                     />
                                 </td>
                             </tr>

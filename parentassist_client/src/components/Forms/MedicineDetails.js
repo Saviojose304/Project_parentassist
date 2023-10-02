@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import axios from 'axios';
 function MedicineDetails(props) {
-    const { onMedicineData } = props;
-    const [medicinename, setMedicinename] = useState('');
+    const { onMedicineData, parentId } = props;
+    const [selectedMedicineId, setSelectedMedicineId] = useState('');
     const [medicineOptions, setMedicineOptions] = useState([]); // Store medicine names
     const [dropdownClicked, setDropdownClicked] = useState(false);
+    const [medicineError, setMedicineError] = useState('');
 
 
     const fetchMedicineNames = async () => {
@@ -26,6 +27,44 @@ function MedicineDetails(props) {
         }
     };
 
+    const handleMedicineSelection = async (selectedMedicineId) => {
+        // Check for duplicate medicine selection
+        const isDuplicate = await checkDuplicateMedicineSelection(selectedMedicineId,parentId);
+        
+        if (isDuplicate) {
+            setMedicineError('Medicne Already Selected');
+            console.error("Duplicate medicine selection for the same parent and doctor visit.");
+        } else {
+            // The selected medicine is not a duplicate, set the selected medicine_id
+            setSelectedMedicineId(selectedMedicineId);
+            // Clear any previous error
+            setMedicineError('');
+            // Notify the parent component about the selected medicine
+            onMedicineData(selectedMedicineId);
+
+        }
+    };
+
+    const checkDuplicateMedicineSelection = async (medicineId) => {
+        try {
+            const response = await axios.get('http://localhost:9000/checkDuplicateMedicineSelection', {
+                params: {
+                    parent_id: parentId,
+                    medicine_id: medicineId,
+                },
+            });
+    
+            if (response.status === 200) {
+                const isDuplicate = response.data.isDuplicate;
+                return isDuplicate;
+            }
+        } catch (error) {
+            console.error("Error checking for duplicate medicine selection:", error);
+            return false; // Assume an error means no duplicate (you can handle this differently if needed)
+        }
+    };
+
+
     // useEffect(() => {
     //     // Initialize with the first medicine option (if available)
     //     if (medicineOptions.length > 0) {
@@ -38,25 +77,21 @@ function MedicineDetails(props) {
         <>
             <select
                 className="form-select mx-auto w-50"
-                value={medicinename}
+                value={selectedMedicineId}
                 onChange={(e) => {
-                    const selectedMedicineName = e.target.value;
-                    setMedicinename(selectedMedicineName);
-                    // Find the corresponding medicine_id for the selected name
-                    const selectedMedicine = medicineOptions.find((option) => option.name === selectedMedicineName);
-                    if (selectedMedicine) {
-                        onMedicineData(selectedMedicine.medicine_id);
-                    }
+                    const selectedMedicineId = e.target.value;
+                    handleMedicineSelection(selectedMedicineId);
                 }}
                 onClick={handleDropdownClick} // Load medicine names onClick
             >
-                <option value="">Select Medicine</option>
+                <option value="" >Select Medicine</option>
                 {medicineOptions.map((option) => (
-                    <option key={option.medicine_id} value={option.name}>
+                    <option key={option.medicine_id} value={option.medicine_id} >
                         {option.name}
                     </option>
                 ))}
             </select>
+            <div className="d-flex justify-content-center align-content-center text-red-500">{medicineError}</div> <br />
         </>
     );
 }

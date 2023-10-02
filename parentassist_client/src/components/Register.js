@@ -62,7 +62,7 @@ function Register() {
     };
 
     const validatePhonenumber = (phone) => {
-        var phone_regex = /^(\+\d{1,2}[- ]?)?\d{10}$/;
+        var phone_regex = /^(\+\d{1,2}?)?\d{10}$/;
         var regex = /^\s/;
         if (phone.match(regex)) {
             return 'Phone number is required'

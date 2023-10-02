@@ -11,10 +11,22 @@ const cors = require('cors');
 const multer = require('multer');
 const fs = require('fs/promises');
 const path = require('path');
+const Razorpay = require('razorpay');
+const twilio = require('twilio');
+const uuid = require('uuid');
 const { log } = require("console");
 
 
 const SECRET_KEY = process.env.SECRET_KEY;
+
+const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TTWILIO_AUTH_TOKEN;
+const client = new twilio(accountSid, authToken);
 
 const app = express();
 var port = process.env.PORT || '9000';
@@ -506,7 +518,7 @@ app.get('/users/:userId', async (req, res) => {
                 userDetailsQuery = 'SELECT * FROM adult_child WHERE user_id = ?';
             } else if (role === 'MedSeller') {
                 userDetailsQuery = 'SELECT * FROM medicine_seller WHERE user_id = ?';
-            } 
+            }
 
             // Fetch user details from the respective table
             db.query(userDetailsQuery, [userId], (err, result) => {
@@ -996,6 +1008,51 @@ app.post("/doctorbooking", async (req, res) => {
                                 }
 
                                 res.json({ message: "Appointment Booked successfully", token, appointmentTime });
+
+                                const fetchParentDoctorQuery = `SELECT p.name AS parent_name, p.phone, d.name AS doctor_name
+                                                        FROM parents p JOIN doctors d ON d.doctor_id = ? WHERE p.parent_id = ?`;
+
+                                db.query(fetchParentDoctorQuery, [doctorid, parent_id], (fetchErr, fetchResults) => {
+                                    if (fetchErr) {
+                                        console.error("Error fetching parent and doctor information: ", fetchErr);
+                                        return res.status(500).json({ error: "Error fetching parent and doctor information" });
+                                    }
+
+                                    if (fetchResults.length === 0) {
+                                        return res.status(404).json({ error: "Parent or doctor data not found" });
+                                    }
+
+                                    const { parent_name, doctor_name, phone } = fetchResults[0];
+
+                                    //console.log(phone);
+                                    // Construct the WhatsApp notification message
+                                    const whatsappMessage = `*Hi ${parent_name}!*
+This is a reminder for your upcoming appointment:
+📅 *Appointment Date:* ${selectedDate}
+⏰ *Appointment Time:* ${time}
+👩‍⚕️ *Doctor's Name:* ${doctor_name}
+
+Please make sure to arrive on time for your appointment.
+
+Thank you,
+*ParentAssist*`;
+
+                                    // Send WhatsApp notification
+                                    client.messages
+                                        .create({
+                                            body: whatsappMessage,
+                                            from: 'whatsapp:+14155238886',
+                                            to: `whatsapp:${phone}`
+                                        })
+                                        .then(() => {
+                                            message => console.log(message.sid)
+                                        })
+                                        .catch((whatsappError) => {
+                                            console.error("Failed to send WhatsApp notification:", whatsappError);
+                                            return res.status(500).json({ error: "Failed to send WhatsApp notification" });
+                                        });
+                                });
+
                             });
                         } else {
                             // Time slot is not available, return a list of available time slots
@@ -1382,6 +1439,51 @@ app.delete("/cancelappointment/:doctorId/:parentId/:appointmentDate", async (req
     });
 });
 
+// Cancel Therappy Booking Appointment API endpoint
+app.delete("/cancelTherappyappointment/:doctorId/:parentUserId/:appointmentDate", async (req, res) => {
+    const doctorId = req.params.doctorId;
+    const parentUserId = req.params.parentUserId;
+    const appointmentDate = req.params.appointmentDate;
+
+    // Check if the appointment date is equal to or greater than today's date
+    const today = new Date().toISOString().split('T')[0];
+    if (appointmentDate < today) {
+        return res.status(400).json({ error: "Cannot cancel past appointments" });
+    }
+
+    // Get the parent_id based on the parent_user_id from the parents table
+    const getParentIdQuery = "SELECT parent_id FROM parents WHERE user_id = ?";
+    db.query(getParentIdQuery, [parentUserId], (getParentIdErr, parentResult) => {
+        if (getParentIdErr) {
+            console.error("Error fetching parent_id: ", getParentIdErr);
+            return res.status(500).json({ error: "Error fetching parent_id" });
+        }
+
+        if (parentResult.length === 0) {
+            return res.status(404).json({ error: "Parent not found" });
+        }
+
+        const parentId = parentResult[0].parent_id;
+
+        // Perform the appointment cancellation by deleting the appointment record
+        const cancelAppointmentQuery = "DELETE FROM doctor_booking WHERE doctor_id = ? AND parent_id = ? AND date = ?";
+        db.query(cancelAppointmentQuery, [doctorId, parentId, appointmentDate], (err, results) => {
+            if (err) {
+                console.error("Error cancelling appointment: ", err);
+                return res.status(500).json({ error: "Error cancelling appointment" });
+            }
+
+            if (results.affectedRows === 0) {
+                return res.status(404).json({ error: "Appointment not found" });
+            }
+
+            res.status(200).json({ message: "Appointment Cancelled Successfully" });
+        });
+    });
+});
+
+
+
 // Admin Add Video API endpoint
 const storage = multer.diskStorage({
     destination: 'public/uploads/', // Specify the destination folder
@@ -1597,7 +1699,7 @@ const pdfStorage = multer.diskStorage({
 const pdfUpload = multer({ storage: pdfStorage });
 
 // Route to handle form submission
-app.post("/parentGeneralInfo",pdfUpload.fields([{ name: "file1", maxCount: 1 }, { name: "file2", maxCount: 1 }]), (req, res) => {
+app.post("/parentGeneralInfo", pdfUpload.fields([{ name: "file1", maxCount: 1 }, { name: "file2", maxCount: 1 }]), (req, res) => {
     const { date, medicalCondition, currentDiseases, bp, sugar, weight, height, parentbmi, allergies, pastSurgeries,
         file1,
         file2,
@@ -1607,9 +1709,9 @@ app.post("/parentGeneralInfo",pdfUpload.fields([{ name: "file1", maxCount: 1 }, 
         doctor_user_id,
     } = req.body;
 
-    if (pastSurgeries === "No" && !req.files.file2) {
-        return res.status(400).json({ message: "Please upload file2 for past surgeries." });
-    }
+    // if (pastSurgeries === "No" && !req.files.file2) {
+    //     return res.status(400).json({ message: "Please upload file2 for past surgeries." });
+    // }
 
     // Check if pastSurgeries is "Yes" and both file1 and file2 are uploaded
     if (pastSurgeries === "Yes" && (!req.files.file1 || !req.files.file2)) {
@@ -1632,9 +1734,10 @@ app.post("/parentGeneralInfo",pdfUpload.fields([{ name: "file1", maxCount: 1 }, 
 
         pastSurgeriesFile = relativePastSurgeriesPath;
         testResultFile = relativeTestResultPath;
-    } else {
-        return res.status(400).json({ message: "Invalid combination of inputs." });
-    }
+    } 
+    // else {
+    //     return res.status(400).json({ message: "Invalid combination of inputs." });
+    // }
 
 
     // Retrieve the doctor_id based on doctor_user_id
@@ -1667,7 +1770,7 @@ app.post("/parentGeneralInfo",pdfUpload.fields([{ name: "file1", maxCount: 1 }, 
                 parentbmi,
                 allergies,
                 pastSurgeriesFile ? pastSurgeriesFile : 'No',
-                testResultFile,
+                testResultFile ? testResultFile : 'No',
                 description,
                 nextCheckupDate,
                 parentId,
@@ -1690,7 +1793,7 @@ app.post("/parentGeneralInfo",pdfUpload.fields([{ name: "file1", maxCount: 1 }, 
 // Send Terms and Condition
 app.post('/send-terms-email', (req, res) => {
     const { recipientEmail } = req.body;
-  
+
     const resetToken = crypto.randomBytes(20).toString('hex');
     const resetLink = `${process.env.CLIENT_URL}/term-condition/${resetToken}`;
     const mailOptions = {
@@ -1700,20 +1803,20 @@ app.post('/send-terms-email', (req, res) => {
         html: `<p>Please click the following link to accept the terms and conditions:</p>
         <p>Click <a href="${resetLink}">here</a></p>`,
     };
-  
+
     // Send the email
     transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.error('Error sending email:', error);
-        return res.status(500).json({ message: 'Email sending failed' });
-      }
-      console.log('Email sent:', info.response);
-      res.status(200).json({ message: 'Email sent successfully' });
+        if (error) {
+            console.error('Error sending email:', error);
+            return res.status(500).json({ message: 'Email sending failed' });
+        }
+        console.log('Email sent:', info.response);
+        res.status(200).json({ message: 'Email sent successfully' });
     });
-  });
+});
 
- //Seller Registration
- app.post('/sellerRegister', pdfUpload.single('testResultFile'), async (req, res) => {
+//Seller Registration
+app.post('/sellerRegister', pdfUpload.single('testResultFile'), async (req, res) => {
     const { name, address, email, phone, password } = req.body;
 
     const checkEmailQuery = 'SELECT * FROM users WHERE email = ?';
@@ -1853,7 +1956,7 @@ app.post('/saveMedicineRoutine', async (req, res) => {
 // API to fetch Latest Doctor Visit Details
 app.get('/getLatestDoctorVisitDetails', (req, res) => {
     try {
-        const userId = req.query.user_id; 
+        const userId = req.query.user_id;
         //console.log(userId);
         const latestDoctorVisitQuery = `
             SELECT 
@@ -1903,10 +2006,423 @@ app.get('/getMedicineRoutineDetails', (req, res) => {
             LEFT JOIN medicine_routine mr ON dv.doctor_visit_id = mr.doctor_visit_id
             LEFT JOIN medicine m ON mr.medicine_id = m.medicine_id
             WHERE dv.parent_id = (SELECT parent_id FROM parents WHERE user_id = ?)
-            AND DATE_ADD(dv.date, INTERVAL mr.days DAY) >= CURDATE();  -- Filter out expired medicines
-        `;
+            AND DATE_ADD(dv.date, INTERVAL mr.days DAY) >= CURDATE();  -- Filter out expired medicines`;
 
         db.query(medicineRoutineQuery, [userId], (error, medicineRoutineResults) => {
+            if (error) {
+                console.error('Error fetching medicine routine details:', error);
+                res.status(500).json({ message: 'Failed to fetch medicine routine details' });
+            } else {
+                const medicineRoutineDetails = medicineRoutineResults;
+                res.status(200).json(medicineRoutineDetails);
+            }
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Failed to fetch medicine routine details' });
+    }
+});
+
+// Therapy Booking API endpoint
+app.post("/therapyBooking", async (req, res) => {
+    const { selectedDate, time, parent_user_id, doctorid } = req.body;
+    //console.log('selected date', selectedDate,'gender:',gender,"time:",time,"doctorId:",doctorid );
+    //console.log(time);
+
+    // Fetch the count of appointments for the same doctor on the same date
+    const countAppointmentsQuery = "SELECT COUNT(*) AS appointmentCount FROM doctor_booking WHERE doctor_id = ? AND date = ?";
+    db.query(countAppointmentsQuery, [doctorid, selectedDate], (countErr, countResults) => {
+        if (countErr) {
+            console.error("Error counting appointments: ", countErr);
+            return res.status(500).json({ error: "Error counting appointments" });
+        }
+
+        const appointmentCount = countResults[0].appointmentCount;
+
+        if (appointmentCount >= 20) {
+            return res.status(400).json({ error: "Doctor's appointments are fully booked for this date" });
+        }
+
+        // Generate the token as the next available number
+        const token = appointmentCount + 1;
+
+        //const selectedTime = `${time}:00`;
+
+        // const appointmentTime = calculateAppointmentTime(appointmentCount);
+
+        // Fetch parent_id and adult_child_id based on doctor_id
+        const fetchParentQuery = "SELECT parent_id FROM parents WHERE user_id = ?";
+        db.query(fetchParentQuery, [parent_user_id], (fetchErr, fetchResults) => {
+            if (fetchErr) {
+                console.error("Error fetching parent data: ", fetchErr);
+                return res.status(500).json({ error: "Error fetching parent data" });
+            }
+
+            if (fetchResults.length === 0) {
+                return res.status(404).json({ error: "Parent data not found for the given doctor_id" });
+            }
+
+            const { parent_id } = fetchResults[0];
+
+            const checkExistingAppointmentQuery = "SELECT COUNT(*) AS existingAppointmentCount FROM doctor_booking WHERE doctor_id = ? AND date = ? AND parent_id = ?";
+            db.query(checkExistingAppointmentQuery, [doctorid, selectedDate, parent_id], (checkErr, checkResults) => {
+                if (checkErr) {
+                    console.error("Error checking existing appointment: ", checkErr);
+                    return res.status(500).json({ error: "Error checking existing appointment" });
+                }
+
+                const existingAppointmentCount = checkResults[0].existingAppointmentCount;
+
+                if (existingAppointmentCount > 0) {
+                    return res.status(400).json({ error: "You already have an appointment with this doctor on the same date" });
+                }
+
+                const checkExistingAppointmentTimeQuery = `SELECT COUNT(*) AS existingAppointmenttimeCount 
+                    FROM doctor_booking 
+                    WHERE date = ? AND time = ? AND parent_id = ?`;
+
+                db.query(checkExistingAppointmentTimeQuery, [selectedDate, time, parent_id], (checkErr, checkResults) => {
+                    if (checkErr) {
+                        console.error("Error checking existing appointment: ", checkErr);
+                        return res.status(500).json({ error: "Error checking existing appointment" });
+                    }
+
+                    const existingAppointmenttimeCount = checkResults[0].existingAppointmenttimeCount;
+
+                    if (existingAppointmenttimeCount > 0) {
+                        return res.status(400).json({ error: "You already have an appointment at the same date and time" });
+                    }
+
+
+                    const bookedTimeSlotsQuery = "SELECT time FROM doctor_booking WHERE doctor_id = ? AND date = ?";
+                    db.query(bookedTimeSlotsQuery, [doctorid, selectedDate], (err, results) => {
+                        if (err) {
+                            console.error("Error fetching booked time slots: ", err);
+                            return res.status(500).json({ error: "Error fetching booked time slots" });
+                        }
+
+                        const bookedTimeSlots = results.map((result) => {
+                            // Extract hour and minute components and format them as 'HH:mm'
+                            const timeComponents = result.time.split(':');
+                            return `${timeComponents[0]}:${timeComponents[1]}`;
+                        });
+                        //console.log(bookedTimeSlots);
+                        const availableTimeSlots = calculateAvailableTimeSlots(selectedDate).filter((slot) => !bookedTimeSlots.includes(slot));
+                        //console.log("Available Time Slots:", availableTimeSlots);
+
+
+                        if (availableTimeSlots.includes(time)) {
+                            // Time slot is available, proceed with booking
+                            const appointmentTime = time; // You can customize this as needed
+
+
+                            // Insert the booking record into the database
+                            const bookingDoctorQuery = "INSERT INTO doctor_booking (date, time, doctor_id, parent_id ) VALUES (?, ?, ?, ?)";
+                            db.query(bookingDoctorQuery, [selectedDate, appointmentTime, doctorid, parent_id], (bookingErr) => {
+                                if (bookingErr) {
+                                    console.error("Error creating booking_doctor record: ", bookingErr);
+                                    return res.status(500).json({ error: "Error creating booking_doctor record" });
+                                }
+
+                                res.json({ success: true });
+                            });
+                        } else {
+                            // Time slot is not available, return a list of available time slots
+                            res.status(400).json({ error_code: 3445, error_message: "Selected time slot is not available", availableTimeSlots });
+                        }
+                    });
+                });
+            });
+        });
+    });
+});
+
+app.post('/initiate-payment', async (req, res) => {
+    try {
+        const { amount, date } = req.body;
+
+        // Generate a unique order_id using uuid
+        const order_id = uuid.v4();
+
+        // Create a Razorpay order using the generated order_id
+        // Send the order_id to the frontend
+        const options = {
+            amount: amount * 100, // Convert amount to paise (Razorpay expects amount in paise)
+            currency: 'INR', // Change this to your desired currency
+            receipt: order_id,
+            payment_capture: 1, // Automatically capture payments
+        };
+
+        razorpay.orders.create(options, (orderErr, order) => {
+            if (orderErr) {
+                console.error('Error creating Razorpay order:', orderErr);
+                return res.status(500).json({ error: 'Error creating Razorpay order' });
+            }
+
+            res.status(200).json({ order_id: order.id });
+        });
+    } catch (error) {
+        console.error('Error initiating payment:', error);
+        res.status(500).json({ error: 'Error initiating payment' });
+    }
+});
+
+// Define a route to verify and insert payment details
+app.post('/verify-payment', async (req, res) => {
+    try {
+        const { razorpay_order_id, amount, date, status, SelectedDate, parent_user_id, doctor_id } = req.body;
+
+        // Insert payment details into payment_details table
+        const insertPaymentQuery = 'INSERT INTO payment_details (amount, order_id, date, status) VALUES (?, ?, ?, ?)';
+        db.query(
+            insertPaymentQuery,
+            [amount, razorpay_order_id, date, status],
+            async (insertErr, result) => {
+                if (insertErr) {
+                    console.error('Error inserting payment details:', insertErr);
+                    return res.status(500).json({ error: 'Error inserting payment details' });
+                }
+
+                const paymentId = result.insertId; // Get the newly inserted payment_id
+
+                // Retrieve parent_id from the parents table using parent_user_id
+                const getParentIdQuery = 'SELECT parent_id FROM parents WHERE user_id = ?';
+                db.query(getParentIdQuery, [parent_user_id], (getParentIdErr, getParentIdResult) => {
+                    if (getParentIdErr) {
+                        console.error('Error retrieving parent_id:', getParentIdErr);
+                        return res.status(500).json({ error: 'Error retrieving parent_id' });
+                    }
+
+                    const parent_id = getParentIdResult[0].parent_id;
+
+                    // Update the doctor_visit table with the payment_id
+                    const updateDoctorVisitQuery = 'UPDATE doctor_booking SET payment_id = ? WHERE parent_id = ? AND date = ? AND doctor_id = ?';
+                    db.query(updateDoctorVisitQuery, [paymentId, parent_id, SelectedDate, doctor_id], (updateErr) => {
+                        if (updateErr) {
+                            console.error('Error updating doctor_visit table:', updateErr);
+                            return res.status(500).json({ error: 'Error updating doctor_visit table' });
+                        }
+
+                        res.status(200).json({ message: 'Payment details inserted, and doctor_visit updated successfully' });
+                    });
+                });
+            }
+        );
+    } catch (error) {
+        console.error('Error processing payment:', error);
+        res.status(500).json({ error: 'Error processing payment' });
+    }
+});
+
+// Parent Therapy View API endpoint
+app.get("/booked-therapies/:parent_user_id", (req, res) => {
+    const parent_user_id = req.params.parent_user_id;
+
+    const query = `
+      SELECT d.name, DATE_FORMAT(db.date, '%Y-%m-%d') AS formatted_date, pd.order_id,
+             CASE 
+               WHEN pd.status IS NOT NULL THEN 'Success' 
+               ELSE 'Pending' 
+             END AS status
+      FROM doctor_booking db
+      INNER JOIN payment_details pd ON db.payment_id = pd.payment_id
+      INNER JOIN parents p ON db.parent_id = p.parent_id
+      INNER JOIN doctors d ON db.doctor_id = d.doctor_id
+      WHERE p.user_id = ?`;
+
+    db.query(query, [parent_user_id], (err, results) => {
+        if (err) {
+            console.error("Error fetching booked therapies: ", err);
+            res.status(500).json({ error: "Error fetching booked therapies" });
+            return;
+        }
+        res.status(200).json(results);
+    });
+});
+
+// Child Doctor Visit Details View API endpoint
+app.get('/getLatestDoctorVisitDetailsChild', (req, res) => {
+    try {
+        const userId = req.query.user_id;
+        const gender = req.query.gender;
+        //console.log(userId);
+        //console.log(gender);
+        const latestDoctorVisitQuery = `
+            SELECT 
+                dv.*, 
+                DATE_FORMAT(dv.date, '%d/%m/%Y') AS formatted_date,
+                DATE_FORMAT(dv.next_visit_date, '%d/%m/%Y') AS formatted_next_visit_date,
+                d.name AS doctor_name
+            FROM doctor_visit dv
+            JOIN (
+                SELECT parent_id, doctor_id, MAX(date) AS max_date
+                FROM doctor_visit
+                WHERE parent_id = (SELECT parent_id FROM parents WHERE Gender =? AND adult_child_id =(SELECT adult_child_id FROM adult_child WHERE user_id = ?))
+                GROUP BY parent_id, doctor_id
+            ) grouped
+            ON dv.parent_id = grouped.parent_id
+            AND dv.doctor_id = grouped.doctor_id
+            AND dv.date = grouped.max_date
+            JOIN doctors d ON dv.doctor_id = d.doctor_id;
+        `;
+
+        db.query(latestDoctorVisitQuery, [gender, userId], (error, doctorVisitResults) => {
+            if (error) {
+                console.error('Error fetching latest doctor visit details:', error);
+                res.status(500).json({ message: 'Failed to fetch latest doctor visit details' });
+            } else {
+                const latestDoctorVisitDetails = doctorVisitResults;
+                res.status(200).json(latestDoctorVisitDetails);
+            }
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Failed to fetch latest doctor visit details' });
+    }
+});
+
+//Child Medicine Doctor Visit API endpoint
+app.get('/getMedicineRoutineDetailsChild', (req, res) => {
+    try {
+        const userId = req.query.user_id;
+        const Gender = req.query.gender;
+
+        const medicineRoutineQuery = `
+            SELECT dv.doctor_visit_id, m.medicine_id, m.name AS medicine_name, 
+                   mr.morning, mr.noon, mr.night, mr.rout_descp, mr.days,
+                   DATE_FORMAT(dv.date, '%d/%m/%Y') AS formatted_doctor_visit_date,
+                   DATE_ADD(dv.date, INTERVAL mr.days DAY) AS medicine_expiry_date
+            FROM doctor_visit dv
+            LEFT JOIN medicine_routine mr ON dv.doctor_visit_id = mr.doctor_visit_id
+            LEFT JOIN medicine m ON mr.medicine_id = m.medicine_id
+            WHERE dv.parent_id = (SELECT parent_id FROM parents WHERE Gender =? AND adult_child_id =(SELECT adult_child_id FROM adult_child WHERE user_id = ?))
+            AND DATE_ADD(dv.date, INTERVAL mr.days DAY) >= CURDATE();  -- Filter out expired medicines`;
+
+        db.query(medicineRoutineQuery, [Gender, userId], (error, medicineRoutineResults) => {
+            if (error) {
+                console.error('Error fetching medicine routine details:', error);
+                res.status(500).json({ message: 'Failed to fetch medicine routine details' });
+            } else {
+                const medicineRoutineDetails = medicineRoutineResults;
+                res.status(200).json(medicineRoutineDetails);
+            }
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Failed to fetch medicine routine details' });
+    }
+});
+
+//Medicine Duplication API endpoint
+app.get('/checkDuplicateMedicineSelection', async (req, res) => {
+    try {
+        const { parent_id, medicine_id } = req.query;
+
+        // Get the current date in a format that matches your database date column format
+        const currentDate = new Date().toISOString().split('T')[0];
+
+        // Get the doctor_visit_id for the current date and parent_id
+        const getDoctorVisitIdQuery = `
+            SELECT doctor_visit_id
+            FROM doctor_visit
+            WHERE parent_id = ? AND DATE(date) = ?;
+        `;
+
+        db.query(getDoctorVisitIdQuery, [parent_id, currentDate], (error, results) => {
+            if (error) {
+                console.error('Error getting doctor_visit_id:', error);
+                res.status(500).json({ message: 'Failed to get doctor_visit_id' });
+            } else {
+                const doctor_visit_id = results[0] ? results[0].doctor_visit_id : null;
+
+                if (doctor_visit_id) {
+                    // Check for duplicate medicine selection
+                    const checkDuplicateQuery = `
+                SELECT COUNT(*) AS count
+                FROM medicine_routine
+                WHERE doctor_visit_id = ? AND medicine_id = ?;`;
+
+                    db.query(checkDuplicateQuery, [doctor_visit_id, medicine_id], (error, results) => {
+                        if (error) {
+                            console.error('Error checking for duplicate medicine selection:', error);
+                            res.status(500).json({ message: 'Failed to check for duplicate medicine selection' });
+                        } else {
+                            const isDuplicate = results[0].count > 0;
+                            res.status(200).json({ isDuplicate });
+                        }
+                    });
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Failed to check for duplicate medicine selection' });
+    }
+});
+
+// Doctor Patient Details View API endpoint
+app.get('/getPatientDetailsDoctorView', (req, res) => {
+    try {
+        const parentId = req.query.parent_id;
+        const userId = req.query.user_id;
+
+        //console.log(parentId,userId);
+
+        const latestDoctorVisitQuery = `
+            SELECT 
+                dv.*, 
+                DATE_FORMAT(dv.date, '%d/%m/%Y') AS formatted_date,
+                DATE_FORMAT(dv.next_visit_date, '%d/%m/%Y') AS formatted_next_visit_date,
+                d.name AS doctor_name
+            FROM doctor_visit dv
+            JOIN (
+                SELECT parent_id, doctor_id, MAX(date) AS max_date
+                FROM doctor_visit
+                WHERE parent_id = ? AND doctor_id = (SELECT doctor_id FROM doctors WHERE user_id = ?)
+                GROUP BY parent_id, doctor_id
+            ) grouped
+            ON dv.parent_id = grouped.parent_id
+            AND dv.doctor_id = grouped.doctor_id
+            AND dv.date = grouped.max_date
+            JOIN doctors d ON dv.doctor_id = d.doctor_id;
+        `;
+
+        db.query(latestDoctorVisitQuery, [parentId, userId], (error, doctorVisitResults) => {
+            if (error) {
+                console.error('Error fetching latest doctor visit details:', error);
+                res.status(500).json({ message: 'Failed to fetch latest doctor visit details' });
+            } else {
+                const latestDoctorVisitDetails = doctorVisitResults;
+                res.status(200).json(latestDoctorVisitDetails);
+                //console.log(latestDoctorVisitDetails);
+            }
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Failed to fetch latest doctor visit details' });
+    }
+});
+
+app.get('/getMedicineDetailsDoctorView', (req, res) => {
+    try {
+        const parentId = req.query.parent_id;
+        const userId = req.query.user_id;
+
+        const medicineRoutineQuery = `
+            SELECT dv.doctor_visit_id, m.medicine_id, 
+                   CASE WHEN dv.doctor_id = (SELECT doctor_id FROM doctors WHERE user_id = ?)
+                        THEN ' ' ELSE d.name END AS doctor_name,
+                   m.name AS medicine_name, 
+                   mr.morning, mr.noon, mr.night, mr.rout_descp, mr.days,
+                   DATE_FORMAT(dv.date, '%d/%m/%Y') AS formatted_doctor_visit_date
+            FROM doctor_visit dv
+            LEFT JOIN medicine_routine mr ON dv.doctor_visit_id = mr.doctor_visit_id
+            LEFT JOIN medicine m ON mr.medicine_id = m.medicine_id
+            LEFT JOIN doctors d ON dv.doctor_id = d.doctor_id
+            WHERE dv.parent_id = ?
+            ORDER BY dv.date DESC;  -- Order by visit date in descending order to get the history`;
+
+        db.query(medicineRoutineQuery, [userId, parentId], (error, medicineRoutineResults) => {
             if (error) {
                 console.error('Error fetching medicine routine details:', error);
                 res.status(500).json({ message: 'Failed to fetch medicine routine details' });

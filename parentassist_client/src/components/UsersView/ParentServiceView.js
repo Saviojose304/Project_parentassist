@@ -67,7 +67,7 @@ function ParentServiceView() {
                             </li>
 
                             <li className="nav-item px-3">
-                                <button type="button" className="btn btn-success"><a className="text-decoration-none text-white" href="/">Book Therapy Section</a></button>
+                                <button type="button" className="btn btn-success"><a className="text-decoration-none text-white" href="/ParentTherapyBooking">Book Therapy Section</a></button>
 
                             </li>
                             <li className="nav-item px-3 py-2">

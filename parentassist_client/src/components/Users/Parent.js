@@ -73,6 +73,10 @@ function Parent() {
         navigate('/ParentServiceView');
     };
 
+    const handleBookedTherapy = () =>{
+        navigate('/ParentBookedTherapyView')
+    };
+
     const toggleSidebar = () => {
         setSidebarOpen(!isSidebarOpen);
     };
@@ -116,6 +120,11 @@ function Parent() {
                                         <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleService}>
                                             <a href="" className="text-decoration-none list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar">
                                                 <i className="bi bi-people-fill"><span>Services</span></i>
+                                            </a>
+                                        </button>
+                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleBookedTherapy}>
+                                            <a href="" className="text-decoration-none list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar">
+                                                <i className="bi bi-people-fill"><span>Booked Therapy</span></i>
                                             </a>
                                         </button>
 

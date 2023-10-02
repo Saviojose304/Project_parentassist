@@ -4,6 +4,7 @@ import { Modal } from "react-bootstrap";
 import '../Register.css'
 import AlertBox from "../Alert";
 import format from "date-fns/format";
+import PatientDetailsModal from "../UsersView/PatientDetailsModal";
 function Doctor() {
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [isshowgeneral, setShowGeneral] = useState(true);
@@ -25,6 +26,8 @@ function Doctor() {
     const [submitClicked, setSubmitClicked] = useState(false);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [showPatientDetailsModal, setShowPatientDetailsModal] = useState(false);
+    const [selectedParentId, setSelectedParentId] = useState(null);
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [alertInfo, setAlertInfo] = useState({ variant: 'success', message: '', show: false });
 
@@ -144,6 +147,12 @@ function Doctor() {
             console.log(error);
         }
     };
+
+    const handleViewDetails = async (parent_id) => {
+        setSelectedParentId(parent_id);
+        setShowPatientDetailsModal(true);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitClicked(true);
@@ -157,7 +166,7 @@ function Doctor() {
                 body: JSON.stringify({
                     startDate,
                     endDate,
-                    doctor_user_id, 
+                    doctor_user_id,
                 }),
             });
 
@@ -263,7 +272,7 @@ function Doctor() {
                                                                 <p className="card-text">Age:{parent.age}</p>
                                                                 <p className="card-text">Phone:{parent.phone}</p>
                                                                 <div className="mb-2">
-                                                                    <button className="btn w-100 btn-outline-primary" onClick={() => navigate(`/DoctorPatientDetails/${parent.parent_id}`)}>View Details</button>
+                                                                    <button className="btn w-100 btn-outline-primary" onClick={() => handleViewDetails(parent.parent_id)}>View Details</button>
                                                                 </div>
                                                                 <button className="btn w-100 btn-primary" onClick={() => navigate(`/DoctorPatientDetails/${parent.parent_id}`)}>Edit Details</button>
                                                             </div>
@@ -290,7 +299,7 @@ function Doctor() {
                                                                     <p className="card-text">Phone: {appointment.parent_phone}</p>
                                                                     <p className="card-text">Time: {appointment.formatted_time}</p>
                                                                     <div className="mb-2">
-                                                                        <button className="btn w-100 btn-outline-primary" onClick={() => navigate(`/DoctorPatientDetails/${appointment.parent_id}`)}>View Details</button>
+                                                                        <button className="btn w-100 btn-outline-primary" onClick={() => handleViewDetails(parent.parent_id)}>View Details</button>
                                                                     </div>
                                                                     <button className="btn w-100 btn-primary" onClick={() => navigate(`/DoctorPatientDetails/${appointment.parent_id}`)}>Edit Details</button>
                                                                 </div>
@@ -314,7 +323,7 @@ function Doctor() {
                                                                 <p className="card-text">Time: {appointment.formatted_time}</p>
                                                                 <p className="card-text">Date: {appointment.formatted_date}</p>
                                                                 <div className="mb-2">
-                                                                    <button className="btn w-100 btn-outline-primary" onClick={() => navigate(`/DoctorPatientDetails/${appointment.parent_id}`)}>View Details</button>
+                                                                    <button className="btn w-100 btn-outline-primary" onClick={() => handleViewDetails(parent.parent_id)}>View Details</button>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -384,6 +393,13 @@ function Doctor() {
                     </div>
                 </Modal.Body>
             </Modal>
+
+            <PatientDetailsModal
+                show={showPatientDetailsModal}
+                onHide={() => setShowPatientDetailsModal(false)}
+                parent_id={selectedParentId}
+                userId = {doctor_user_id}
+            />
 
         </>
     );
