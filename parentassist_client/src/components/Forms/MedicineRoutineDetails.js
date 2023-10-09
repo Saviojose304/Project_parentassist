@@ -13,6 +13,8 @@ function MedicineRoutineDetails(props) {
     const [submitClicked, setSubmitClicked] = useState(false);
     const [alertInfo, setAlertInfo] = useState({ variant: 'success', message: '', show: false });
     const [selectedMedicineId, setSelectedMedicineId] = useState("");
+    const [isSubmissionSuccessful, setIsSubmissionSuccessful] = useState(false);
+
 
 
     const handleMedicineData = (medicineId) => {
@@ -52,6 +54,7 @@ function MedicineRoutineDetails(props) {
             const response = await axios.post('http://localhost:9000/saveMedicineRoutine', requestData);
             if (response.status === 200) {
                 setAlertInfo({ variant: 'success', message: 'Subimitted successfully', show: true });
+                setIsSubmissionSuccessful(true);
             }
             else{
                 setAlertInfo({ variant: 'danger', message: 'Submission  Failed', show: true });
@@ -71,7 +74,7 @@ function MedicineRoutineDetails(props) {
 
     return (
         <>
-            <MedicineDetails onMedicineData={handleMedicineData} parentId={parentId} />
+            <MedicineDetails onMedicineData={handleMedicineData} parentId={parentId} isSubmissionSuccessful={isSubmissionSuccessful} />
             <form onSubmit={handleSubmit}>
                 <div style={{ marginLeft: '15px' }}>
                     <table className="table table-bordered">

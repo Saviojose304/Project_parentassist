@@ -5,6 +5,7 @@ import './Admin.css'
 import '../Register.css'
 import AlertBox from "../Alert";
 import { Modal } from "react-bootstrap";
+import { Document, Page, Text, View, StyleSheet, PDFViewer } from "@react-pdf/renderer";
 
 function Admin() {
 
@@ -18,6 +19,7 @@ function Admin() {
     const navigate = useNavigate();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [submitClicked, setSubmitClicked] = useState(false);
+    const [showPdfModal, setShowPdfModal] = useState(false);
     const [alertInfo, setAlertInfo] = useState({ variant: 'success', message: '', show: false });
 
 
@@ -44,9 +46,14 @@ function Admin() {
         fetchData();
     }, []);
 
-    const filteredUsers = users.filter((user) =>
-        user.email.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredUsers = users.filter((user) => {
+        const query = searchQuery.toLowerCase();
+        return (
+            user.email.toLowerCase().includes(query) ||
+            user.role.toLowerCase().includes(query) ||
+            user.user_status.toLowerCase().includes(query)
+        );
+    });
 
     const validateEmail = (email) => {
         var filter = /^([a-zA-Z0-9_\- ])+\@(([a-zA-Z\-])+\.)+([a-zA-Z]{2,})+$/;
@@ -120,6 +127,78 @@ function Admin() {
         }
     }
 
+    const styles = StyleSheet.create({
+        page: {
+            flexDirection: "row",
+            backgroundColor: "#fff",
+        },
+        section: {
+            margin: 10,
+            padding: 10,
+            flexGrow: 1,
+        },
+        title: {
+            fontSize: 24,
+            marginBottom: 10,
+        },
+        table: {
+            display: "table",
+            width: "100%",
+            borderCollapse: "collapse",
+        },
+        tableRow: {
+            flexDirection: "row",
+        },
+        tableCellHeader: {
+            backgroundColor: "#f2f2f2",
+            fontWeight: "bold",
+            padding: 5,
+            flex: 1,
+            border: "1px solid #ccc",
+        },
+        tableCell: {
+            padding: 5,
+            fontSize: 12,
+            flex: 1,
+            border: "1px solid #ccc",
+        },
+    });
+
+
+    const generatePdf = () => {
+        return (
+            <Document>
+                <Page size="A4" style={styles.page}>
+                    <View style={styles.section}>
+                        <Text style={styles.title}>User Data</Text>
+                        <View style={styles.table}>
+                            <View style={styles.tableRow}>
+                                <View style={styles.tableCellHeader}><Text>Email</Text></View>
+                                <View style={styles.tableCellHeader}><Text>User Role</Text></View>
+                                <View style={styles.tableCellHeader}><Text>User Status</Text> </View>
+                            </View>
+                            {filteredUsers.map((user) => (
+                                <View style={styles.tableRow} key={user.user_id}>
+                                    <View style={styles.tableCell}><Text>{user.email}</Text></View>
+                                    <View style={styles.tableCell}><Text>{user.role}</Text></View>
+                                    <View style={styles.tableCell}><Text>{user.user_status}</Text></View>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                </Page>
+            </Document>
+        );
+    };
+
+    const openPdfModal = () => {
+        setShowPdfModal(true);
+    };
+    const closePdfModal = () => {
+        setShowPdfModal(false);
+    };
+
+
     return (
         <>
             <header>
@@ -131,7 +210,7 @@ function Admin() {
                                 <input
                                     type="text"
                                     className="form-control"
-                                    placeholder="Search by Email"
+                                    placeholder="Search by Email or Role or Status"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
@@ -164,9 +243,9 @@ function Admin() {
                                                 <i className="bi bi-people-fill"><span>Services</span></i>
                                             </a>
                                         </button>
-                                        {/* <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }}>
+                                        {/* <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleReports}>
                                             <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline text-truncate" data-bs-parent="#sidebar">
-                                                <i className="bi bi-bootstrap"><span>Providers</span></i>
+                                                <i className="bi bi-file-earmark-pdf"><span>Reports</span></i>
                                             </a>
                                         </button> */}
                                         <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={Logout}>
@@ -186,7 +265,18 @@ function Admin() {
                     <main className="col overflow-auto h-100">
                         <div className="bg-light border rounded-3 p-5">
                             <div className="container mt-5">
-                                <h2>Admin Dashboard</h2>
+                                <div className='d-flex'>
+                                    <h2>Admin Dashboard</h2>
+                                    <div className="nav-item px-3">
+                                        <button
+                                            className="btn btn-primary btn-md"
+                                            onClick={openPdfModal}
+                                        >
+                                            Download PDF
+                                        </button>
+                                    </div>
+
+                                </div>
                                 <table className="table table-bordered table-hover">
                                     <thead className="thead-dark">
                                         <tr>
@@ -332,6 +422,18 @@ function Admin() {
                     </form>
                 </Modal.Body>
             </Modal>
+
+            <Modal show={showPdfModal} onHide={closePdfModal}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Download PDF</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <PDFViewer width="100%" height="500px">
+                        {generatePdf()}
+                    </PDFViewer>
+                </Modal.Body>
+            </Modal>
+
         </>
     );
 }

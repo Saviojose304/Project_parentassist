@@ -5,6 +5,7 @@ import '../Register.css'
 import AlertBox from "../Alert";
 import format from "date-fns/format";
 import PatientDetailsModal from "../UsersView/PatientDetailsModal";
+import EveFooter from "../EveFooter"
 function Doctor() {
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [isshowgeneral, setShowGeneral] = useState(true);
@@ -202,7 +203,7 @@ function Doctor() {
                     </div>
                 </nav>
             </header>
-            <div className='row d-flex'>
+            <div className='row d-flex pb-10 mb-10'>
                 <div className='col-2' id="sidebar-nav">
                     <div className="container mt-5 pt-2">
                         <div className="row flex-nowrap" >
@@ -299,7 +300,7 @@ function Doctor() {
                                                                     <p className="card-text">Phone: {appointment.parent_phone}</p>
                                                                     <p className="card-text">Time: {appointment.formatted_time}</p>
                                                                     <div className="mb-2">
-                                                                        <button className="btn w-100 btn-outline-primary" onClick={() => handleViewDetails(parent.parent_id)}>View Details</button>
+                                                                        <button className="btn w-100 btn-outline-primary" onClick={() => handleViewDetails(appointment.parent_id)}>View Details</button>
                                                                     </div>
                                                                     <button className="btn w-100 btn-primary" onClick={() => navigate(`/DoctorPatientDetails/${appointment.parent_id}`)}>Edit Details</button>
                                                                 </div>
@@ -323,7 +324,7 @@ function Doctor() {
                                                                 <p className="card-text">Time: {appointment.formatted_time}</p>
                                                                 <p className="card-text">Date: {appointment.formatted_date}</p>
                                                                 <div className="mb-2">
-                                                                    <button className="btn w-100 btn-outline-primary" onClick={() => handleViewDetails(parent.parent_id)}>View Details</button>
+                                                                    <button className="btn w-100 btn-outline-primary" onClick={() => handleViewDetails(appointment.parent_id)}>View Details</button>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -400,7 +401,7 @@ function Doctor() {
                 parent_id={selectedParentId}
                 userId = {doctor_user_id}
             />
-
+            <EveFooter />
         </>
     );
 }

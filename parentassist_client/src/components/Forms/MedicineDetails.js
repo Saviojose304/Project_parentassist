@@ -18,7 +18,13 @@ function MedicineDetails(props) {
         } catch (error) {
             console.error("Error fetching medicine names:", error);
         }
-    };
+    };  
+
+    useEffect(() => {
+        if (props.isSubmissionSuccessful) {
+            setSelectedMedicineId("");
+        }
+    }, [props.isSubmissionSuccessful]);
 
     const handleDropdownClick = () => {
         if (!dropdownClicked) {
@@ -64,14 +70,6 @@ function MedicineDetails(props) {
         }
     };
 
-
-    // useEffect(() => {
-    //     // Initialize with the first medicine option (if available)
-    //     if (medicineOptions.length > 0) {
-    //         setMedicinename(medicineOptions[0].name);
-    //         onMedicineData(medicineOptions[0].medicine_id); // Send the initial medicine_id to the parent
-    //     }
-    // }, [medicineOptions, onMedicineData]);
 
     return (
         <>

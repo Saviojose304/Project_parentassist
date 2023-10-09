@@ -21,7 +21,7 @@ function Login() {
             return "Email is required";
         }
         if (email.match(filter)) {
-            return " ";
+            setEmailError(true);
         } else {
             return "Invalid email address!";
         }
@@ -40,7 +40,7 @@ function Login() {
             return "Password maximum length is 12"
         }
         if (password.match(pwd_expression)) {
-            return " "
+            setPasswordError(true);
         } else {
             return "Upper case, Lower case, Special character and Numeric letter are required in Password filed"
         }
@@ -155,48 +155,51 @@ function Login() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        setSubmitClicked(true);
-
-        try {
-
-
-            const response = await axios.post('http://localhost:9000/login', { email, password, role });
-
-            const token = response.data; //  token field
-            const userRole = token.role
-            // const userRole = response.data.role  ;
-
-
-            localStorage.setItem('token', JSON.stringify(token));
-            // console.log(token);
-
-            if (userRole === 'Doctor') {
-                navigate('/Doctor');
-            } else if (userRole === 'Child') {
-                navigate('/ChildProfile');
-            } else if (userRole === 'Parent') {
-                navigate('/Parent');
-            } else if (userRole === 'Admin') {
-                navigate('/Admin');
-            } else if(userRole === 'MedSeller'){
-                navigate('/MedicineSeller')
-            }else {
-                alert("Invalid Credentials")
-            }
-
-            // console.log(response.data);
-        } catch (error) {
-            // console.error(error);
-            if (error.response && error.response.status === 401) {
-                // Email already registered
-                setAlertInfo({ variant: 'danger', message: 'User not found/Invalid password/Account is Deactive', show: true });
-            } else if (error.response && error.response.status === 500) {
-                // Other error occurred
-                setAlertInfo({ variant: 'danger', message: 'Login Failed', show: true });
-            } else {
-                setAlertInfo({ variant: 'danger', message: 'An error occurred. Please try again later.', show: true });
+        if(!emailError && !passwordError)
+        {
+            try {
+                setSubmitClicked(true);
+                const response = await axios.post('http://localhost:9000/login', { email, password, role });
+    
+                const token = response.data; //  token field
+                const userRole = token.role
+                // const userRole = response.data.role  ;
+    
+    
+                localStorage.setItem('token', JSON.stringify(token));
+                // console.log(token);
+    
+                if (userRole === 'Doctor') {
+                    navigate('/Doctor');
+                } else if (userRole === 'Child') {
+                    navigate('/ChildProfile');
+                } else if (userRole === 'Parent') {
+                    navigate('/Parent');
+                } else if (userRole === 'Admin') {
+                    navigate('/Admin');
+                } else if(userRole === 'MedSeller'){
+                    navigate('/MedicineSeller')
+                }else {
+                    alert("Invalid Credentials")
+                }
+    
+                // console.log(response.data);
+            } catch (error) {
+                // console.error(error);
+                if (error.response && error.response.status === 401) {
+                    // Email already registered
+                    setAlertInfo({ variant: 'danger', message: 'User not found/Invalid password/Account is Deactive', show: true });
+                } else if (error.response && error.response.status === 500) {
+                    // Other error occurred
+                    setAlertInfo({ variant: 'danger', message: 'Login Failed', show: true });
+                } else {
+                    setAlertInfo({ variant: 'danger', message: 'An error occurred. Please try again later.', show: true });
+                }
             }
         }
+
+
+        
     };
 
     const sendmail = async (e) => {
@@ -269,6 +272,7 @@ function Login() {
                                     <button
                                         className="btn btn-lg btn-block btn-primary"
                                         style={{ backgroundColor: '#dd4b39', width: '100%', marginBottom: '20px' }}
+                                        id='google-btn'
                                         type="submit"
                                         onClick={handlegoogleSiginIn}
                                     >

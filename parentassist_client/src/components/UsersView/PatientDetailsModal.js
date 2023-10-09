@@ -81,7 +81,7 @@ function PatientDetailsModal({ show, onHide, parent_id, userId }) {
                                         {details.text_result === "No" ? (
                                             <span>No</span>
                                         ) : (
-                                            <a href={`http://localhost:9000/${details.text_result}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20 mt-3">
+                                            <a href={`http://localhost:9000/${details.test_result}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20 mt-3">
                                                 <i className="bi bi-file-arrow-down-fill"></i>
                                             </a>
                                         )}

@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from 'axios';
-
+import EveFooter from "../EveFooter";
 function Parent() {
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [doctorVisits, setDoctorVisits] = useState([]);
@@ -73,7 +73,7 @@ function Parent() {
         navigate('/ParentServiceView');
     };
 
-    const handleBookedTherapy = () =>{
+    const handleBookedTherapy = () => {
         navigate('/ParentBookedTherapyView')
     };
 
@@ -193,9 +193,13 @@ function Parent() {
                                                         </p>
                                                         <p>
                                                             Test Results:
-                                                            <a href={`http://localhost:9000/${visit.test_result}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20 mt-3">
-                                                                <i className="bi bi-file-arrow-down-fill"></i>
-                                                            </a>
+                                                            {visit.test_result === "No" ? (
+                                                                <span>No</span>
+                                                            ) : (
+                                                                <a href={`http://localhost:9000/${visit.test_result}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20 mt-3">
+                                                                    <i className="bi bi-file-arrow-down-fill"></i>
+                                                                </a>
+                                                            )}
                                                         </p>
                                                         <p>Description: {visit.description}</p>
                                                         <p>Next Visit: {visit.formatted_next_visit_date}</p>
@@ -241,6 +245,8 @@ function Parent() {
                     </main>
                 </div>
             </div>
+
+            < EveFooter />
         </>
     );
 }

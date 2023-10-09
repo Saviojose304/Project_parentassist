@@ -40,6 +40,7 @@ import MedSellerProfileUpdate from './components/Users/MedSellerProfileUpdate';
 import ParentTherapyBooking from './components/Booking/ParentTherapyBooking';
 import TherapyBookingBilling from './components/Billing Page/TherapyBookingBilling';
 import ParentBookedTherapyView from './components/UsersView/ParentBookedTherapyView';
+import ChildReports from './components/Reports/ChildReports';
 
 const router = createBrowserRouter([
   {
@@ -156,6 +157,10 @@ const router = createBrowserRouter([
   {
     path:"/ParentBookedTherapyView",
     element: <ParentBookedTherapyView />
+  },
+  {
+    path:"/ChildReports",
+    element: <ChildReports />
   }
   
 

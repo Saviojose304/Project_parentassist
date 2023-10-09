@@ -62,16 +62,18 @@ function Register() {
     };
 
     const validatePhonenumber = (phone) => {
-        var phone_regex = /^(\+\d{1,2}?)?\d{10}$/;
-        var regex = /^\s/;
-        if (phone.match(regex)) {
-            return 'Phone number is required'
+        const phoneRegex = /^\+(\d{1,2})?\d{10}$/;
+        const emptyRegex = /^\s*$/;
+
+        if (emptyRegex.test(phone)) {
+            return 'Phone number is required';
         }
-        if (phone.match(phone_regex) && !(phone.match(/0{5,}/))) {
-            return " ";
-        } else {
-            return "Please enter country code with phone number "
+
+        if (!phoneRegex.test(phone) || phone.length !== 13) {
+            return 'Please enter a valid phone number with a country code starting with "+" and exactly 10 digits';
         }
+
+        return '';
     };
 
     const validatePassword = (password) => {
@@ -159,47 +161,47 @@ function Register() {
 
     const login = useGoogleLogin({
 
-        onSuccess: async (codeResponse) =>{ 
+        onSuccess: async (codeResponse) => {
             // setUser(codeResponse);
             if (codeResponse.access_token) {
                 const res = await axios.get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${codeResponse.access_token}`, {
-                        headers: {
-                            Authorization: `Bearer ${codeResponse.access_token}`,
-                            Accept: 'application/json'
-                        }
-                    });
-                
-                    if (res.data.name && res.data.email) {
-                        setSubmitClicked(true);
-                        try {
-                            const response = await axios.post('http://localhost:9000/google-signup', {
-                                gname: res.data.name,
-                                gemail: res.data.email
-                            });
-                            const token  = response.data;
-                            localStorage.setItem('token', JSON.stringify(token));
-                            navigate('/ChildProfile'); // Navigate to the desired route
-                        } catch (error) {
-                            // console.log('Google Sign-In failed');
-                            if (error.response && error.response.status === 400) {
-                                // Email already registered
-                                setAlertInfo({ variant: 'danger', message: 'Email is already registered', show: true });
-                            } else {
-                                // Other error occurred
-                                setAlertInfo({ variant: 'danger', message: 'An error occurred. Please try again later.', show: true });
-                            }
+                    headers: {
+                        Authorization: `Bearer ${codeResponse.access_token}`,
+                        Accept: 'application/json'
+                    }
+                });
+
+                if (res.data.name && res.data.email) {
+                    setSubmitClicked(true);
+                    try {
+                        const response = await axios.post('http://localhost:9000/google-signup', {
+                            gname: res.data.name,
+                            gemail: res.data.email
+                        });
+                        const token = response.data;
+                        localStorage.setItem('token', JSON.stringify(token));
+                        navigate('/ChildProfile'); // Navigate to the desired route
+                    } catch (error) {
+                        // console.log('Google Sign-In failed');
+                        if (error.response && error.response.status === 400) {
+                            // Email already registered
+                            setAlertInfo({ variant: 'danger', message: 'Email is already registered', show: true });
+                        } else {
+                            // Other error occurred
+                            setAlertInfo({ variant: 'danger', message: 'An error occurred. Please try again later.', show: true });
                         }
                     }
-    
+                }
+
             }
         },
         onError: (error) => console.log('Login Failed:', error)
     });
 
-    
+
 
     const handlegoogleSiginIn = async () => {
-        login(); 
+        login();
     };
 
 
@@ -214,26 +216,27 @@ function Register() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        setSubmitClicked(true);
-
-        try {
-            const response = await axios.post('http://localhost:9000/signup', { name, address, email, phone, password });
-            if(response.status === 200)
-            {
-                setAlertInfo({variant : 'success' , message:'Registration successful. Verification email sent', show:true});
-            }    
-            // navigate('/Login')
-            // console.log(response.data);
-        } catch (error) {
-            // console.error(error);
-            if (error.response && error.response.status === 400) {
-                // Email already registered
-                setAlertInfo({ variant: 'danger', message: 'Email is already registered', show: true });
-            } else {
-                // Other error occurred
-                setAlertInfo({ variant: 'danger', message: 'An error occurred. Please try again later.', show: true });
+        if (!nameError && !addressError && !emailError && !phoneError && !passwordError && !repasswordError) {
+            try {
+                setSubmitClicked(true);
+                const response = await axios.post('http://localhost:9000/signup', { name, address, email, phone, password });
+                if (response.status === 200) {
+                    setAlertInfo({ variant: 'success', message: 'Registration successful. Verification email sent', show: true });
+                }
+                // navigate('/Login')
+                // console.log(response.data);
+            } catch (error) {
+                // console.error(error);
+                if (error.response && error.response.status === 400) {
+                    // Email already registered
+                    setAlertInfo({ variant: 'danger', message: 'Email is already registered', show: true });
+                } else {
+                    // Other error occurred
+                    setAlertInfo({ variant: 'danger', message: 'An error occurred. Please try again later.', show: true });
+                }
             }
         }
+
     };
     return (
         <>

@@ -1137,7 +1137,7 @@ app.get("/DoctorViewAppointments", (req, res) => {
         }
 
         const doctorId = doctorIdResult[0].doctor_id; // Extract the doctor_id
-        const query = `SELECT doctor_booking.*, parents.name AS parent_name, parents.age AS parent_age, parents.phone AS parent_phone, DATE_FORMAT(doctor_booking.date, '%Y-%m-%d') AS formatted_date, TIME_FORMAT(doctor_booking.time, '%H:%i:%s') AS formatted_time
+        const query = `SELECT doctor_booking.*,parents.parent_id, parents.name AS parent_name, parents.age AS parent_age, parents.phone AS parent_phone, DATE_FORMAT(doctor_booking.date, '%Y-%m-%d') AS formatted_date, TIME_FORMAT(doctor_booking.time, '%H:%i:%s') AS formatted_time
                        FROM doctor_booking
                        JOIN parents ON doctor_booking.parent_id = parents.parent_id
                        WHERE doctor_booking.doctor_id = ?
@@ -1333,78 +1333,64 @@ app.put("/updatedoctorbooking/:doctorId/:appointmentDate", async (req, res) => {
 
             const { parent_id } = fetchResults[0];
 
-            const checkExistingAppointmentQuery = "SELECT COUNT(*) AS existingAppointmentCount FROM doctor_booking WHERE doctor_id = ? AND date = ? AND parent_id = ?";
-            db.query(checkExistingAppointmentQuery, [doctorId, selectedDate, parent_id], (checkErr, checkResults) => {
+            const checkExistingAppointmentTimeQuery = `SELECT COUNT(*) AS existingAppointmenttimeCount 
+                FROM doctor_booking 
+                WHERE date = ? AND time = ? AND parent_id = ?`;
+
+            db.query(checkExistingAppointmentTimeQuery, [selectedDate, time, parent_id], (checkErr, checkResults) => {
                 if (checkErr) {
                     console.error("Error checking existing appointment: ", checkErr);
                     return res.status(500).json({ error: "Error checking existing appointment" });
                 }
 
-                const existingAppointmentCount = checkResults[0].existingAppointmentCount;
+                const existingAppointmenttimeCount = checkResults[0].existingAppointmenttimeCount;
 
-                if (existingAppointmentCount > 0) {
-                    return res.status(400).json({ error: "You already have an appointment with this doctor on the same date" });
+                if (existingAppointmenttimeCount > 0) {
+                    return res.status(400).json({ error: "You already have an appointment at the same date and time" });
                 }
 
-                const checkExistingAppointmentTimeQuery = `SELECT COUNT(*) AS existingAppointmenttimeCount 
-                    FROM doctor_booking 
-                    WHERE date = ? AND time = ? AND parent_id = ?`;
-
-                db.query(checkExistingAppointmentTimeQuery, [selectedDate, time, parent_id], (checkErr, checkResults) => {
-                    if (checkErr) {
-                        console.error("Error checking existing appointment: ", checkErr);
-                        return res.status(500).json({ error: "Error checking existing appointment" });
+                const bookedTimeSlotsQuery = "SELECT time FROM doctor_booking WHERE doctor_id = ? AND date = ?";
+                db.query(bookedTimeSlotsQuery, [doctorId, selectedDate], (err, results) => {
+                    if (err) {
+                        console.error("Error fetching booked time slots: ", err);
+                        return res.status(500).json({ error: "Error fetching booked time slots" });
                     }
 
-                    const existingAppointmenttimeCount = checkResults[0].existingAppointmenttimeCount;
-
-                    if (existingAppointmenttimeCount > 0) {
-                        return res.status(400).json({ error: "You already have an appointment at the same date and time" });
-                    }
-
-                    const bookedTimeSlotsQuery = "SELECT time FROM doctor_booking WHERE doctor_id = ? AND date = ?";
-                    db.query(bookedTimeSlotsQuery, [doctorId, selectedDate], (err, results) => {
-                        if (err) {
-                            console.error("Error fetching booked time slots: ", err);
-                            return res.status(500).json({ error: "Error fetching booked time slots" });
-                        }
-
-                        const bookedTimeSlots = results.map((result) => {
-                            // Extract hour and minute components and format them as 'HH:mm'
-                            const timeComponents = result.time.split(':');
-                            return `${timeComponents[0]}:${timeComponents[1]}`;
-                        });
-                        //console.log(bookedTimeSlots);
-                        //const selectedTime = `${time}:00`;
-                        const availableTimeSlots = calculateAvailableTimeSlots(selectedDate).filter((slot) => !bookedTimeSlots.includes(slot));
-                        //console.log(availableTimeSlots);
-                        if (availableTimeSlots.includes(time)) {
-                            // Time slot is not available, return a list of available time slots
-                            const updateDoctorBookingQuery =
-                                "UPDATE doctor_booking SET date = ?, time = ? WHERE doctor_id = ? AND parent_id = ? AND date = ?";
-
-                            db.query(updateDoctorBookingQuery, [selectedDate, time, doctorId, parent_id, appointmentDate], (updateErr, updateResults) => {
-                                if (updateErr) {
-                                    console.error("Error updating doctor_booking: ", updateErr);
-                                    return res.status(500).json({ error: "Error updating doctor_booking" });
-                                }
-
-                                if (updateResults.affectedRows === 0) {
-                                    // No rows were affected, meaning there was no appointment to update
-                                    return res.status(404).json({ error: "Appointment not found" });
-                                }
-
-                                res.status(200).json({ message: "Appointment Updated Successfully" });
-                            }
-                            );
-
-                        }
-                        else {
-                            return res.status(400).json({ error_code: 3445, error_message: "Selected time slot is not available", availableTimeSlots });
-                        }
-
-
+                    const bookedTimeSlots = results.map((result) => {
+                        // Extract hour and minute components and format them as 'HH:mm'
+                        const timeComponents = result.time.split(':');
+                        return `${timeComponents[0]}:${timeComponents[1]}`;
                     });
+                    //console.log(bookedTimeSlots);
+                    //const selectedTime = `${time}:00`;
+                    const availableTimeSlots = calculateAvailableTimeSlots(selectedDate).filter((slot) => !bookedTimeSlots.includes(slot));
+                    //console.log(availableTimeSlots);
+                    if (availableTimeSlots.includes(time)) {
+                        // Time slot is not available, return a list of available time slots
+                        const updateDoctorBookingQuery =
+                            "UPDATE doctor_booking SET date = ?, time = ? WHERE doctor_id = ? AND parent_id = ? AND date = ?";
+
+                        db.query(updateDoctorBookingQuery, [selectedDate, time, doctorId, parent_id, appointmentDate], (updateErr, updateResults) => {
+                            if (updateErr) {
+                                console.error("Error updating doctor_booking: ", updateErr);
+                                return res.status(500).json({ error: "Error updating doctor_booking" });
+                            }
+
+                            if (updateResults.affectedRows === 0) {
+                                // No rows were affected, meaning there was no appointment to update
+                                return res.status(404).json({ error: "Appointment not found" });
+                            }
+
+                            res.status(200).json({ message: "Appointment Updated Successfully" });
+                        }
+                        );
+
+                    }
+                    else {
+                        return res.status(400).json({ error_code: 3445, error_message: "Selected time slot is not available", availableTimeSlots });
+                    }
+
+
                 });
             });
         });
@@ -1416,6 +1402,7 @@ app.delete("/cancelappointment/:doctorId/:parentId/:appointmentDate", async (req
     const doctorId = req.params.doctorId;
     const parentId = req.params.parentId;
     const appointmentDate = req.params.appointmentDate;
+    let whatsappMessage; // Define whatsappMessage variable here
 
     // Check if the appointment date is equal to or greater than today's date
     const today = new Date().toISOString().split('T')[0];
@@ -1423,21 +1410,91 @@ app.delete("/cancelappointment/:doctorId/:parentId/:appointmentDate", async (req
         return res.status(400).json({ error: "Cannot cancel past appointments" });
     }
 
-    // Perform the appointment cancellation by deleting the appointment record
-    const cancelAppointmentQuery = "DELETE FROM doctor_booking WHERE doctor_id = ? AND parent_id = ? AND date = ?";
-    db.query(cancelAppointmentQuery, [doctorId, parentId, appointmentDate], (err, results) => {
-        if (err) {
-            console.error("Error cancelling appointment: ", err);
-            return res.status(500).json({ error: "Error cancelling appointment" });
+    const fetchAdultChildQuery = `SELECT name AS adult_child_name, phone FROM adult_child 
+                                    WHERE adult_child_id = (SELECT adult_child_id FROM parents WHERE parent_id = ? )`;
+    db.query(fetchAdultChildQuery, [parentId], (fetchErr, fetchResults) => {
+        if (fetchErr) {
+            console.error("Error fetching adult_child information: ", fetchErr);
+            return res.status(500).json({ error: "Error fetching adult_child information" });
         }
 
-        if (results.affectedRows === 0) {
-            return res.status(404).json({ error: "Appointment not found" });
+        if (fetchResults.length === 0) {
+            return res.status(404).json({ error: "Adult Child data not found" });
         }
 
-        res.status(200).json({ message: "Appointment Cancelled Successfully" });
+        const { adult_child_name, phone } = fetchResults[0];
+
+        // Fetch doctor name
+        const fetchDoctorNameQuery = "SELECT name AS doctor_name FROM doctors WHERE doctor_id = ?";
+        db.query(fetchDoctorNameQuery, [doctorId], (doctorErr, doctorResults) => {
+            if (doctorErr) {
+                console.error("Error fetching doctor information: ", doctorErr);
+                return res.status(500).json({ error: "Error fetching doctor information" });
+            }
+
+            if (doctorResults.length === 0) {
+                return res.status(404).json({ error: "Doctor data not found" });
+            }
+
+            const { doctor_name } = doctorResults[0];
+
+            // Fetch appointment date and time
+            const fetchAppointmentDateTimeQuery = "SELECT time FROM doctor_booking WHERE doctor_id = ? AND parent_id = ? AND date = ?";
+            db.query(fetchAppointmentDateTimeQuery, [doctorId, parentId, appointmentDate], (appErr, appResults) => {
+                if (appErr) {
+                    console.error("Error fetching appointment information: ", appErr);
+                    return res.status(500).json({ error: "Error fetching appointment information" });
+                }
+
+                if (appResults.length === 0) {
+                    return res.status(404).json({ error: "Appointment data not found" });
+                }
+
+                const { time } = appResults[0];
+
+                // Construct the WhatsApp message
+                whatsappMessage = `Hi ${adult_child_name},
+
+Your appointment on ${appointmentDate} at ${time} with Dr. ${doctor_name} has been cancelled.
+
+Please feel free to reschedule if needed.
+
+Thank you,
+ParentAssist`;
+
+                // Perform the appointment cancellation by deleting the appointment record
+                const cancelAppointmentQuery = "DELETE FROM doctor_booking WHERE doctor_id = ? AND parent_id = ? AND date = ?";
+                db.query(cancelAppointmentQuery, [doctorId, parentId, appointmentDate], (err, results) => {
+                    if (err) {
+                        console.error("Error cancelling appointment: ", err);
+                        return res.status(500).json({ error: "Error cancelling appointment" });
+                    }
+
+                    if (results.affectedRows === 0) {
+                        return res.status(404).json({ error: "Appointment not found" });
+                    }
+
+                    // Send WhatsApp message
+                    client.messages
+                        .create({
+                            body: whatsappMessage,
+                            from: 'whatsapp:+14155238886',
+                            to: `whatsapp:${phone}`
+                        })
+                        .then(() => {
+                            message => console.log(message.sid);
+                        })
+                        .catch((whatsappError) => {
+                            console.error("Failed to send WhatsApp notification:", whatsappError);
+                            return res.status(500).json({ error: "Failed to send WhatsApp notification" });
+                        });
+                    res.status(200).json({ message: "Appointment Cancelled Successfully" });
+                });
+            });
+        });
     });
 });
+
 
 // Cancel Therappy Booking Appointment API endpoint
 app.delete("/cancelTherappyappointment/:doctorId/:parentUserId/:appointmentDate", async (req, res) => {
@@ -1734,7 +1791,7 @@ app.post("/parentGeneralInfo", pdfUpload.fields([{ name: "file1", maxCount: 1 },
 
         pastSurgeriesFile = relativePastSurgeriesPath;
         testResultFile = relativeTestResultPath;
-    } 
+    }
     // else {
     //     return res.status(400).json({ message: "Invalid combination of inputs." });
     // }
@@ -1779,10 +1836,70 @@ app.post("/parentGeneralInfo", pdfUpload.fields([{ name: "file1", maxCount: 1 },
             (err, results) => {
                 if (err) {
                     console.error(err);
-                    return res.status(500).json({ message: "Database error" });
+                    return res.status(500).json({ message: "Insertion Failed" });
                 }
 
-                return res.status(200).json({ message: "Data inserted successfully" });
+                const fetchChildQuery = `SELECT name AS child_name, phone FROM adult_child 
+                                        WHERE adult_child_id = (SELECT adult_child_id FROM parents WHERE parent_id = ? )`;;
+                db.query(fetchChildQuery, [parentId], (childErr, childResults) => {
+                    if (childErr) {
+                        console.error("Error fetching child information: ", childErr);
+                        return res.status(500).json({ message: "Error fetching child information" });
+                    }
+
+                    if (childResults.length === 0) {
+                        return res.status(404).json({ message: "Child data not found" });
+                    }
+
+                    const { child_name, phone } = childResults[0];
+
+                    // Fetch doctor name
+                    const fetchDoctorNameQuery = "SELECT name AS doctor_name FROM doctors WHERE doctor_id = ?";
+                    db.query(fetchDoctorNameQuery, [doctor_id], (doctorErr, doctorResults) => {
+                        if (doctorErr) {
+                            console.error("Error fetching doctor information: ", doctorErr);
+                            return res.status(500).json({ message: "Error fetching doctor information" });
+                        }
+
+                        if (doctorResults.length === 0) {
+                            return res.status(404).json({ message: "Doctor data not found" });
+                        }
+
+                        const { doctor_name } = doctorResults[0];
+
+                        // Construct the WhatsApp message
+                        const whatsappMessage = `Hi ${child_name},
+
+Doctor's Note: ${description}
+
+Visited Date: ${date}
+
+Your next checkup is scheduled for ${nextCheckupDate} with Dr. ${doctor_name}.
+
+Please make sure to attend the appointment as scheduled.
+
+Visit ParentAssist to get the details of Prescribed Medicines
+
+Regards,
+ParentAssist`;
+
+                        client.messages
+                            .create({
+                                body: whatsappMessage,
+                                from: 'whatsapp:+14155238886',
+                                to: `whatsapp:${phone}`
+                            })
+                            .then(() => {
+                                message => console.log(message.sid);
+                            })
+                            .catch((whatsappError) => {
+                                console.error("Failed to send WhatsApp notification:", whatsappError);
+                                return res.status(500).json({ error: "Failed to send WhatsApp notification" });
+                            });
+
+                        return res.status(200).json({ message: "Data inserted successfully" });
+                    });
+                });
             }
         );
     });
@@ -2436,6 +2553,85 @@ app.get('/getMedicineDetailsDoctorView', (req, res) => {
         res.status(500).json({ message: 'Failed to fetch medicine routine details' });
     }
 });
+
+app.get('/getLatestDoctorVisitDetailsChildReport', (req, res) => {
+    try {
+        const userId = req.query.user_id;
+        const gender = req.query.gender;
+        //console.log(userId);
+        //console.log(gender);
+        const latestDoctorVisitQuery = `
+        SELECT 
+        dv.*, 
+        DATE_FORMAT(dv.date, '%d/%m/%Y') AS formatted_date,
+        DATE_FORMAT(dv.next_visit_date, '%d/%m/%Y') AS formatted_next_visit_date,
+        d.name AS doctor_name
+    FROM doctor_visit dv
+    JOIN doctors d ON dv.doctor_id = d.doctor_id
+    WHERE dv.parent_id = (SELECT parent_id FROM parents WHERE Gender =? AND adult_child_id =(SELECT adult_child_id FROM adult_child WHERE user_id = ?))
+    ORDER BY dv.date DESC;
+        `;
+
+        db.query(latestDoctorVisitQuery, [gender, userId], (error, doctorVisitResults) => {
+            if (error) {
+                console.error('Error fetching latest doctor visit details:', error);
+                res.status(500).json({ message: 'Failed to fetch latest doctor visit details' });
+            } else {
+                const latestDoctorVisitDetails = doctorVisitResults;
+                res.status(200).json(latestDoctorVisitDetails);
+            }
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Failed to fetch latest doctor visit details' });
+    }
+});
+
+app.get('/getMedicineRoutineDetailsChildReport', (req, res) => {
+    try {
+        const userId = req.query.user_id;
+        const Gender = req.query.gender;
+
+        const medicineRoutineQuery = `
+        SELECT 
+        dv.doctor_visit_id,
+        m.medicine_id,
+        m.name AS medicine_name, 
+        mr.morning,
+        mr.noon,
+        mr.night,
+        mr.rout_descp,
+        mr.days,
+        DATE_FORMAT(dv.date, '%d/%m/%Y') AS formatted_doctor_visit_date
+    FROM doctor_visit dv
+    JOIN medicine_routine mr ON dv.doctor_visit_id = mr.doctor_visit_id
+    JOIN medicine m ON mr.medicine_id = m.medicine_id
+    WHERE dv.parent_id = (
+        SELECT parent_id 
+        FROM parents 
+        WHERE Gender = ? 
+        AND adult_child_id = (
+            SELECT adult_child_id 
+            FROM adult_child 
+            WHERE user_id = ?
+        )
+    )`;
+
+        db.query(medicineRoutineQuery, [Gender, userId], (error, medicineRoutineResults) => {
+            if (error) {
+                console.error('Error fetching medicine routine details:', error);
+                res.status(500).json({ message: 'Failed to fetch medicine routine details' });
+            } else {
+                const medicineRoutineDetails = medicineRoutineResults;
+                res.status(200).json(medicineRoutineDetails);
+            }
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Failed to fetch medicine routine details' });
+    }
+});
+
 
 function generateRandomPassword() {
     const uppercaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';

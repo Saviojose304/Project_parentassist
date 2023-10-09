@@ -3,6 +3,8 @@ import axios from "axios";
 import '../Register.css';
 import AlertBox from "../Alert";
 import { useNavigate } from "react-router-dom";
+import { Modal } from 'react-bootstrap';
+import TherapyBookingBilling from "../Billing Page/TherapyBookingBilling";
 function ParentTherapyBooking() {
     const [doctorList, setDoctorList] = useState([]);
     const [selectedDoctor, setSelectedDoctor] = useState('');
@@ -20,6 +22,7 @@ function ParentTherapyBooking() {
     const [editMode, setEditMode] = useState(false);
     const [disabledDates, setDisabledDates] = useState([]);
     const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
+    const [showTherapyBillingModal, setShowTherapyBillingModal] = useState(false);
     const navigate = useNavigate();
     const token = localStorage.getItem('token');
     const parsedToken = JSON.parse(token);
@@ -100,6 +103,10 @@ function ParentTherapyBooking() {
         }
     };
 
+    const closeModal = () => {
+        setShowTherapyBillingModal(false);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -111,7 +118,9 @@ function ParentTherapyBooking() {
             });
     
             if (response.data.success) {
-                navigate(`/therapy-booking-billing/${selectedDate}/${parent_user_id}/${doctorid}`);
+                //navigate(`/therapy-booking-billing/${selectedDate}/${parent_user_id}/${doctorid}`);
+                setSubmitClicked(false)
+                setShowTherapyBillingModal(true);
             } else {
                 console.error("Booking failed:", response.data.message);
                 setAlertInfo({ variant: 'danger', message: response.data.error, show: true });
@@ -230,7 +239,7 @@ function ParentTherapyBooking() {
                             </div>
                         </div>
                         {selectedDoctor && (
-                            <div className="col-md-4">
+                            <div className={selectedDoctor ? (disabledDates.length > 0 ? 'col-md-4' : ' ') : 'col-12 col-md-4 col-lg-4 col-xl-4'}>
                                 {disabledDates.length > 0 && (
                                     <div className="card mt-4">
                                         <div className="card-header">Doctor Leave Dates</div>
@@ -250,6 +259,21 @@ function ParentTherapyBooking() {
                     </div>
                 </div>
             </section>
+
+            <Modal show={showTherapyBillingModal} onHide={closeModal}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Therapy Booking Billing</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <TherapyBookingBilling
+                        selectedDate={selectedDate}
+                        parentUserId={parent_user_id}
+                        doctorId={doctorid}
+                        closeModal={closeModal} 
+                    />
+                </Modal.Body>
+            </Modal>
+
         </>
     );
 }

@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import AlertBox from "../Alert";
 import { useNavigate, useParams } from "react-router-dom";
 import Razorpay from "react-razorpay";
-function TherapyBookingBilling() {
+function TherapyBookingBilling(props) {
     const navigate = useNavigate();
-    const { selectedDate, parentUserId, doctorId } = useParams();
+    const { selectedDate, parentUserId, doctorId } = props;
     const [appointmentFee] = useState(250);
     const [sectionFee] = useState(500);
     const totalBillAmount = appointmentFee + sectionFee;
@@ -78,10 +78,9 @@ function TherapyBookingBilling() {
 
     return (
         <>
-            <div className="container mt-5 d-flex justify-content-center align-items-center">
+            <div className="container d-flex justify-content-center align-items-center">
                 <div className="card">
                     <div className="card-body text-center">
-                        <h2 className="card-title">Appointment Billing</h2>
                         <p>Appointment Fee: <i className="bi bi-currency-rupee"></i>{appointmentFee}</p>
                         <p>Section Fee: <i className="bi bi-currency-rupee"></i>{sectionFee}</p>
                         <p>Total Bill Amount: <i className="bi bi-currency-rupee"></i>{totalBillAmount}</p>
