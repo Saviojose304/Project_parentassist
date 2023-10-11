@@ -84,7 +84,7 @@ function TherapyBookingBilling(props) {
                         <p>Appointment Fee: <i className="bi bi-currency-rupee"></i>{appointmentFee}</p>
                         <p>Section Fee: <i className="bi bi-currency-rupee"></i>{sectionFee}</p>
                         <p>Total Bill Amount: <i className="bi bi-currency-rupee"></i>{totalBillAmount}</p>
-                        <button className="btn btn-outline-danger" onClick={async () => {
+                        <button id="cancel_button" className="btn btn-outline-danger" onClick={async () => {
                                 // Show a confirmation dialog before canceling
                                 const confirmed = window.confirm("Are you sure you want to cancel this appointment?");
                                 if (confirmed) {

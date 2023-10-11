@@ -3,17 +3,33 @@ import { Fragment } from 'react'
 import { useState } from 'react'
 import { Disclosure } from '@headlessui/react'
 import { Bars3Icon,  XMarkIcon } from '@heroicons/react/24/outline'
-
-
+import { useNavigate } from 'react-router-dom'
+import { googleLogout } from "@react-oauth/google";
 function Header() {
+    const token = localStorage.getItem('token');
+    const navigate = useNavigate();
+
+    const logOut = async () => {
+        try {
+            googleLogout(); 
+            localStorage.removeItem('token');
+            navigate('/');
+        } catch (error) {
+            console.log(error);
+        }
+    };
 
     const navigation = [
         { name: 'HOME', href: '/', current: true },
         { name: 'ABOUT', href: '#about', current: false },
         { name: 'SERVICES', href: '#service', current: false },
         { name: 'CONTACT US', href: '#contact', current: false },
-        { name: 'LOG IN', href: '/Login', current: false },
-        { name: 'SIGN UP', href: '/Register', current: false },
+        token
+            ? { name: 'LOGOUT', href:'/LogOut', current: false } 
+            : { name: 'LOG IN', href: '/Login', current: false },
+        !token
+            ? { name: 'SIGN UP', href: '/Register', current: false }
+            : {  },
     ]
 
     function classNames(...classes) {
@@ -25,8 +41,6 @@ function Header() {
         setshow(show);
     };
 
-    const token = localStorage.getItem('token');
-    console.log(token);
 
     return (
         <>

@@ -5,6 +5,7 @@ import AlertBox from "../Alert";
 import { Modal, Dropdown } from "react-bootstrap";
 function MedicineSeller() {
     const token = localStorage.getItem('token');
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const parsedToken = JSON.parse(token); // Parse the token string to an object
     const navigate = useNavigate();
     const seller_user_id = parsedToken.userId;
@@ -19,6 +20,17 @@ function MedicineSeller() {
     const [editedMedicine, setEditedMedicine] = useState(null);
     const [currentMedicineName, setCurrentMedicineName] = useState('');
     const [alertInfo, setAlertInfo] = useState({ variant: 'success', message: '', show: false });
+
+    useEffect(() => {
+        const token = JSON.parse(localStorage.getItem('token'));
+        const user_role = token.role;
+        if (token !== null && user_role == 'MedSeller') {
+            setIsAuthenticated(true);
+        } else {
+            setIsAuthenticated(false);
+            navigate('/Login'); // Navigate to login if no token is present
+        }
+    }, [navigate]);
 
     useEffect(() => {
         fetchMedicineDetails();

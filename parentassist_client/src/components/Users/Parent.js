@@ -16,11 +16,12 @@ function Parent() {
 
     useEffect(() => {
         const token = JSON.parse(localStorage.getItem('token'));
-        if (token !== null) {
+        const user_role = token.role
+        if (token !== null && user_role == 'Parent'){
             setIsAuthenticated(true);
         } else {
             setIsAuthenticated(false);
-            navigate('/Login'); // Navigate to login if no token is present
+            navigate('/Login'); 
         }
     }, [navigate]);
 
@@ -99,7 +100,7 @@ function Parent() {
                         <a style={{ color: "white" }} className="navbar-brand ms-5" href="#">ParentAssist</a>
                         <ul className="navbar-nav ms-auto me-5">
                             <li className="nav-item px-3 py-2">
-                                <a style={{ color: "white" }} href="#" data-bs-target="#sidebar" data-bs-toggle="collapse" className="text-decoration-none text-end" onClick={toggleSidebar}>{parsedToken ? parsedToken.email : 'Name'}</a>
+                                <a style={{ color: "white" }} href="#" data-bs-target="#sidebar" id="username" data-bs-toggle="collapse" className="text-decoration-none text-end" onClick={toggleSidebar}>{parsedToken ? parsedToken.email : 'Name'}</a>
                             </li>
                         </ul>
                     </div>
@@ -117,7 +118,7 @@ function Parent() {
                                                 <i class="bi bi-gear-fill"><span>View Profile</span></i>
                                             </a>
                                         </button>
-                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleService}>
+                                        <button type="button" id="service" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleService}>
                                             <a href="" className="text-decoration-none list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar">
                                                 <i className="bi bi-people-fill"><span>Services</span></i>
                                             </a>

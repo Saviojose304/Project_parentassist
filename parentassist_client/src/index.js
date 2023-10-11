@@ -41,6 +41,7 @@ import ParentTherapyBooking from './components/Booking/ParentTherapyBooking';
 import TherapyBookingBilling from './components/Billing Page/TherapyBookingBilling';
 import ParentBookedTherapyView from './components/UsersView/ParentBookedTherapyView';
 import ChildReports from './components/Reports/ChildReports';
+import Logout from './components/Logout';
 
 const router = createBrowserRouter([
   {
@@ -161,6 +162,10 @@ const router = createBrowserRouter([
   {
     path:"/ChildReports",
     element: <ChildReports />
+  },
+  {
+    path:"/LogOut",
+    element: <Logout />
   }
   
 

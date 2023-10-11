@@ -300,7 +300,7 @@ function ChildProfile() {
             <header>
                 <nav className="navbar navbar-expand-md fixed-top" style={{ backgroundColor: "#116396" }}>
                     <div className="container-fluid">
-                        <a style={{ color: "white" }} className="navbar-brand ms-5" href="#">ParentAssist</a>
+                        <a style={{ color: "white" }} className="navbar-brand ms-5" href="/">ParentAssist</a>
                         <ul className="navbar-nav ms-auto me-5">
                             <li className="nav-item px-3">
                                 <button type="button" className="btn btn-success"><a className="text-decoration-none text-white" href="/ParentRegister"><i className="bi bi-plus-lg"></i>Add Parent</a></button>

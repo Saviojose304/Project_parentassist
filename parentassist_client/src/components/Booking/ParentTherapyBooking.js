@@ -157,11 +157,11 @@ function ParentTherapyBooking() {
                                     <form onSubmit={handleSubmit} autoComplete="off" className="row">
                                         <div className="">
                                             <span><i className="bi bi-person-fill icon"></i></span>
-                                                <select value={selectedDoctor} onChange={handleDoctorChange}
+                                                <select id="selectdoctor" value={selectedDoctor} onChange={handleDoctorChange}
                                                     required >
                                                     <option value="">Select a doctor</option>
                                                     {doctorList.map((doctor) => (
-                                                        <option key={doctor.id} value={doctor.id}>
+                                                        <option id="sel_doc" key={doctor.id} value={doctor.id}>
                                                             {doctor.name}
                                                         </option>
                                                     ))}
@@ -177,7 +177,7 @@ function ParentTherapyBooking() {
                                                 <input type="text" placeholder="Hospital name" readOnly name="hospital" value={hospital}  required />
                                         </div> <br />
                                         <div className="">
-                                            <input type="date" min={currentDate} value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} required />
+                                            <input type="date" id="selectdate" min={currentDate} value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} required />
                                         </div>
                                         <div className="">
                                             <input type="time" placeholder="Enter Time" name="time" value={time} min="09:30" max="17:00" onChange={handletime} required />

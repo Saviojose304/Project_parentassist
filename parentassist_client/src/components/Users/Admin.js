@@ -16,6 +16,7 @@ function Admin() {
     const [emailError, setEmailError] = useState('');
     const [showForm, setShowForm] = useState(false);
     const token = JSON.parse(localStorage.getItem('token'))
+    const user_role = token.role;
     const navigate = useNavigate();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [submitClicked, setSubmitClicked] = useState(false);
@@ -24,8 +25,7 @@ function Admin() {
 
 
     useEffect(() => {
-        const token = JSON.parse(localStorage.getItem('token'));
-        if (token !== null) {
+        if (token !== null && user_role == 'Admin') {
             setIsAuthenticated(true);
         } else {
             setIsAuthenticated(false);

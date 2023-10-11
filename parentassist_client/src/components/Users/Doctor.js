@@ -34,7 +34,8 @@ function Doctor() {
 
     useEffect(() => {
         const token = JSON.parse(localStorage.getItem('token'));
-        if (token !== null) {
+        const user_role = token.role;
+        if (token !== null && user_role == 'Doctor') {
             setIsAuthenticated(true);
         } else {
             setIsAuthenticated(false);

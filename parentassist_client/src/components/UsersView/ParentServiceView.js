@@ -60,6 +60,7 @@ function ParentServiceView() {
                                     type="text"
                                     className="form-control"
                                     placeholder="Search Videos"
+                                    id="searchinput"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
@@ -67,7 +68,7 @@ function ParentServiceView() {
                             </li>
 
                             <li className="nav-item px-3">
-                                <button type="button" className="btn btn-success"><a className="text-decoration-none text-white" href="/ParentTherapyBooking">Book Therapy Section</a></button>
+                                <button type="button" id="book_therapy" className="btn btn-success"><a className="text-decoration-none text-white" href="/ParentTherapyBooking">Book Therapy Section</a></button>
 
                             </li>
                             <li className="nav-item px-3 py-2">
