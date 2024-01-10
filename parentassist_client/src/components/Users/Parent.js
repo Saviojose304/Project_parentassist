@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from 'axios';
-import EveFooter from "../EveFooter";
 function Parent() {
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [doctorVisits, setDoctorVisits] = useState([]);
@@ -113,7 +112,7 @@ function Parent() {
                             <div className=" px-0">
                                 <div id="sidebar" className={isSidebarOpen ? 'collapse collapse-horizontal ' : 'show border-end pt-2'}>
                                     <div className="d-grid  mx-auto ">
-                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleprofile} >
+                                        <button type="button" id="profile" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleprofile} >
                                             <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar">
                                                 <i class="bi bi-gear-fill"><span>View Profile</span></i>
                                             </a>
@@ -134,7 +133,7 @@ function Parent() {
                                                 <i class="bi bi-activity"><span>Doctors</span></i>
                                             </a>
                                         </button>
-                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={logOut}>
+                                        <button type="button" id="logout" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={logOut}>
                                             <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline text-truncate" data-bs-parent="#sidebar">
                                                 <i className="bi bi-box-arrow-right"><span>Logout</span></i>
                                             </a>
@@ -246,8 +245,6 @@ function Parent() {
                     </main>
                 </div>
             </div>
-
-            < EveFooter />
         </>
     );
 }

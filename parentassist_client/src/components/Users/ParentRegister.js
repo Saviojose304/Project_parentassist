@@ -190,7 +190,7 @@ function ParentRegister() {
 
                                         <div className="">
                                             <span><i className="bi bi-person-fill icon"></i></span>
-                                            <input type="number" inputMode="numeric" placeholder="Enter parent age" name="age" value={age} onChange={handleage} required />
+                                            <input type="number" inputMode="numeric" placeholder="Enter parent age" min={0} name="age" value={age} onChange={handleage} required />
                                             <div className="red-text" id="name_err">{ageError}</div> <br />
                                         </div>
 

@@ -257,22 +257,22 @@ function ParentGeneralInfo(props) {
                         <div style={{ color: 'red' }} id="name_err">{errorMessageCD}</div> <br />
                     </div>
                     <div className="mb-3 col-md-6">
-                        <input type="number" id="bp" placeholder="BP (mmHg)" value={bp}
+                        <input type="number" id="bp" min={1} placeholder="BP (mmHg)" value={bp}
                             onChange={(e) => setBp(e.target.value)} required
                         />
                     </div>
                     <div className="mb-3 col-md-6">
-                        <input type="number" id="sugar" placeholder="Sugar (mg/dL)" value={sugar}
+                        <input type="number" id="sugar" min={1} placeholder="Sugar (mg/dL)" value={sugar}
                             onChange={(e) => setSugar(e.target.value)} required
                         />
                     </div>
                     <div className="mb-3 col-md-6">
-                        <input type="number" id="weight" placeholder="Weight (kg)" value={weight}
+                        <input type="number" id="weight" min={1} placeholder="Weight (kg)" value={weight}
                             onChange={handleweight} required
                         />
                     </div>
                     <div className="mb-3 col-md-6">
-                        <input type="number" id="height" placeholder="Height (cm)" value={height}
+                        <input type="number" id="height" min={1} placeholder="Height (cm)" value={height}
                             onChange={handleheight} required
                         />
                     </div>

@@ -9,7 +9,7 @@ function ChildProfile() {
     const [gender, setGender] = useState('male');
     const token = localStorage.getItem('token');
     const parsedToken = JSON.parse(token); // Parse the token string to an object
-    const user_id = parsedToken.userId;
+    // const user_id = parsedToken.userId;
 
     const navigate = useNavigate();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -20,40 +20,39 @@ function ChildProfile() {
     const [showPdfModal, setShowPdfModal] = useState(false);
 
     useEffect(() => {
-        const token = JSON.parse(localStorage.getItem('token'));
-        if (token !== null) {
-            setIsAuthenticated(true);
-        } else {
+        const token = localStorage.getItem('token');
+
+        if (token === null) {
             setIsAuthenticated(false);
-            navigate('/Login'); // Navigate to login if no token is present
+            navigate('/'); // Navigate to login if no token is present
+        } else {
+            setIsAuthenticated(true);
+            const parsedToken = JSON.parse(token);
+            const user_id = parsedToken.userId;
+
+            // Fetch latest doctor visit details for the parent
+            axios.get(`http://localhost:9000/getLatestDoctorVisitDetailsChild?user_id=${user_id}&gender=${gender}`)
+                .then((response) => {
+                    if (response.status === 200) {
+                        setDoctorVisits(response.data);
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error fetching doctor visit details:", error);
+                });
+
+            // Fetch medicine routine details for the parent's doctor visits
+            axios.get(`http://localhost:9000/getMedicineRoutineDetailsChild?user_id=${user_id}&gender=${gender}`)
+                .then((response) => {
+                    if (response.status === 200) {
+                        setMedicineRoutine(response.data);
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error fetching medicine routine details:", error);
+                });
         }
-    }, [navigate]);
-
-    useEffect(() => {
-        // Fetch latest doctor visit details for the parent
-        axios.get(`http://localhost:9000/getLatestDoctorVisitDetailsChild?user_id=${user_id}&gender=${gender}`)
-            .then((response) => {
-                if (response.status === 200) {
-                    setDoctorVisits(response.data);
-                }
-            })
-            .catch((error) => {
-                console.error("Error fetching doctor visit details:", error);
-            });
-    }, []);
-
-    useEffect(() => {
-        // Fetch medicine routine details for the parent's doctor visits
-        axios.get(`http://localhost:9000/getMedicineRoutineDetailsChild?user_id=${user_id}&gender=${gender}`)
-            .then((response) => {
-                if (response.status === 200) {
-                    setMedicineRoutine(response.data);
-                }
-            })
-            .catch((error) => {
-                console.error("Error fetching medicine routine details:", error);
-            });
-    }, [user_id]);
+    }, [navigate, gender]);
 
     const logOut = async () => {
         try {
@@ -71,7 +70,7 @@ function ChildProfile() {
     };
 
     const handleparents = () => {
-        navigate('/ChildParentView')
+        navigate('/ChildProfile')
     };
 
     const handledoctor = () => {
@@ -91,6 +90,8 @@ function ChildProfile() {
 
         setDoctorVisits([]);
         setMedicineRoutine([]);
+
+        const user_id = parsedToken.userId;
 
         axios.get(`http://localhost:9000/getLatestDoctorVisitDetailsChild?user_id=${user_id}&gender=${updatedGender}`)
             .then((response) => {
@@ -125,6 +126,8 @@ function ChildProfile() {
         setDoctorVisits([]);
         setMedicineRoutine([]);
 
+        const user_id = parsedToken.userId;
+
         // Fetch latest doctor visit details for the parent with the updated gender
         axios.get(`http://localhost:9000/getLatestDoctorVisitDetailsChild?user_id=${user_id}&gender=${updatedGender}`)
             .then((response) => {
@@ -156,6 +159,10 @@ function ChildProfile() {
             expanded: visit.doctor_visit_id === doctor_visit_id ? !visit.expanded : visit.expanded,
         }));
         setDoctorVisits(updatedDoctorVisits);
+    };
+
+    const handleParentDetails = () => {
+        navigate('/ChildProfile')
     };
 
     const styles = StyleSheet.create({
@@ -303,6 +310,12 @@ function ChildProfile() {
                         <a style={{ color: "white" }} className="navbar-brand ms-5" href="/">ParentAssist</a>
                         <ul className="navbar-nav ms-auto me-5">
                             <li className="nav-item px-3">
+                                <button type="button" className="btn btn-success" onClick={toggleFatherDetails}>Father Details</button>
+                            </li>
+                            <li className="nav-item px-3">
+                                <button type="button" className="btn btn-success" onClick={toggleMotherDetails}>Mother Details</button>
+                            </li>
+                            <li className="nav-item px-3">
                                 <button type="button" className="btn btn-success"><a className="text-decoration-none text-white" href="/ParentRegister"><i className="bi bi-plus-lg"></i>Add Parent</a></button>
                             </li>
                             <li className="nav-item px-3">
@@ -327,9 +340,9 @@ function ChildProfile() {
                                                 <i class="bi bi-gear-fill"><span>View Profile</span></i>
                                             </a>
                                         </button>
-                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleparents}>
+                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleParentDetails}>
                                             <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar">
-                                                <i className="bi bi-people-fill"><span>Parents</span></i>
+                                                <i className="bi bi-people-fill"><span>Parent Details</span></i>
                                             </a>
                                         </button>
                                         <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handledoctor}>
@@ -357,34 +370,10 @@ function ChildProfile() {
                 </div>
                 <div style={{ paddingTop: '5rem' }} className='col-10'>
                     <div className="container">
-                        <div className="row">
-                            <div className="col-md-6 mb-4">
-                                <Card style={{ width: '30rem', height: '6rem', borderRadius: '30px', backgroundColor: "#116396", cursor: 'pointer' }} onClick={toggleFatherDetails}>
-                                    <Card.Body>
-                                        <Card.Text>
-                                            <div className="d-flex text-white  h3 strong py-3 justify-content-center align-content-center">
-                                                Father Details
-                                            </div>
-                                        </Card.Text>
-                                    </Card.Body>
-                                </Card>
-                            </div>
-                            <div className="col-md-6 mb-4">
-                                <Card style={{ width: '30rem', height: '6rem', borderRadius: '30px', backgroundColor: "#116396", cursor: 'pointer' }} onClick={toggleMotherDetails}>
-                                    <Card.Body>
-                                        <Card.Text>
-                                            <div className="d-flex text-white  h3 strong py-3 justify-content-center align-content-center">
-                                                Mother Details
-                                            </div>
-                                        </Card.Text>
-                                    </Card.Body>
-                                </Card>
-                            </div>
-                        </div>
-
                         {showFatherDetails && (
                             <main className="col overflow-auto h-100">
                                 <div className="bg-light border rounded-3 p-5">
+                                    <h2>Father Details</h2>
                                     <div className="d-flex">
                                         <h2>Doctor Visits</h2>
                                         <div className="nav-item px-3">
@@ -487,6 +476,7 @@ function ChildProfile() {
                         {showMotherDetails && (
                             <main className="col overflow-auto h-100">
                                 <div className="bg-light border rounded-3 p-5">
+                                    <h2>Mother Details</h2>
                                     <div className="d-flex">
                                         <h2>Doctor Visits</h2>
                                         <div className="nav-item px-3">

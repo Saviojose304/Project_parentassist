@@ -288,7 +288,7 @@ function ChildReports() {
             <header>
                 <nav className="navbar navbar-expand-md fixed-top" style={{ backgroundColor: "#116396" }}>
                     <div className="container-fluid">
-                        <a style={{ color: "white" }} className="navbar-brand ms-5" href="/ChildProfile">Home</a>
+                        <a style={{ color: "white" }} className="navbar-brand ms-5" href="/ChildProfile">ParentAssist</a>
                         <div className="nav-item w-50 px-3 pt-1">
                             <input
                                 type="text"

@@ -266,7 +266,7 @@ function ParentProfileUpdate() {
                                     </div>
 
                                     <div className="text-right mt-1 pb-3 ">
-                                        <button type="button" className="btn btn-primary" onClick={handleGeneralData}>Save changes</button>&nbsp;
+                                        <button type="button" id="submit" className="btn btn-primary" onClick={handleGeneralData}>Save changes</button>&nbsp;
                                         <button type="button" className="btn btn-default" onClick={handleCancel}>Cancel</button>
                                     </div>
                                 </div>
