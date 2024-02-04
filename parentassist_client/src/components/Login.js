@@ -125,6 +125,9 @@ function Login() {
                             case 'MedSeller':
                                 navigate('/MedicineSeller');
                                 break;
+                            case 'SRVCPRVDR':
+                                navigate('/ServiceProviderHomePage');
+                                break;
                             default:
                                 alert("Invalid Credentials");
                         }
@@ -155,20 +158,19 @@ function Login() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if(!emailError && !passwordError)
-        {
+        if (!emailError && !passwordError) {
             try {
                 setSubmitClicked(true);
                 const response = await axios.post('http://localhost:9000/login', { email, password, role });
-    
+
                 const token = response.data; //  token field
                 const userRole = token.role
                 // const userRole = response.data.role  ;
-    
-    
+
+
                 localStorage.setItem('token', JSON.stringify(token));
                 // console.log(token);
-    
+
                 if (userRole === 'Doctor') {
                     navigate('/Doctor');
                 } else if (userRole === 'Child') {
@@ -177,12 +179,14 @@ function Login() {
                     navigate('/Parent');
                 } else if (userRole === 'Admin') {
                     navigate('/Admin');
-                } else if(userRole === 'MedSeller'){
-                    navigate('/MedicineSeller')
+                } else if (userRole === 'MedSeller') {
+                    navigate('/MedicineSeller');
+                } else if (userRole === 'SRVCPRVDR') {
+                    navigate('/ServiceProviderHomePage')
                 }else {
                     alert("Invalid Credentials")
                 }
-    
+
                 // console.log(response.data);
             } catch (error) {
                 // console.error(error);
@@ -199,7 +203,7 @@ function Login() {
         }
 
 
-        
+
     };
 
     const sendmail = async (e) => {

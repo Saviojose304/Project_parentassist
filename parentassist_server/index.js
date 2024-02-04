@@ -15,6 +15,7 @@ const Razorpay = require('razorpay');
 const twilio = require('twilio');
 const uuid = require('uuid');
 const { log } = require("console");
+const db = require('./db');
 
 
 const SECRET_KEY = process.env.SECRET_KEY;
@@ -38,13 +39,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-const db = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_DATABASE
-})
-
 const transporter = nodemailer.createTransport({
     service: 'Gmail',
     auth: {
@@ -53,13 +47,6 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-db.connect((err) => {
-    if (err) {
-        console.error('Database connection error:', err);
-    } else {
-        console.log('Connected to the database');
-    }
-});
 
 app.post('/signup', async (req, res) => {
     const { name, address, email, phone, password } = req.body;
@@ -140,42 +127,74 @@ app.post('/emailverify', async (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
-
     const { email, password } = req.body;
-    // return res.status(200).json({message:"dfsd"})
-
 
     try {
-        const selectQuery = 'SELECT * FROM users WHERE email = ? ';
-        const [rows] = await db.promise().query(selectQuery, [email]);
-        if (rows.length === 0) {
+        const selectUserQuery = 'SELECT * FROM users WHERE email = ? ';
+        const [userRows] = await db.promise().query(selectUserQuery, [email]);
+
+        if (userRows.length === 0) {
             return res.status(401).json({ error: 'User not found' });
         }
 
-        const user = rows[0];
+        const user = userRows[0];
 
         if (user.user_status === 'DEACTIVE') {
             return res.status(401).json({ error: 'Your Account is Deactivated By Admin' });
         }
 
-        //   const hashedPassword = await bcrypt.hash(password, 10);
-        //   console.log({hashedPassword})
+        const selectNameQuery = getSelectNameQuery(user.role);
+        const [nameRows] = await db.promise().query(selectNameQuery, [user.user_id]);
+
+        if (nameRows.length === 0) {
+            return res.status(401).json({ error: 'Name not found for the user' });
+        }
+
+        const userName = nameRows[0].name;
+
+
         const isPasswordValid = await bcrypt.compare(password, user.password);
-        //   console.log(isPasswordValid)
 
         if (!isPasswordValid) {
             return res.status(401).json({ error: 'Invalid password' });
         } else {
-            const token = jwt.sign({ userId: user.user_id, role: user.role, email: user.email }, SECRET_KEY, { expiresIn: '1h' });
+            const token = jwt.sign({
+                userId: user.user_id,
+                role: user.role,
+                email: user.email,
+                userName: userName,
+            }, SECRET_KEY, { expiresIn: '1h' });
 
-            res.status(200).json({ data: token, userId: user.user_id, role: user.role, email: user.email, message: 'Login successful' });
+            res.status(200).json({
+                data: token,
+                userId: user.user_id,
+                role: user.role,
+                email: user.email,
+                userName: userName,
+                message: 'Login successful',
+            });
         }
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ error: 'Login failed' });
     }
-
 });
+
+function getSelectNameQuery(userRole) {
+    switch (userRole) {
+        case 'Child':
+            return 'SELECT name FROM adult_child WHERE user_id = ?';
+        case 'Parent':
+            return 'SELECT name FROM parents WHERE user_id = ?';
+        case 'Doctor':
+            return 'SELECT name FROM doctors WHERE user_id = ?';
+        case 'SRVCPRVDR':
+            return 'SELECT name FROM service_provider_tbl WHERE user_id = ?';
+        default:
+            throw new Error('Invalid user role');
+    }
+}
+
 
 app.post('/google-signup', async (req, res) => {
     const { gname, gemail } = req.body;
@@ -516,8 +535,8 @@ app.get('/users/:userId', async (req, res) => {
                 userDetailsQuery = 'SELECT * FROM doctors WHERE user_id = ?';
             } else if (role === 'Child') {
                 userDetailsQuery = 'SELECT * FROM adult_child WHERE user_id = ?';
-            } else if (role === 'MedSeller') {
-                userDetailsQuery = 'SELECT * FROM medicine_seller WHERE user_id = ?';
+            } else if (role === 'SRVCPRVDR') {
+                userDetailsQuery = 'SELECT * FROM service_provider_tbl WHERE user_id = ?';
             }
 
             // Fetch user details from the respective table
@@ -599,7 +618,7 @@ app.post('/activateUser/:userId', async (req, res) => {
 
     try {
         // Query the database to get user details based on userId and user role
-        const userQuery = 'SELECT u.email, u.role, p.name AS parent_name, d.name AS doctor_name, ac.name AS adult_child_name FROM users u LEFT JOIN parents p ON u.user_id = p.user_id LEFT JOIN doctors d ON u.user_id = d.user_id LEFT JOIN adult_child ac ON u.user_id = ac.user_id WHERE u.user_id = ?';
+        const userQuery = 'SELECT u.email, u.role, p.name AS parent_name, d.name AS doctor_name, ac.name AS adult_child_name, sp.name AS servicePro FROM users u LEFT JOIN parents p ON u.user_id = p.user_id LEFT JOIN doctors d ON u.user_id = d.user_id LEFT JOIN adult_child ac ON u.user_id = ac.user_id LEFT JOIN service_provider_tbl sp ON u.user_id = sp.user_id WHERE u.user_id = ?';
         const [userResult] = await db.promise().query(userQuery, [userId]);
         if (userResult.length === 0) {
             return res.status(404).json({ error: 'User not found' });
@@ -616,7 +635,7 @@ app.post('/activateUser/:userId', async (req, res) => {
             from: process.env.GMAIL, // Replace with your email address
             to: user.email,
             subject: 'Account Activation',
-            text: `Hello ${user.role === 'Parent' ? user.parent_name : (user.role === 'Doctor' ? user.doctor_name : user.adult_child_name)},
+            text: `Hello ${user.role === 'Parent' ? user.parent_name : (user.role === 'Doctor' ? user.doctor_name : (user.role === 'SRVCPRVDR' ? user.servicePro : user.adult_child_name ))},
             \n\nYour account has been Activated. We're determined for your better life..\n\nBest regards, ParentAssist`,
         };
 
@@ -1932,52 +1951,6 @@ app.post('/send-terms-email', (req, res) => {
     });
 });
 
-//Seller Registration
-app.post('/sellerRegister', pdfUpload.single('testResultFile'), async (req, res) => {
-    const { name, address, email, phone, password } = req.body;
-
-    const checkEmailQuery = 'SELECT * FROM users WHERE email = ?';
-    const [existingUser] = await db.promise().query(checkEmailQuery, [email]);
-
-
-
-    if (existingUser.length > 0) {
-
-        return res.status(400).json({ error: 'Email already registered' });
-    }
-
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-    let testResultFile = null;
-
-    const testResultFilePath = req.file.path;
-    const relativeTestResultPath = path.normalize(testResultFilePath).replace(/^public[\\/]+/, '');
-    testResultFile = relativeTestResultPath;
-
-    // console.log('Received data:', { name, address, email, password, phone });
-    // Insert user data into 'user' table
-    const userSql = 'INSERT INTO users (email, password, role,user_status) VALUES (?, ?, "MedSeller","DEACTIVE")';
-    db.query(userSql, [email, hashedPassword], (err, userResult) => {
-        if (err) {
-            console.error('Error inserting user data:', err);
-            return res.status(500).json({ message: 'Error registering user' });
-        }
-
-        // Insert additional data into 'adult_child' table
-        const adultChildSql = 'INSERT INTO medicine_seller (name, address, phone, med_license, user_id) VALUES (?, ?, ?, ?, ?)';
-        const user_id = userResult.insertId;
-        db.query(adultChildSql, [name, address, phone, testResultFile, user_id], err => {
-            if (err) {
-                console.error('Error inserting adult_child data:', err);
-                return res.status(500).json({ message: 'Error registering user' });
-            }
-
-            res.status(200).json({ message: 'Registration successful' });
-        });
-    });
-});
-
 // Seller Medicine View API endpoint
 app.get('/sellerMedicineView/:seller_user_id', (req, res) => {
     const { seller_user_id } = req.params;
@@ -2631,6 +2604,166 @@ app.get('/getMedicineRoutineDetailsChildReport', (req, res) => {
         res.status(500).json({ message: 'Failed to fetch medicine routine details' });
     }
 });
+
+app.post("/serviceProviderRegister", pdfUpload.fields([{ name: "pdfFile", maxCount: 1 }]), async (req, res) => {
+
+    try {
+        const { name, address, adharNumber, email, phone, password, pdfFile } = req.body;
+
+        let filePath = null;
+
+        const pdfFile_path = req.files.pdfFile[0].path;
+        const relativepdfFile_path = path.normalize(pdfFile_path).replace(/^public[\\/]+/, '');
+
+        filePath = relativepdfFile_path;
+
+        // Check if the 'password' field is present
+        if (!password) {
+            return res.status(400).json({ error: 'Password is required' });
+        }
+
+        const checkEmailQuery = 'SELECT * FROM users WHERE email = ?';
+        const [existingUser] = await db.promise().query(checkEmailQuery, [email]);
+
+        if (existingUser.length > 0) {
+            return res.status(400).json({ error: 'Email already registered' });
+        }
+
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+        // Insert user data into 'user' table
+        const userSql = 'INSERT INTO users (email, password, role,user_status) VALUES (?, ?, "SRVCPRVDR","DEACTIVE")';
+        const [userResult] = await db.promise().query(userSql, [email, hashedPassword]);
+
+
+
+        // Insert additional data into 'service_provider_tbl' table
+        const serviceProviderSql = 'INSERT INTO service_provider_tbl (name, address, adhar_number, phn_num, adhar_card, user_id) VALUES (?, ?, ?, ?, ?, ?)';
+        const user_id = userResult.insertId;
+
+        await db.promise().query(serviceProviderSql, [name, address, adharNumber, phone, filePath, user_id]);
+
+        res.status(200).json({ message: 'Registration successful' });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'An error occurred. Please try again later.' });
+    }
+
+});
+
+app.post('/addService', (req, res) => {
+    const { service, subServiceDes, location, latitude, longitude, userId } = req.body;
+
+    // Check if the service already exists for the user
+    db.query('SELECT service_id FROM home_service_tbl WHERE service = ? AND sp_id = (SELECT sp_id FROM service_provider_tbl WHERE user_id = ?)', [service, userId], (error, existingServiceResult) => {
+        if (error) {
+            console.error('Error checking existing service:', error);
+            return res.status(500).json({ error: 'Internal Server Error' });
+        }
+
+        if (existingServiceResult.length > 0) {
+
+            // Service already exists, retrieve the service ID
+            const homeServiceId = existingServiceResult[0].service_id;
+
+            // Check if the subService already exists for the same service
+            db.query('SELECT location_id FROM service_location_tbll WHERE location = ? AND service_id = ?', [location, homeServiceId], (error, existingSubServiceResult) => {
+                if (error) {
+                    console.error('Error checking existing subService:', error);
+                    return res.status(500).json({ error: 'Internal Server Error' });
+                }
+
+                if (existingSubServiceResult.length > 0) {
+                    
+                    return res.status(500).json({ error: 'Service Already Existing For Same Location' });
+
+
+                } else {
+                    // SubService doesn't exist, insert a new subService
+                    db.query('INSERT INTO service_location_tbll (location, latitude, longitude, status, service_id) VALUES (?, ?, ?, ?, ?)', [location, latitude, longitude, "", homeServiceId], (error, subServiceResult) => {
+                        if (error) {
+                            console.error('Error inserting Location', error);
+                            return res.status(500).json({ error: 'Internal Server Error' });
+                        }
+
+                            res.status(200).json({ message: 'Service added successfully!' });
+                    });
+                }
+            });
+        } else {
+            // Service doesn't exist, insert a new service
+            db.query('INSERT INTO home_service_tbl (service, service_dec, sp_id) VALUES (?, ?, (SELECT sp_id FROM service_provider_tbl WHERE user_id = ?))', [service, subServiceDes, userId], (error, homeServiceResult) => {
+                if (error) {
+                    console.error('Error inserting into Service', error);
+                    return res.status(500).json({ error: 'Internal Server Error' });
+                }
+
+                const homeServiceId = homeServiceResult?.insertId;
+
+                if (!homeServiceId) {
+                    console.error('Error retrieving homeServiceId:', homeServiceResult);
+                    return res.status(500).json({ error: 'Internal Server Error' });
+                }
+
+                // Insert into sub_service_tbl
+                db.query('INSERT INTO service_location_tbll (location, latitude, longitude, status, service_id) VALUES (?, ?, ?, ?, ?)', [location, latitude, longitude, "", homeServiceId], (error, subServiceResult) => {
+                    if (error) {
+                        console.error('Error inserting Location:', error);
+                        return res.status(500).json({ error: 'Internal Server Error' });
+                    }
+                        res.status(200).json({ message: 'Service added successfully!' });
+                });
+            });
+        }
+    });
+});
+
+app.get('/api/distinct-locations', (req, res) => {
+    const query = 'SELECT DISTINCT location, latitude, longitude FROM service_location_tbll';
+
+    db.query(query, (error, results) => {
+        if (error) {
+            console.error('Error executing MySQL query:', error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        } else {
+            res.json(results);
+        }
+    });
+});
+
+app.get('/servicesperlocation', (req, res) => {
+    const { latitude, longitude } = req.query;
+
+    // Updated query to get distinct services and count of service providers
+    const query = `
+        WITH DistinctServices AS (
+            SELECT DISTINCT hs.service
+            FROM home_service_tbl hs
+            INNER JOIN service_location_tbll sl ON hs.service_id = sl.service_id
+            WHERE sl.latitude = ? AND sl.longitude = ?
+        )
+        SELECT ds.service, COUNT(sp.sp_id) AS provider_count
+        FROM DistinctServices ds
+        LEFT JOIN home_service_tbl hs ON ds.service = hs.service
+        LEFT JOIN service_provider_tbl sp ON hs.sp_id = sp.sp_id
+        GROUP BY ds.service;
+    `;
+
+    db.query(query, [latitude, longitude], (err, results) => {
+        if (err) {
+            console.error('Error fetching services:', err);
+            res.status(500).json({ error: 'Internal Server Error' });
+        } else {
+            res.json(results);
+        }
+    });
+});
+
+
+
+
+
 
 
 function generateRandomPassword() {

@@ -14,7 +14,6 @@ function Admin() {
     const [searchQuery, setSearchQuery] = useState("");
     const [email, setEmail] = useState('');
     const [emailError, setEmailError] = useState('');
-    const [showForm, setShowForm] = useState(false);
     const token = JSON.parse(localStorage.getItem('token'))
     const navigate = useNavigate();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -217,13 +216,6 @@ function Admin() {
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
-                            <div className="nav-item px-3">
-                                <button className="btn btn-success btn-lg"
-                                    onClick={() => setShowForm(true)} >
-                                    <i className="bi bi-plus-lg"></i>
-                                    Add Medicine Seller
-                                </button>
-                            </div>
                         </div>
                         <ul className="navbar-nav ms-auto me-5">
                             <li className="nav-item px-3">
@@ -387,43 +379,6 @@ function Admin() {
                     </main>
                 </div >
             </div >
-
-            <Modal show={showForm} onHide={() => {
-                setShowForm(false);
-                window.location.reload();
-            }}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Add Medcine Seller</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <form onSubmit={handleSubmit}>
-                        <div className="">
-                            <span><i className="bi bi-envelope-fill icon"></i></span>
-                            <input type="email" placeholder="Enter Medicine Seller e-mail" name="email" value={email} onChange={handleEmail} required />
-                            <div className="red-text" id="name_err">{emailError}</div> <br />
-                        </div>
-                        <div className="col-12 w-100 d-flex justify-content-center align-content-center">
-                            <button
-                                className="btn btn-primary btn-lg btn-block"
-                                type="submit"
-                                id="submit"
-                                name="submit"
-                            >
-                                Send Terms and condition
-                            </button>
-                        </div>
-                        <div className="p-2">
-                            {submitClicked && (
-                                <AlertBox
-                                    variant={alertInfo.variant}
-                                    message={alertInfo.message}
-                                    onClose={handleAlertClose}
-                                />
-                            )}
-                        </div>
-                    </form>
-                </Modal.Body>
-            </Modal>
 
             <Modal show={showPdfModal} onHide={closePdfModal}>
                 <Modal.Header closeButton>

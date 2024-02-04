@@ -12,6 +12,8 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Register from './components/Register';
 import Home from './components/Home';
 import Login from './components/Login';
@@ -34,7 +36,7 @@ import AdminUserView from './components/UsersView/AdminUserView';
 import AdminAddServices from './components/UsersView/AdminAddServices';
 import ParentServiceView from './components/UsersView/ParentServiceView';
 import TermsCondition from './components/UsersView/TermsContion';
-import SellerRegister from './components/SellerRegister';
+import ServiceProviderRegister from './components/HomeMaintenance/ServiceProviderRegister.js';
 import MedicineSeller from './components/Users/MedicineSeller';
 import MedSellerProfileUpdate from './components/Users/MedSellerProfileUpdate';
 import ParentTherapyBooking from './components/Booking/ParentTherapyBooking';
@@ -42,6 +44,9 @@ import TherapyBookingBilling from './components/Billing Page/TherapyBookingBilli
 import ParentBookedTherapyView from './components/UsersView/ParentBookedTherapyView';
 import ChildReports from './components/Reports/ChildReports';
 import Logout from './components/Logout';
+import HomeMaintenance from './components/HomeMaintenance/HomeMaintenancePage.js';
+import ServiceProviderHomePage from './components/Users/ServiceProvideHomePage.js';
+import AddService from './components/HomeMaintenance/AddService.js';
 
 const router = createBrowserRouter([
   {
@@ -136,8 +141,8 @@ const router = createBrowserRouter([
     element: <TermsCondition />
   },
   {
-    path:"/seller-registration",
-    element: <SellerRegister />
+    path:"/service-registration",
+    element: <ServiceProviderRegister />
   },
   {
     path:"/MedicineSeller",
@@ -166,6 +171,18 @@ const router = createBrowserRouter([
   {
     path:"/LogOut",
     element: <Logout />
+  },
+  {
+    path:"/HomeMaintenancePage",
+    element: <HomeMaintenance />
+  },
+  {
+    path:"/ServiceProviderHomePage",
+    element: <ServiceProviderHomePage />
+  },
+  {
+    path:"/AddService",
+    element: <AddService />
   }
   
 
@@ -177,6 +194,7 @@ root.render(
     <RouterProvider router={router}>
       <App />
     </RouterProvider>
+    <ToastContainer />
   </React.StrictMode>
   </GoogleOAuthProvider>
 );

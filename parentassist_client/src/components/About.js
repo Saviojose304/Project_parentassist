@@ -3,6 +3,7 @@ import './About.css';
 import picss from './about-us-bg.png'
 import healthpic from './HMO-2-1.jpg'
 import stresspic from './stress-relief.jpg'
+import homemaintenance from '../assets/images/homemaintenance.jpg'
 function About() {
     return (
         <>
@@ -96,7 +97,8 @@ function About() {
                                 </div>
                             </div>
                         </div>
-                    </div><div className="container">
+                    </div>
+                    <div className="container">
                         <div className="card">
                             <div className="row no-gutters">
                                 <div className="col-md-6">
@@ -117,6 +119,36 @@ function About() {
                                             and rejuvenate your spirit,helping you navigate life's challenges with calmness and clarity.
                                         </p>
                                         <a href="/Login" className="btn btn-primary">
+                                            Get Service
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="container">
+                        <div className="card">
+                            <div className="row no-gutters">
+                                <div className="col-md-6">
+                                    <img src={homemaintenance} className="card-img" alt="health_maintain_image" />
+                                </div>
+                                <div className="col-md-6">
+                                    <div className="card-body">
+                                        <h2 className="fw-bold mb-4" style={{ color: "#116396" }}>
+                                            Home Maintenance
+                                        </h2>
+                                        <p>
+                                            Discover serenity with our Home Maintenance service. Our skilled professionals 
+                                            <br className="d-none d-sm-block" /> 
+                                            deliver seamless solutions, ensuring your space remains a haven. From routine  
+                                            <br className="d-none d-sm-block" />
+                                            upkeep to specialized tasks, we handle it all. Experience the ease of a well-maintained
+                                            <br className="d-none d-sm-block" /> 
+                                            home, allowing you to focus on what truly matters. Your comfort, our priority. 
+                                            <br className="d-none d-sm-block" /> 
+                                            Welcome to worry-free living with us!
+                                        </p>
+                                        <a href="/HomeMaintenancePage" className="btn btn-primary">
                                             Get Service
                                         </a>
                                     </div>
