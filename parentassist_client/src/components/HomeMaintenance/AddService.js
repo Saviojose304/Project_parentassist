@@ -177,13 +177,9 @@ function AddService() {
                     toast.success("Service added successfully!");
                     // Optionally, you can reset the form or navigate to another page
                     // Resetting form:
-                    // setService("");
-                    // setSubService("");
-                    // setSubServiceDes("");
-                    // setAmount("");
-                    // setLocation("");
-                    // setLatitude("");
-                    // setLongitude("");
+                    setLocation("");
+                    setLatitude("");
+                    setLongitude("");
                 } else {
                     if (response.data.error === 'Service Already Existing For Same Location') {
                         toast.error("Service already exists for the same location.");
@@ -218,6 +214,11 @@ function AddService() {
             console.log(error);
         }
     };
+
+    const handleServiceList = () => {
+        navigate("/ServiceProviderHomePage")
+    }
+
     return (
         <>
             <header>
@@ -250,7 +251,7 @@ function AddService() {
                                                 <i className="bi bi-house-gear-fill"><span className="ml-2">Add Service</span></i>
                                             </a>
                                         </button>
-                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }}>
+                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleServiceList}>
                                             <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline text-truncate" data-bs-parent="#sidebar">
                                                 <i class="bi bi-list-columns"><span className=" ml-2">Service List</span></i>
                                             </a>

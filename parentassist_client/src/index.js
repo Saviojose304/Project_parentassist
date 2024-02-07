@@ -47,6 +47,8 @@ import Logout from './components/Logout';
 import HomeMaintenance from './components/HomeMaintenance/HomeMaintenancePage.js';
 import ServiceProviderHomePage from './components/Users/ServiceProvideHomePage.js';
 import AddService from './components/HomeMaintenance/AddService.js';
+import ChildProfileRequestService from './components/Users/ChildProfileRequestService.js';
+import ParentRequsetService from './components/Users/ParentRequestService.js';
 
 const router = createBrowserRouter([
   {
@@ -183,6 +185,14 @@ const router = createBrowserRouter([
   {
     path:"/AddService",
     element: <AddService />
+  },
+  {
+    path:"/requestService",
+    element: <ChildProfileRequestService />
+  },
+  {
+    path:"/parentRequestService",
+    element: <ParentRequsetService />
   }
   
 

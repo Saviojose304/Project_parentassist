@@ -69,6 +69,10 @@ function Parent() {
         navigate('/ChildDoctorView');
     };
 
+    const handledoctorVisits = () => {
+        navigate('/Parent');
+    };
+
     const handleService = () => {
         navigate('/ParentServiceView');
     };
@@ -77,10 +81,11 @@ function Parent() {
         navigate('/ParentBookedTherapyView')
     };
 
-    const toggleSidebar = () => {
-        setSidebarOpen(!isSidebarOpen);
-    };
+    const handleRequsetService = () => {
+        navigate('/parentRequestService')
+    }
 
+   
     const handleMoreDetailsClick = (doctor_visit_id) => {
         // Toggle the expanded state for the selected doctor visit card
         const updatedDoctorVisits = doctorVisits.map((visit) => ({
@@ -99,7 +104,7 @@ function Parent() {
                         <a style={{ color: "white" }} className="navbar-brand ms-5" href="#">ParentAssist</a>
                         <ul className="navbar-nav ms-auto me-5">
                             <li className="nav-item px-3 py-2">
-                                <a style={{ color: "white" }} href="#" data-bs-target="#sidebar" id="username" data-bs-toggle="collapse" className="text-decoration-none text-end" onClick={toggleSidebar}>{parsedToken ? parsedToken.email : 'Name'}</a>
+                                <a style={{ color: "white" }} href="#" data-bs-target="#sidebar" id="username" data-bs-toggle="collapse" className="text-decoration-none text-end">{parsedToken ? parsedToken.userName : 'Name'}</a>
                             </li>
                         </ul>
                     </div>
@@ -110,7 +115,7 @@ function Parent() {
                     <div className="container pt-5">
                         <div className="row flex-nowrap" >
                             <div className=" px-0">
-                                <div id="sidebar" className={isSidebarOpen ? 'collapse collapse-horizontal ' : 'show border-end pt-2'}>
+                                <div id="sidebar" className='show border-end pt-2'>
                                     <div className="d-grid  mx-auto ">
                                         <button type="button" id="profile" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleprofile} >
                                             <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar">
@@ -119,7 +124,7 @@ function Parent() {
                                         </button>
                                         <button type="button" id="service" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleService}>
                                             <a href="" className="text-decoration-none list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar">
-                                                <i className="bi bi-people-fill"><span>Services</span></i>
+                                                <i className="bi bi-people-fill"><span>Therapy Services</span></i>
                                             </a>
                                         </button>
                                         <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleBookedTherapy}>
@@ -128,9 +133,20 @@ function Parent() {
                                             </a>
                                         </button>
 
+                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleRequsetService}>
+                                            <a href="" className="text-decoration-none list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar">
+                                                <i className="bi bi-house-gear-fill"><span>Home Services</span></i>
+                                            </a>
+                                        </button>
+
                                         <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handledoctor}>
                                             <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline text-truncate" data-bs-parent="#sidebar">
                                                 <i class="bi bi-activity"><span>Doctors</span></i>
+                                            </a>
+                                        </button>
+                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handledoctorVisits}>
+                                            <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline text-truncate" data-bs-parent="#sidebar">
+                                                <i class="bi bi-activity"><span>Doctors Visits</span></i>
                                             </a>
                                         </button>
                                         <button type="button" id="logout" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={logOut}>
@@ -146,7 +162,7 @@ function Parent() {
 
 
                 </div>
-                <div className={isSidebarOpen ? 'col-12' : 'col-10 pt-2'}>
+                <div style={{ paddingTop: '3rem' }} className='col-10'>
                     <main className="col overflow-auto h-100">
                         <div className="bg-light border rounded-3 p-5">
                             <h2>Doctor Visits</h2>

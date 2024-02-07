@@ -198,7 +198,7 @@ function Doctor() {
                                 <button className="btn btn-success" onClick={() => setShowForm(true)}>Add Leave Days</button>
                             </li>
                             <li className="nav-item px-3 py-2">
-                                <a style={{ color: "white" }} href="#" data-bs-target="#sidebar" data-bs-toggle="collapse" className="text-decoration-none" onClick={toggleSidebar}>{parsedToken ? parsedToken.email : 'Name'}</a>
+                                <a style={{ color: "white" }} href="#" data-bs-target="#sidebar" data-bs-toggle="collapse" className="text-decoration-none" onClick={toggleSidebar}>{parsedToken ? parsedToken.userName : 'Name'}</a>
                             </li>
                         </ul>
                     </div>

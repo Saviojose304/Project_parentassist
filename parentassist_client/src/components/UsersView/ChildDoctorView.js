@@ -53,6 +53,10 @@ function ChildDoctorView() {
         navigate('/ChildDoctorView')
     };
 
+    const handledoctorVisits = () => {
+        navigate('/Parent')
+    };
+
     const handleReports = () => {
         navigate('/ChildReports')
     }
@@ -206,6 +210,11 @@ function ChildDoctorView() {
                                         <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handledoctor}>
                                             <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline text-truncate" data-bs-parent="#sidebar">
                                                 <i class="bi bi-activity"><span>Doctors</span></i>
+                                            </a>
+                                        </button>
+                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handledoctorVisits}>
+                                            <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline text-truncate" data-bs-parent="#sidebar">
+                                                <i class="bi bi-activity"><span>Doctors Visits</span></i>
                                             </a>
                                         </button>
                                         <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleReports}>

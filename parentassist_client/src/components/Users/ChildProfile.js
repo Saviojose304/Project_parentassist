@@ -81,6 +81,10 @@ function ChildProfile() {
         navigate('/ChildReports')
     }
 
+    const handleService = () => {
+        navigate('/requestService')
+    }
+
     const toggleFatherDetails = async () => {
         setShowFatherDetails(true);
         setShowMotherDetails(false);
@@ -322,7 +326,7 @@ function ChildProfile() {
                                 <button type="button" className="btn btn-success"><a className="text-decoration-none text-white" href="/DoctorRegister"><i className="bi bi-plus-lg"></i>Add Doctor</a></button>
                             </li>
                             <li className="nav-item px-3 py-2">
-                                <a style={{ color: "white" }} href="#" data-bs-target="#sidebar" data-bs-toggle="collapse" className="text-decoration-none" >{parsedToken ? parsedToken.email : 'Name'}</a>
+                                <a style={{ color: "white" }} href="#" data-bs-target="#sidebar" data-bs-toggle="collapse" className="text-decoration-none" >{parsedToken ? parsedToken.userName : 'Name'}</a>
                             </li>
                         </ul>
                     </div>
@@ -353,6 +357,11 @@ function ChildProfile() {
                                         <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleReports}>
                                             <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline text-truncate" data-bs-parent="#sidebar">
                                                 <i class="bi bi-file-earmark-pdf"><span>Reports</span></i>
+                                            </a>
+                                        </button>
+                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleService}>
+                                            <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline text-truncate" data-bs-parent="#sidebar">
+                                                <i class="bi bi-house-gear-fill"><span>Service</span></i>
                                             </a>
                                         </button>
                                         <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={logOut}>

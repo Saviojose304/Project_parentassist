@@ -73,7 +73,7 @@ function ServiceContainer({ latitude, longitude }) {
                             >
                                 <img src={service.icon} alt={service.title} className="w-16 h-16 mx-auto mb-4" />
                                 <h2 className="text-xl font-bold mb-2 text-center">{service.title}</h2>
-                                <p className="text-gray-600 text-center">{service.count}Available at your Location</p>
+                                <p className="text-gray-600 text-center">{service.count} Available at your Location</p>
                             </div>
                         ))}
                     </div>

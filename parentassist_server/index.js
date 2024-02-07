@@ -251,8 +251,17 @@ app.post('/google-signin', async (req, res) => {
             return res.status(401).json({ error: 'Your Account is Deactivated By Admin' });
         }
 
-        const token = jwt.sign({ userId: user.user_id, email: user.email, role: user.role }, SECRET_KEY, { expiresIn: '1h' });
-        res.json({ data: token, userId: user.user_id, role: user.role, email: user.email });
+        const selectNameQuery = getSelectNameQuery(user.role);
+        const [nameRows] = await db.promise().query(selectNameQuery, [user.user_id]);
+
+        if (nameRows.length === 0) {
+            return res.status(401).json({ error: 'Name not found for the user' });
+        }
+
+        const userName = nameRows[0].name;
+
+        const token = jwt.sign({ userId: user.user_id, email: user.email, userName: userName, role: user.role }, SECRET_KEY, { expiresIn: '1h' });
+        res.json({ data: token, userId: user.user_id, role: user.role, email: user.email, userName: userName });
     } catch (error) {
         console.error('Google Sign-In error:', error);
         res.status(500).json({ error: 'Error during Google Sign-In' });
@@ -375,7 +384,6 @@ app.post('/parent-register', async (req, res) => {
 
                 res.status(200).json({ message: 'Registration successful' });
             });
-
             const mailOptions = {
                 from: process.env.GMAIL,
                 to: email,
@@ -398,6 +406,8 @@ app.post('/parent-register', async (req, res) => {
                     res.status(200).json({ message: 'Registration successful. Email sent with details.' });
                 }
             });
+
+            res.status(200).json({ message: 'Registration successful' });
         });
 
     } catch (error) {
@@ -635,7 +645,7 @@ app.post('/activateUser/:userId', async (req, res) => {
             from: process.env.GMAIL, // Replace with your email address
             to: user.email,
             subject: 'Account Activation',
-            text: `Hello ${user.role === 'Parent' ? user.parent_name : (user.role === 'Doctor' ? user.doctor_name : (user.role === 'SRVCPRVDR' ? user.servicePro : user.adult_child_name ))},
+            text: `Hello ${user.role === 'Parent' ? user.parent_name : (user.role === 'Doctor' ? user.doctor_name : (user.role === 'SRVCPRVDR' ? user.servicePro : user.adult_child_name))},
             \n\nYour account has been Activated. We're determined for your better life..\n\nBest regards, ParentAssist`,
         };
 
@@ -2675,7 +2685,7 @@ app.post('/addService', (req, res) => {
                 }
 
                 if (existingSubServiceResult.length > 0) {
-                    
+
                     return res.status(500).json({ error: 'Service Already Existing For Same Location' });
 
 
@@ -2687,7 +2697,7 @@ app.post('/addService', (req, res) => {
                             return res.status(500).json({ error: 'Internal Server Error' });
                         }
 
-                            res.status(200).json({ message: 'Service added successfully!' });
+                        res.status(200).json({ message: 'Service added successfully!' });
                     });
                 }
             });
@@ -2712,7 +2722,7 @@ app.post('/addService', (req, res) => {
                         console.error('Error inserting Location:', error);
                         return res.status(500).json({ error: 'Internal Server Error' });
                     }
-                        res.status(200).json({ message: 'Service added successfully!' });
+                    res.status(200).json({ message: 'Service added successfully!' });
                 });
             });
         }
@@ -2760,10 +2770,170 @@ app.get('/servicesperlocation', (req, res) => {
     });
 });
 
+app.post('/requestService', async (req, res) => {
+    try {
+        const { service, subServiceDes, location, formattedDate, userId } = req.body;
 
 
+        // Check if the same service request already exists for the specified date and user
+        const checkExistingRequestQuery = `
+        SELECT * FROM service_request_tbl sr
+    JOIN users u ON sr.user_id = u.user_id
+    WHERE sr.service_name = ? AND sr.date = ? AND (
+        (u.role = 'Child' AND sr.user_id =? )  OR
+        (sr.user_id IN (
+            SELECT user_id FROM adult_child WHERE adult_child_id = (SELECT adult_child_id FROM parents WHERE user_id = ?)      ))
+    )
+`;
+
+        const [existingRequest] = await db.promise().query(checkExistingRequestQuery, [service, formattedDate, userId, userId]);
+
+        if (existingRequest.length > 0) {
+            // A similar request already exists
+            return res.status(500).json({ error: 'Similar service request already exists for this date and user.' });
+        }
+
+        // Insert values into service_request_tbl
+        const insertRequestQuery = `
+            INSERT INTO service_request_tbl (service_name, service_dec, location, date, status, user_id)
+            VALUES (?, ?, ?, ?, 'Pending', ?)
+        `;
+
+        await db.promise().query(insertRequestQuery, [service, subServiceDes, location, formattedDate, userId]);
+
+        res.status(200).json({ message: 'Service request submitted successfully.' });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'An error occurred. Please try again later.' });
+    }
+});
 
 
+app.get('/getRequestServices', async (req, res) => {
+    try {
+        const userId = req.query.user_id;
+
+        // Get service provider details with service and location details
+        const serviceProviderQuery = `
+            SELECT
+                sp.*,
+                hs.service,
+                hs.service_dec,
+                sl.location,
+                sl.latitude,
+                sl.longitude,
+                sl.status AS service_location_status
+            FROM
+                service_provider_tbl sp
+                JOIN home_service_tbl hs ON sp.sp_id = hs.sp_id
+                JOIN service_location_tbll sl ON hs.service_id = sl.service_id
+            WHERE
+                sp.user_id = ?
+        `;
+
+        const [serviceProviderDetails] = await db.promise().query(serviceProviderQuery, [userId]);
+
+        if (serviceProviderDetails.length === 0) {
+            res.status(404).json({ message: 'User not found' });
+            return;
+        }
+
+        // Extract service name, location, and location status from service provider details
+        const services = serviceProviderDetails.map(service => ({
+            name: service.service,
+            location: service.location,
+            locationStatus: service.service_location_status
+        }));
+
+        // Array to store matching service requests
+        let matchingServiceRequests = [];
+
+        // Loop through each service and fetch matching service requests
+        for (const service of services) {
+            const { name, location, locationStatus } = service;
+
+            // Get service requests with matching service name, location, and status 'pending'
+            const serviceRequestsQuery = `
+                SELECT
+                    *
+                FROM
+                    service_request_tbl
+                WHERE
+                    service_name = ?
+                    AND location = ?
+                    AND status = 'pending'
+            `;
+
+            const [serviceRequests] = await db.promise().query(serviceRequestsQuery, [name, location]);
+
+            // Add matching service requests to the array, including location status
+            matchingServiceRequests = matchingServiceRequests.concat(
+                serviceRequests.map(request => ({
+                    ...request,
+                    locationStatus
+                }))
+            );
+        }
+
+        res.status(200).json({ matchingServiceRequests });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+app.post('/acceptRequest', pdfUpload.fields([{ name: "file", maxCount: 1 }]), async (req, res) => {
+    try {
+        const { srq_id, date, userId, serviceName } = req.body;
+
+        let filePath = null;
+
+        const pdfFile_path = req.files.file[0].path;
+        const relativepdfFile_path = path.normalize(pdfFile_path).replace(/^public[\\/]+/, '');
+
+        filePath = relativepdfFile_path;
+
+        // Check if the user has already submitted an invoice for the given srq_id and sp_id
+        const existingInvoiceQuery = 'SELECT * FROM service_reqaccept_tbl WHERE srq_id = ? AND sp_id = (SELECT sp_id FROM service_provider_tbl WHERE user_id = ?)';
+        const [existingInvoiceResult] = await db.promise().query(existingInvoiceQuery, [srq_id, userId]);
+
+        if (existingInvoiceResult.length > 0) {
+            return res.status(400).json({ error: 'Invoice already submitted for this request' });
+        }
+
+        // Continue with the rest of the logic if no existing invoice is found
+
+        const spQuery = 'SELECT sp_id FROM service_provider_tbl WHERE user_id = ?';
+        const [spResult] = await db.promise().query(spQuery, [userId]);
+        const sp_id = spResult[0].sp_id;
+
+        // Get service_id from home_service_tbl using sp_id
+        const serviceQuery = 'SELECT service_id FROM home_service_tbl WHERE service = ? AND sp_id = ?';
+        const [serviceResult] = await db.promise().query(serviceQuery, [serviceName, sp_id]);
+        const service_id = serviceResult[0].service_id;
+
+        // Insert into service_reqaccept_tbl
+        const insertQuery = `
+          INSERT INTO service_reqaccept_tbl (srq_id, invoice, date, sp_id)
+          VALUES (?, ?, ?, ?)
+        `;
+        await db.promise().query(insertQuery, [srq_id, filePath, date, sp_id]);
+
+        // Update status in service_location_tbll
+        const updateQuery = `
+          UPDATE service_location_tbll
+          SET status = 'pending'
+          WHERE service_id = ?;
+        `;
+        await db.promise().query(updateQuery, [service_id]);
+
+        res.status(200).json({ message: 'Request accepted successfully' });
+    } catch (error) {
+        console.error('Error submitting invoice:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
 
 
 function generateRandomPassword() {
