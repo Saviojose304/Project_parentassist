@@ -2780,13 +2780,16 @@ app.post('/requestService', async (req, res) => {
         SELECT * FROM service_request_tbl sr
     JOIN users u ON sr.user_id = u.user_id
     WHERE sr.service_name = ? AND sr.date = ? AND (
-        (u.role = 'Child' AND sr.user_id =? )  OR
+        (u.role = 'Child' AND sr.user_id = ? )  OR
         (sr.user_id IN (
-            SELECT user_id FROM adult_child WHERE adult_child_id = (SELECT adult_child_id FROM parents WHERE user_id = ?)      ))
+            SELECT user_id FROM adult_child WHERE adult_child_id = (SELECT adult_child_id FROM parents WHERE user_id = ?))
+        OR (sr.user_id IN (SELECT user_id FROM parents WHERE adult_child_id = (SELECT adult_child_id FROM parents WHERE Gender = (SELECT Gender FROM parents WHERE user_id = ?) AND user_id = ?))) OR 
+         (sr.user_id IN (SELECT user_id FROM parents WHERE Gender = "Male" AND adult_child_id = (SELECT adult_child_id FROM adult_child WHERE user_id = ?) ) OR (SELECT user_id FROM parents WHERE Gender = "Female" AND adult_child_id = (SELECT adult_child_id FROM adult_child WHERE user_id = ?)) )
+        )
     )
 `;
 
-        const [existingRequest] = await db.promise().query(checkExistingRequestQuery, [service, formattedDate, userId, userId]);
+        const [existingRequest] = await db.promise().query(checkExistingRequestQuery, [service, formattedDate, userId, userId, userId, userId, userId, userId]);
 
         if (existingRequest.length > 0) {
             // A similar request already exists
@@ -2796,7 +2799,7 @@ app.post('/requestService', async (req, res) => {
         // Insert values into service_request_tbl
         const insertRequestQuery = `
             INSERT INTO service_request_tbl (service_name, service_dec, location, date, status, user_id)
-            VALUES (?, ?, ?, ?, 'Pending', ?)
+            VALUES (?, ?, ?, ?, 'Requested', ?)
         `;
 
         await db.promise().query(insertRequestQuery, [service, subServiceDes, location, formattedDate, userId]);
@@ -2835,8 +2838,7 @@ app.get('/getRequestServices', async (req, res) => {
         const [serviceProviderDetails] = await db.promise().query(serviceProviderQuery, [userId]);
 
         if (serviceProviderDetails.length === 0) {
-            res.status(404).json({ message: 'User not found' });
-            return;
+            return res.status(404).json({ message: 'User not found' });
         }
 
         // Extract service name, location, and location status from service provider details
@@ -2846,42 +2848,91 @@ app.get('/getRequestServices', async (req, res) => {
             locationStatus: service.service_location_status
         }));
 
-        // Array to store matching service requests
-        let matchingServiceRequests = [];
+        const getUserRole = async (name, location) => {
+            const userRoleQuery = `
+                SELECT DISTINCT role
+                FROM service_request_tbl sr
+                JOIN users u ON sr.user_id = u.user_id
+                WHERE sr.service_name = ? AND sr.location = ?
+                LIMIT 1;
+            `;
 
-        // Loop through each service and fetch matching service requests
-        for (const service of services) {
-            const { name, location, locationStatus } = service;
+            const [userRoleResult] = await db.promise().query(userRoleQuery, [name, location]);
 
-            // Get service requests with matching service name, location, and status 'pending'
+            if (userRoleResult.length === 0) {
+                return null;
+            }
+
+            return userRoleResult[0].role;
+        };
+
+        const getServiceRequests = async (name, location, userDetailsTable, locationStatus) => {
             const serviceRequestsQuery = `
                 SELECT
-                    *
+                    sr.*,
+                    ${userDetailsTable}.address,
+                    ${userDetailsTable}.phone
                 FROM
-                    service_request_tbl
+                    service_request_tbl sr
+                    JOIN ${userDetailsTable} ON sr.user_id = ${userDetailsTable}.user_id
                 WHERE
-                    service_name = ?
-                    AND location = ?
-                    AND status = 'pending'
+                    sr.service_name = ?
+                    AND sr.location = ?
             `;
 
             const [serviceRequests] = await db.promise().query(serviceRequestsQuery, [name, location]);
 
-            // Add matching service requests to the array, including location status
-            matchingServiceRequests = matchingServiceRequests.concat(
-                serviceRequests.map(request => ({
-                    ...request,
-                    locationStatus
-                }))
-            );
-        }
+            return serviceRequests.map(request => ({
+                ...request,
+                user_address: request.address,
+                user_phone: request.phone,
+                locationStatus,
+            }));
+        };
 
-        res.status(200).json({ matchingServiceRequests });
+        try {
+            const userRolesAndRequests = await Promise.all(
+                services.map(async (service) => {
+                    const { name, location, locationStatus } = service;
+
+                    const userRole = await getUserRole(name, location);
+
+                    if (!userRole) {
+                        return null;
+                    }
+
+                    let userDetailsTable;
+
+                    if (userRole === 'Child') {
+                        userDetailsTable = 'adult_child';
+                    } else if (userRole === 'Parent') {
+                        userDetailsTable = 'parents';
+                    } else {
+                        return res.status(500).json({ message: 'Unsupported user role' });
+                    }
+
+                    return getServiceRequests(name, location, userDetailsTable, locationStatus);
+                })
+            );
+
+            // Filter out null values (requests for users not found)
+            const validRequests = userRolesAndRequests.filter(requests => requests !== null);
+
+            // Flatten the array
+            const matchingServiceRequests = [].concat(...validRequests);
+
+            return res.status(200).json({ matchingServiceRequests });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Internal Server Error' });
+        }
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Internal Server Error' });
+        return res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
+
 
 app.post('/acceptRequest', pdfUpload.fields([{ name: "file", maxCount: 1 }]), async (req, res) => {
     try {
@@ -2928,12 +2979,46 @@ app.post('/acceptRequest', pdfUpload.fields([{ name: "file", maxCount: 1 }]), as
         `;
         await db.promise().query(updateQuery, [service_id]);
 
+        const updateRequsetQuery = `
+        UPDATE service_request_tbl
+        SET status = 'pending'
+        WHERE srq_id = ?;
+      `;
+      await db.promise().query(updateRequsetQuery, [srq_id]);
+
         res.status(200).json({ message: 'Request accepted successfully' });
     } catch (error) {
         console.error('Error submitting invoice:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
+app.get('/getRequsetServicesList',  (req, res) => {
+        const getServiceQuery = `
+        SELECT sr.*, sa.*, sp.*
+        FROM service_request_tbl sr
+        LEFT JOIN service_reqaccept_tbl sa ON sr.srq_id = sa.srq_id
+        LEFT JOIN service_provider_tbl sp ON sa.sp_id = sp.sp_id
+        JOIN users u ON sr.user_id = u.user_id
+    WHERE ( 
+        (sr.user_id IN (
+            SELECT user_id FROM adult_child WHERE adult_child_id = (SELECT adult_child_id FROM parents WHERE user_id = "61"))
+        OR (sr.user_id IN (SELECT user_id FROM parents WHERE adult_child_id = (SELECT adult_child_id FROM parents WHERE Gender = (SELECT Gender FROM parents WHERE user_id = "61") AND user_id = "61"))) OR 
+         (sr.user_id IN (SELECT user_id FROM parents WHERE Gender = "Male" AND adult_child_id = (SELECT adult_child_id FROM adult_child WHERE user_id = "61") ) OR (SELECT user_id FROM parents WHERE Gender = "Female" AND adult_child_id = (SELECT adult_child_id FROM adult_child WHERE user_id = "61")) )
+        )
+        )
+        `;
+
+        db.query(getServiceQuery, (error, results) => {
+            if (error) {
+                console.error('Error executing MySQL query:', error);
+                res.status(500).json({ error: 'Internal Server Error' });
+            } else {
+                res.json(results);
+            }
+        });
+        
+})
 
 
 function generateRandomPassword() {

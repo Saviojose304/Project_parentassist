@@ -76,9 +76,9 @@ function ParentRequsetService() {
                     <div className="container-fluid">
                         <a style={{ color: "white" }} className="navbar-brand ms-5" href="#">ParentAssist</a>
                         <ul className="navbar-nav ms-auto me-5">
-                            {/* <li className="nav-item px-3">
+                            <li className="nav-item px-3">
                                 <button type="button" className="btn btn-success" onClick={handleModal}>Request Service</button>
-                            </li> */}
+                            </li>
                             <li className="nav-item px-3 py-2">
                                 <a style={{ color: "white" }} href="#" data-bs-target="#sidebar" id="username" data-bs-toggle="collapse" className="text-decoration-none text-end">{parsedToken ? parsedToken.userName : 'Name'}</a>
                             </li>
@@ -154,7 +154,7 @@ function ParentRequsetService() {
                             className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
                             onClick={closeModal}
                         >
-                            <IoMdClose size={24} />
+                            <IoMdClose className="bg-red-500 text-white" size={24} />
                         </button>
                         <Requsetservice />
                     </div>

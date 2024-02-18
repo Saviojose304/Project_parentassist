@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { IoMdClose } from "react-icons/io";
 import axios from "axios";
 import Requsetservice from "../Forms/RequestService";
+import RequestAndAcceptList from "../Pages/RequestAndAcceptList";
 function ChildProfileRequestService() {
     const token = localStorage.getItem('token');
     const parsedToken = JSON.parse(token); // Parse the token string to an object
@@ -140,7 +141,7 @@ function ChildProfileRequestService() {
                 </div>
                 <div style={{ paddingTop: '5rem' }} className='col-10'>
                     <div className="container">
-                       <h1>Requested Services</h1>
+                       <RequestAndAcceptList />
                     </div>
                 </div>
             </div>

@@ -16,7 +16,7 @@ function ServiceProviderHomePage() {
     const navigate = useNavigate();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [serviceList, setServiceList] = useState([]);
-    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [selectedDates, setSelectedDates] = useState({});
     const [selectedDate, setSelectedDate] = useState("NO");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
@@ -75,14 +75,16 @@ function ServiceProviderHomePage() {
         return new Date(dateString).toLocaleDateString('en-GB', options);
     };
 
-    const handleDateChange = (date) => {
-        setSelectedDate(date);
-        // Additional logic if needed
+    const handleRadioChange = (value, index) => {
+        setSelectedDates((prevDates) => {
+            return { ...prevDates, [index]: value };
+        });
     };
 
-    const handleRadioChange = (value) => {
-        setShowDatePicker(value === 'yes');
-        // Additional logic if needed
+    const handleDateChange = (value, index) => {
+        setSelectedDates((prevDates) => {
+            return { ...prevDates, [index]: value };
+        });
     };
 
     const handleAddInvoice = async (serviceId) => {
@@ -264,6 +266,8 @@ function ServiceProviderHomePage() {
                                         <h2 className="text-xl font-semibold mb-2">{service.service_name}</h2>
                                         <p className="text-gray-600 mb-2">Service Description: {service.service_dec}</p>
                                         <p className="text-gray-700 mb-2">Location: {service.location}</p>
+                                        <p className="text-gray-700 mb-2">Address: {service.address}</p>
+                                        <p className="text-gray-700 mb-2">Phone: {service.phone}</p>
                                         <p className="text-gray-700">Date: {formatDateString(service.date)}</p>
 
 
@@ -273,44 +277,43 @@ function ServiceProviderHomePage() {
                                             <div className="flex items-center">
                                                 <input
                                                     type="radio"
-                                                    id={`yes`}
-                                                    name={`changeDate`}
+                                                    id={`yes-${index}`}
+                                                    name={`changeDate-${index}`}
                                                     value="yes"
                                                     className="mr-2"
-                                                    onChange={() => handleRadioChange('yes')}
+                                                    onChange={() => handleRadioChange('yes', index)}
                                                 />
-                                                <label htmlFor={`yes`} className="cursor-pointer">
+                                                <label htmlFor={`yes-${index}`} className="cursor-pointer">
                                                     Yes
                                                 </label>
                                             </div>
                                             <div className="flex items-center ml-4">
                                                 <input
                                                     type="radio"
-                                                    id={`no`}
-                                                    name={`changeDate`}
+                                                    id={`no-${index}`}
+                                                    name={`changeDate-${index}`}
                                                     value="no"
                                                     className="mr-2"
-                                                    defaultChecked
                                                     onChange={() => {
-                                                        handleRadioChange('no');
-                                                        handleDateChange('No'); // Set date to "No" when selecting "No"
+                                                        handleRadioChange('no', index);
+                                                        handleDateChange('No', index); // Set date to "No" when selecting "No"
                                                     }}
                                                 />
-                                                <label htmlFor={`no`} className="cursor-pointer">
+                                                <label htmlFor={`no-${index}`} className="cursor-pointer">
                                                     No
                                                 </label>
                                             </div>
                                         </div>
 
                                         {/* Date picker for changing the date */}
-                                        {showDatePicker && (
+                                        {selectedDates[index] === 'yes' && (
                                             <div className="mt-4">
                                                 <label className="mr-2">Select Date:</label>
                                                 <input
                                                     type="date"
-                                                    value={selectedDate === 'No' ? 'No' : selectedDate}
-                                                    onChange={(e) => handleDateChange(e.target.value)}
-                                                    className=" w-full lg:w-2/3"
+                                                    value={selectedDates[index] === 'No' ? 'No' : selectedDates[index]}
+                                                    onChange={(e) => handleDateChange(e.target.value, index)}
+                                                    className="w-full lg:w-2/3"
                                                 />
                                             </div>
                                         )}
