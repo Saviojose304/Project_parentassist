@@ -11,15 +11,21 @@ function ServiceProviderHomePage() {
     const parsedToken = JSON.parse(token);
     const user_id = parsedToken.userId;
 
-    console.log(parsedToken);
+    // console.log(parsedToken);
 
     const navigate = useNavigate();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [serviceList, setServiceList] = useState([]);
+    const [acceptedServices, setAcceptedServices] = useState([]);
+    const [requestedServices, setRequestedServices] = useState([]);
     const [selectedDates, setSelectedDates] = useState({});
     const [selectedDate, setSelectedDate] = useState("NO");
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedAmount, setSelectedAmount] = useState("");
     const [selectedFile, setSelectedFile] = useState(null);
+    const [amountError, setAmountError] = useState('');
+    const [selectedDateToChange, setSelectedDateToChange] = useState("");
+
     const [error, setError] = useState('');
 
 
@@ -39,7 +45,13 @@ function ServiceProviderHomePage() {
             axios.get(`http://localhost:9000/getRequestServices?user_id=${user_id}`)
                 .then((response) => {
                     if (response.status === 200) {
+                        const services = response.data;
                         setServiceList(response.data);
+                        const accepted = services.matchingServiceRequests.filter(service => service.locationStatus === "Approved");
+                        const requested = services.matchingServiceRequests.filter(service => service.locationStatus === "" || service.locationStatus === "pending");
+
+                        setAcceptedServices(accepted);
+                        setRequestedServices(requested);
                     }
                 })
                 .catch((error) => {
@@ -76,32 +88,53 @@ function ServiceProviderHomePage() {
     };
 
     const handleRadioChange = (value, index) => {
+        setSelectedDateToChange(value);
         setSelectedDates((prevDates) => {
             return { ...prevDates, [index]: value };
         });
     };
 
     const handleDateChange = (value, index) => {
+        setSelectedDateToChange(value);
         setSelectedDates((prevDates) => {
             return { ...prevDates, [index]: value };
         });
     };
 
-    const handleAddInvoice = async (serviceId) => {
+    const handleAmountChange = (value, index) => {
+        // Use a regular expression to allow only numeric values
+        const numericValue = value.replace(/[^0-9]/g, '');
+
+        if (value !== numericValue) {
+            setAmountError('Please enter only numbers');
+        } else {
+            setAmountError('');
+        }
+
+        setSelectedAmount((prevAmounts) => {
+            return { ...prevAmounts, [index]: numericValue };
+        });
+    };
+
+
+    const handleAddInvoice = async (serviceId, index, serviceName) => {
         try {
+
+            // console.log(selectedAmount);
             if (!selectedFile) {
                 setIsModalOpen(true);
                 return;
             }
 
-            const formattedDate = selectedDate === 'No' ? "No" : formatDate(selectedDate);
+            const formattedDate = selectedDateToChange === 'No' ? "No" : formatDate(selectedDateToChange);
 
             const formData = new FormData();
             formData.append('file', selectedFile);
             formData.append('srq_id', serviceId);
+            formData.append('amount', selectedAmount[index]);
             formData.append('date', formattedDate);
             formData.append('userId', parsedToken.userId);
-            formData.append('serviceName', serviceList.matchingServiceRequests[0].service_name)
+            formData.append('serviceName', serviceName);
 
             const submitResponse = await axios.post(`http://localhost:9000/acceptRequest`, formData, {
                 headers: {
@@ -228,16 +261,22 @@ function ServiceProviderHomePage() {
                 </div>
                 <div style={{ paddingTop: '5rem' }} className='col-10'>
                     <div className="container">
-                        <h1>Service Request List</h1>
-                        {serviceList.matchingServiceRequests && serviceList.matchingServiceRequests.length > 0 ? (
-                            serviceList.matchingServiceRequests.map((service, index) => (
-                                <div key={index} className="relative border border-gray-400 rounded-lg p-4 hover:shadow-md transition duration-300"
-                                    style={{
-                                        boxShadow: "5px 5px 12px 0px rgba(173, 216, 230, 0.9)",
-                                    }}>
-                                    <div className="top-0 right-0 p-2 flex items-center absolute">
-                                        {service.locationStatus === "Approved" ? (
-                                            <>
+
+                        <div className=" w-2/3   shadow-md shadow-gray-400 rounded-md mt-28 lg:mt-12 bg-white mx-auto ">
+                            <div className="w-full bg-blue-700 text-white font-semibold text-xl  text-center px-3 py-4">
+                                Service Accept List
+                            </div>
+                            <div className="max-h-96 overflow-y-auto">
+                                {acceptedServices && acceptedServices.length > 0 ? (
+                                    acceptedServices.map((service, index) => (
+                                        <div key={index} className="relative border border-gray-400 rounded-lg p-4 hover:shadow-md transition duration-300"
+                                            style={{
+                                                boxShadow: "5px 5px 12px 0px rgba(173, 216, 230, 0.9)",
+                                            }}>
+
+
+                                            <div className="top-0 right-0 p-2 flex items-center absolute">
+
                                                 <img
                                                     src={geernTick}
                                                     alt="Thumbnail"
@@ -246,9 +285,42 @@ function ServiceProviderHomePage() {
                                                 <span className="text-gray px-2 py-1 rounded">
                                                     Status: Approved
                                                 </span>
-                                            </>
-                                        ) : (
-                                            <>
+                                            </div>
+                                            <div className="p-4 border rounded-md bg-white">
+                                                <h2 className="text-xl font-semibold mb-2">{service.service_name}</h2>
+                                                <p className="text-gray-600 mb-2">Service Description: {service.service_dec}</p>
+                                                <p className="text-gray-700 mb-2">Location: {service.location}</p>
+                                                <p className="text-gray-700 mb-2">Address: {service.address}</p>
+                                                <p className="text-gray-700 mb-2">Phone: {service.phone}</p>
+                                                <p className="text-gray-700">Date: {formatDateString(service.date)}</p>
+
+                                            </div>
+
+
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="flex justify-center text-center">Nothing to show</p>
+                                )}
+                            </div>
+
+                        </div>
+
+                        <div className=" w-2/3   shadow-md shadow-gray-400 rounded-md mt-28 lg:mt-12 bg-white mx-auto mb-4 ">
+                            <div className="w-full bg-blue-700 text-white font-semibold text-xl  text-center px-3 py-4">
+                                Service Request List
+                            </div>
+
+                            <div className="max-h-96 overflow-y-auto">
+                                {requestedServices && requestedServices.length > 0 ? (
+                                    requestedServices.map((service, index) => (
+                                        <div key={index} className="relative border border-gray-400 rounded-lg p-4 hover:shadow-md transition duration-300"
+                                            style={{
+                                                boxShadow: "5px 5px 12px 0px rgba(173, 216, 230, 0.9)",
+                                            }}>
+
+
+                                            <div className="top-0 right-0 p-2 flex items-center absolute">
                                                 <div
                                                     style={{ display: "flex", alignItems: "center" }}
                                                 >
@@ -259,76 +331,95 @@ function ServiceProviderHomePage() {
                                                         Status: {service.locationStatus}
                                                     </span>
                                                 </div>
-                                            </>
-                                        )}
-                                    </div>
-                                    <div className="p-4 border rounded-md bg-white">
-                                        <h2 className="text-xl font-semibold mb-2">{service.service_name}</h2>
-                                        <p className="text-gray-600 mb-2">Service Description: {service.service_dec}</p>
-                                        <p className="text-gray-700 mb-2">Location: {service.location}</p>
-                                        <p className="text-gray-700 mb-2">Address: {service.address}</p>
-                                        <p className="text-gray-700 mb-2">Phone: {service.phone}</p>
-                                        <p className="text-gray-700">Date: {formatDateString(service.date)}</p>
+
+                                            </div>
+                                            <div className="p-4 border rounded-md bg-white">
+                                                <h2 className="text-xl font-semibold mb-2">{service.service_name}</h2>
+                                                <p className="text-gray-600 mb-2">Service Description: {service.service_dec}</p>
+                                                <p className="text-gray-700 mb-2">Location: {service.location}</p>
+                                                <p className="text-gray-700 mb-2">Address: {service.address}</p>
+                                                <p className="text-gray-700 mb-2">Phone: {service.phone}</p>
+                                                <p className="text-gray-700">Date: {formatDateString(service.date)}</p>
 
 
-                                        {/* Radio button for changing the date */}
-                                        <div className="flex items-center mt-4">
-                                            <label className="mr-4 font-semibold">Do you want to change the date?</label>
-                                            <div className="flex items-center">
-                                                <input
-                                                    type="radio"
-                                                    id={`yes-${index}`}
-                                                    name={`changeDate-${index}`}
-                                                    value="yes"
-                                                    className="mr-2"
-                                                    onChange={() => handleRadioChange('yes', index)}
-                                                />
-                                                <label htmlFor={`yes-${index}`} className="cursor-pointer">
-                                                    Yes
-                                                </label>
+                                                <div className="mt-4">
+                                                    <label className="mr-2">Amount:</label>
+                                                    <input
+                                                        type="text"
+                                                        value={selectedAmount[index] || ''}
+                                                        onChange={(e) => handleAmountChange(e.target.value, index)}
+                                                        placeholder="Enter amount"
+                                                        className="w-full lg:w-2/3"
+                                                    />
+                                                    {amountError && <p className="text-red-500">{amountError}</p>}
+                                                </div>
+
+
+                                                {/* Radio button for changing the date */}
+                                                <div className="flex items-center mt-4">
+                                                    <label className="mr-4 font-semibold">Do you want to change the date?</label>
+                                                    <div className="flex items-center">
+                                                        <input
+                                                            type="radio"
+                                                            id={`yes-${index}`}
+                                                            name={`changeDate-${index}`}
+                                                            value="yes"
+                                                            className="mr-2"
+                                                            onChange={() => handleRadioChange('yes', index)}
+                                                        />
+                                                        <label htmlFor={`yes-${index}`} className="cursor-pointer">
+                                                            Yes
+                                                        </label>
+                                                    </div>
+                                                    <div className="flex items-center ml-4">
+                                                        <input
+                                                            type="radio"
+                                                            id={`no-${index}`}
+                                                            name={`changeDate-${index}`}
+                                                            value="no"
+                                                            className="mr-2"
+                                                            onChange={() => {
+                                                                handleRadioChange('no', index);
+                                                                handleDateChange('No', index); // Set date to "No" when selecting "No"
+                                                            }}
+                                                        />
+                                                        <label htmlFor={`no-${index}`} className="cursor-pointer">
+                                                            No
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                {/* Date picker for changing the date */}
+                                                {selectedDates[index] === 'yes' && (
+                                                    <div className="mt-4">
+                                                        <label className="mr-2">Select Date:</label>
+                                                        <input
+                                                            type="date"
+                                                            value={selectedDates[index] === 'No' ? 'No' : selectedDates[index]}
+                                                            onChange={(e) => handleDateChange(e.target.value, index)}
+                                                            className="w-full lg:w-2/3"
+                                                        />
+                                                    </div>
+                                                )}
+
+                                                <button
+                                                    className="bg-green-500 text-white px-4 py-2 rounded-md mt-4"
+                                                    onClick={() => handleAddInvoice(service.srq_id, index, service.service_name)}
+                                                >
+                                                    {selectedFile ? 'Submit' : 'Add Invoice'}
+                                                </button>
                                             </div>
-                                            <div className="flex items-center ml-4">
-                                                <input
-                                                    type="radio"
-                                                    id={`no-${index}`}
-                                                    name={`changeDate-${index}`}
-                                                    value="no"
-                                                    className="mr-2"
-                                                    onChange={() => {
-                                                        handleRadioChange('no', index);
-                                                        handleDateChange('No', index); // Set date to "No" when selecting "No"
-                                                    }}
-                                                />
-                                                <label htmlFor={`no-${index}`} className="cursor-pointer">
-                                                    No
-                                                </label>
-                                            </div>
+
+
                                         </div>
+                                    ))
+                                ) : (
+                                    <p className="flex justify-center text-center">Nothing to show</p>
+                                )}
+                            </div>
 
-                                        {/* Date picker for changing the date */}
-                                        {selectedDates[index] === 'yes' && (
-                                            <div className="mt-4">
-                                                <label className="mr-2">Select Date:</label>
-                                                <input
-                                                    type="date"
-                                                    value={selectedDates[index] === 'No' ? 'No' : selectedDates[index]}
-                                                    onChange={(e) => handleDateChange(e.target.value, index)}
-                                                    className="w-full lg:w-2/3"
-                                                />
-                                            </div>
-                                        )}
+                        </div>
 
-                                        <button
-                                            className="bg-green-500 text-white px-4 py-2 rounded-md mt-4"
-                                            onClick={() => handleAddInvoice(service.srq_id)}>
-                                            {selectedFile ? 'Submit' : 'Add Invoice'}
-                                        </button>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <p className="flex justify-center text-center">Nothing to show</p>
-                        )}
                     </div>
                 </div>
 

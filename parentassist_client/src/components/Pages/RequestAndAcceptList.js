@@ -11,6 +11,8 @@ function RequestAndAcceptList() {
   const [serviceList, setServiceList] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterService, setFilteredService] = useState([]);
+  const [paymentStatus, setPaymentStatus] = useState(false);
+
 
 
   useEffect(() => {
@@ -45,16 +47,76 @@ function RequestAndAcceptList() {
   const formatDateString = (dateString) => {
     const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
     return new Date(dateString).toLocaleDateString('en-GB', options);
-};
+  };
 
 
   const serviceToRender = searchTerm ? filterService : serviceList;
 
 
-  const handleSubmit = () => {
+  const handleSubmit = async (item) => {
+    try {
+      const initiatePaymentResponse = await axios.post("http://localhost:9000/initiate-payment", {
+        amount: item.amount,
+        date: new Date().toISOString(), // Pass the desired date
+      });
 
-  }
+      const { order_id } = initiatePaymentResponse.data;
+      // console.log(order_id);
 
+      const options = {
+        key: "rzp_test_9jMMbEMH5GTU9V",
+        amount: item.amount * 100, // Amount in paise (100 paise = 1 INR)
+        currency: "INR",
+        name: "ParentAssist",
+        description: "Service Bill Payment",
+        order_id: order_id,
+        handler: async (response) => {
+          //console.log(totalBillAmount);
+          try {
+            // Send the payment response to your backend for verification
+            const paymentResponse = await axios.post("http://localhost:9000/verify-service-payment", {
+              razorpay_order_id: response.razorpay_order_id,
+              amount: item.amount,
+              date: new Date().toISOString(),
+              sp_id:item.sp_id,
+              srq_id: item.srq_id,
+              srqa_id:item.srqa_id,
+              status: response.razorpay_signature,
+              serviceName: item.service_name
+            });
+            console.log("Payment Response:", paymentResponse.data);
+
+            // Update payment status
+            setPaymentStatus(true);
+          } catch (error) {
+            console.error("Payment Verification Error:", error);
+            // Handle payment verification error
+            setPaymentStatus("failed");
+          }
+        },
+        // prefill: {
+        //     name: "Gaurav Kumar",
+        //     email: "gaurav.kumar@example.com",
+        //     contact: "9000090000",
+        // },
+        // notes: {
+        //     address: "Razorpay Corporate Office",
+        // },
+        theme: {
+          color: "#3399cc",
+        },
+      };
+
+      // Create a new Razorpay instance with the options
+      const razorpayInstance = new window.Razorpay(options);
+      razorpayInstance.open(); // Open the Razorpay payment dialog
+
+      // ... create Razorpay instance ...
+    } catch (error) {
+      console.error("Error initiating payment:", error);
+      // Handle payment initiation error
+    }
+  };
 
   return (
     <>
@@ -113,14 +175,14 @@ function RequestAndAcceptList() {
                   <p className="text-gray-700 mb-2">
                     {item.name ? (
                       <>
-                      Service Provider : {item.name}
+                        Service Provider : {item.name}
                       </>
                     ) : ("")}
                   </p>
                   <p className="text-gray-700 mb-2">
                     {item.phn_num ? (
                       <>
-                      Phone : {item.phn_num}
+                        Phone : {item.phn_num}
                       </>
                     ) : ("")}
                   </p>
@@ -128,7 +190,7 @@ function RequestAndAcceptList() {
                   <p className="text-gray-700 mb-2">
                     {item.adhar_number ? (
                       <>
-                      Adhar Number : {item.adhar_number}
+                        Adhar Number : {item.adhar_number}
                       </>
                     ) : ("")}
                   </p>
@@ -136,9 +198,17 @@ function RequestAndAcceptList() {
                   <p className="text-gray-700 mb-2">
                     {item.adhar_card ? (
                       <>
-                      ID Proof : <a href={`http://localhost:9000/${item.adhar_card}`} target="_blank" rel="noopener noreferrer" className="btn btn-danger mx-2 w-20  mt-3">
-                                           <i class="bi bi-file-arrow-down-fill"></i>
-                                        </a>
+                        ID Proof : <a href={`http://localhost:9000/${item.adhar_card}`} target="_blank" rel="noopener noreferrer" className="btn btn-danger mx-2 w-20  mt-3">
+                          <i class="bi bi-file-arrow-down-fill"></i>
+                        </a>
+                      </>
+                    ) : ("")}
+                  </p>
+
+                  <p className="text-gray-700 mb-2">
+                    {item.amount ? (
+                      <>
+                        Amount to be Paid : {item.amount}
                       </>
                     ) : ("")}
                   </p>
@@ -146,15 +216,17 @@ function RequestAndAcceptList() {
                   <p className="text-gray-700 mb-2">
                     {item.invoice ? (
                       <>
-                      Invoice : <a href={`http://localhost:9000/${item.invoice}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20  mt-3">
-                                           <i class="bi bi-file-arrow-down-fill"></i>
-                                        </a>
+                        Invoice : <a href={`http://localhost:9000/${item.invoice}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20  mt-3">
+                          <i class="bi bi-file-arrow-down-fill"></i>
+                        </a>
                       </>
                     ) : ("")}
                   </p>
 
+
+
                   <p className="text-gray-700 mb-2">
-                    {item.date === 'No' || item.date === null  ? (
+                    {item.date === 'No' || item.date === null ? (
                       ""
                     ) : (
                       <p className="text-gray-700">Date: {formatDateString(item.date)}</p>
@@ -163,14 +235,14 @@ function RequestAndAcceptList() {
 
                   {item.name ? (
                     <>
-                    <div className="text-center">
-                    <button
-                        type="submit"
-                        onClick={handleSubmit}
-                        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full">
-                        Accept 
-                    </button>
-                </div>
+                      <div className="text-center">
+                        <button
+                          type="submit"
+                          onClick={() => handleSubmit(item)}
+                          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full">
+                          Accept
+                        </button>
+                      </div>
                     </>
                   ) : ("")}
 

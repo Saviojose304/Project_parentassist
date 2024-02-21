@@ -11,6 +11,8 @@ function Requsetservice() {
     const parsedToken = JSON.parse(token);
 
     const [service, setService] = useState("");
+    const [serviceList, setServiceList] = useState([]);
+    const [selectedService, setSelectedService] = useState("");
     const [subServiceDes, setSubServiceDes] = useState("");
     const [fetchingCoordinates, setFetchingCoordinates] = useState(false);
     const [location, setLocation] = useState("");
@@ -27,25 +29,24 @@ function Requsetservice() {
         const user_role = token.role;
         const user_id = token.userId;
         setUserId(user_id);
+
+        const fetchData = async () => {
+            try {
+                const response = await axios.get(`http://localhost:9000/distinct-Service`);
+                setServiceList(response.data);
+            } catch (error) {
+                console.error('Error fetching service list:', error);
+            }
+        };
+
+        fetchData();
     }, []);
+
 
     useEffect(() => {
         // Set default value to today's date
         setSelectedDate(new Date());
     }, []);
-
-    const validateService = (name) => {
-        var letters = /^[A-Za-z ]*$/;
-        var regex = /^\s/;
-        if (name.length >= 3 && name.match(regex)) {
-            return "Service cannot start with a space";
-        }
-        if (name.match(letters) && name.length >= 3) {
-            return '';
-        } else {
-            return 'Please enter a service with at least 3 valid characters';
-        }
-    };
 
 
     const validateSubServiceDes = (name) => {
@@ -85,12 +86,6 @@ function Requsetservice() {
         return () => clearTimeout(timeoutId);
     }, [location]);
 
-    const handleService = (event) => {
-        const newService = event.target.value;
-        setService(newService);
-        const errorMessage = validateService(newService);
-        setServiceError(errorMessage)
-    }
 
 
     const handleSubServiceDes = (event) => {
@@ -144,13 +139,11 @@ function Requsetservice() {
         const adjustedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000);
         const formattedDate = adjustedDate.toISOString().split('T')[0];
         console.log(userId, formattedDate, location, latitude, longitude);
-        const serviceError = validateService(service);
         const locationError = validateLocation(location);
 
 
-        if (serviceError || subServiceDesError || locationError) {
+        if (subServiceDesError || locationError) {
             // Display individual field error messages
-            if (serviceError) toast.warning("Enter Service ");
             if (locationError) toast.warning("Enter location");
             if (subServiceDesError) toast.warning("Enter Description");
         } else {
@@ -163,7 +156,7 @@ function Requsetservice() {
 
 
                 const requestBody = {
-                    service,
+                    selectedService,
                     subServiceDes,
                     location,
                     formattedDate,
@@ -177,7 +170,6 @@ function Requsetservice() {
                     toast.success("Service Request added successfully!");
                     // Optionally, you can reset the form or navigate to another page
                     // Resetting form:
-                    setService("");
                     setSubServiceDes("");
                     setLocation("");
                     setLatitude("");
@@ -215,16 +207,18 @@ function Requsetservice() {
                 }}>
                 <div className="mb-4">
                     <label className="block text-lg text-left font-semibold text-gray-700 mb-2">Enter Service</label>
-                    <input
-                        type="text"
-                        id="addService"
-                        name="addService"
-                        value={service}
-                        onChange={handleService}
-                        required
+                    <select
+                        value={selectedService}
+                        onChange={(e) => setSelectedService(e.target.value)}
                         className="border rounded-md p-2 w-full"
-                        placeholder="Enter service name"
-                    />
+                    >
+                        <option value="" disabled>Select</option>
+                        {serviceList.map((serviceItem, index) => (
+                            <option key={index} value={serviceItem.service}>
+                                {serviceItem.service}
+                            </option>
+                        ))}
+                    </select>
                     <div className=" text-red-700" id="name_err">{serviceError}</div>
                 </div>
 

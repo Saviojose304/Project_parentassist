@@ -2742,6 +2742,19 @@ app.get('/api/distinct-locations', (req, res) => {
     });
 });
 
+app.get('/distinct-Service', (req, res) => {
+    const query = 'SELECT DISTINCT service FROM home_service_tbl';
+
+    db.query(query, (error, results) => {
+        if (error) {
+            console.error('Error executing MySQL query:', error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        } else {
+            res.json(results);
+        }
+    });
+});
+
 app.get('/servicesperlocation', (req, res) => {
     const { latitude, longitude } = req.query;
 
@@ -2772,7 +2785,7 @@ app.get('/servicesperlocation', (req, res) => {
 
 app.post('/requestService', async (req, res) => {
     try {
-        const { service, subServiceDes, location, formattedDate, userId } = req.body;
+        const { selectedService, subServiceDes, location, formattedDate, userId } = req.body;
 
 
         // Check if the same service request already exists for the specified date and user
@@ -2789,7 +2802,7 @@ app.post('/requestService', async (req, res) => {
     )
 `;
 
-        const [existingRequest] = await db.promise().query(checkExistingRequestQuery, [service, formattedDate, userId, userId, userId, userId, userId, userId]);
+        const [existingRequest] = await db.promise().query(checkExistingRequestQuery, [selectedService, formattedDate, userId, userId, userId, userId, userId, userId]);
 
         if (existingRequest.length > 0) {
             // A similar request already exists
@@ -2802,7 +2815,7 @@ app.post('/requestService', async (req, res) => {
             VALUES (?, ?, ?, ?, 'Requested', ?)
         `;
 
-        await db.promise().query(insertRequestQuery, [service, subServiceDes, location, formattedDate, userId]);
+        await db.promise().query(insertRequestQuery, [selectedService, subServiceDes, location, formattedDate, userId]);
 
         res.status(200).json({ message: 'Service request submitted successfully.' });
 
@@ -2936,7 +2949,9 @@ app.get('/getRequestServices', async (req, res) => {
 
 app.post('/acceptRequest', pdfUpload.fields([{ name: "file", maxCount: 1 }]), async (req, res) => {
     try {
-        const { srq_id, date, userId, serviceName } = req.body;
+        const { srq_id, amount, date, userId, serviceName } = req.body;
+
+        //console.log(srq_id,amount,date,userId,serviceName);
 
         let filePath = null;
 
@@ -2966,10 +2981,10 @@ app.post('/acceptRequest', pdfUpload.fields([{ name: "file", maxCount: 1 }]), as
 
         // Insert into service_reqaccept_tbl
         const insertQuery = `
-          INSERT INTO service_reqaccept_tbl (srq_id, invoice, date, sp_id)
-          VALUES (?, ?, ?, ?)
+          INSERT INTO service_reqaccept_tbl (srq_id, invoice, amount, date, sp_id)
+          VALUES (?, ?, ?, ?, ?)
         `;
-        await db.promise().query(insertQuery, [srq_id, filePath, date, sp_id]);
+        await db.promise().query(insertQuery, [srq_id, filePath, amount, date, sp_id]);
 
         // Update status in service_location_tbll
         const updateQuery = `
@@ -2984,7 +2999,7 @@ app.post('/acceptRequest', pdfUpload.fields([{ name: "file", maxCount: 1 }]), as
         SET status = 'pending'
         WHERE srq_id = ?;
       `;
-      await db.promise().query(updateRequsetQuery, [srq_id]);
+        await db.promise().query(updateRequsetQuery, [srq_id]);
 
         res.status(200).json({ message: 'Request accepted successfully' });
     } catch (error) {
@@ -2993,8 +3008,8 @@ app.post('/acceptRequest', pdfUpload.fields([{ name: "file", maxCount: 1 }]), as
     }
 });
 
-app.get('/getRequsetServicesList',  (req, res) => {
-        const getServiceQuery = `
+app.get('/getRequsetServicesList', (req, res) => {
+    const getServiceQuery = `
         SELECT sr.*, sa.*, sp.*
         FROM service_request_tbl sr
         LEFT JOIN service_reqaccept_tbl sa ON sr.srq_id = sa.srq_id
@@ -3009,16 +3024,94 @@ app.get('/getRequsetServicesList',  (req, res) => {
         )
         `;
 
-        db.query(getServiceQuery, (error, results) => {
+    db.query(getServiceQuery, (error, results) => {
+        if (error) {
+            console.error('Error executing MySQL query:', error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        } else {
+            res.json(results);
+        }
+    });
+
+})
+
+app.post('/verify-service-payment', async (req, res) => {
+    try {
+        const { razorpay_order_id, amount, date, sp_id, srq_id, srqa_id, status, serviceName } = req.body;
+
+        console.log(razorpay_order_id, amount, date, sp_id, srq_id, srqa_id, status, serviceName
+
+
+        );
+
+        // Insert payment details into payment_details table
+        const insertQuery = `
+            INSERT INTO service_payment_details (order_id, amount, date, sp_id, srq_id, srqa_id, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        db.query(insertQuery, [razorpay_order_id, amount, date, sp_id, srq_id, srqa_id, status], (error, results) => {
             if (error) {
-                console.error('Error executing MySQL query:', error);
-                res.status(500).json({ error: 'Internal Server Error' });
+                console.error('Error inserting payment details:', error);
+                res.status(500).json({ error: 'Error processing payment' });
             } else {
-                res.json(results);
+                // Successfully inserted into the database
+                // res.status(200).json({ message: 'Payment details inserted successfully' });
+                const updateQuery = `
+                    UPDATE service_request_tbl
+                    SET status = 'Approved'
+                    WHERE srq_id = ?
+                `;
+
+                db.query(updateQuery, [srq_id], (updateError, updateResults) => {
+                    if (updateError) {
+                        console.error('Error updating service_request_tbl:', updateError);
+                        res.status(500).json({ error: 'Error updating service request status' });
+                    } else {
+                        const getServiceIdQuery = `
+                    SELECT service_id
+                    FROM home_service_tbl
+                    WHERE sp_id = ? AND service = ?
+                `;
+
+                        db.query(getServiceIdQuery, [sp_id, serviceName], (serviceIdError, serviceIdResults) => {
+                            if (serviceIdError) {
+                                console.error('Error getting service_id from home_service_tbl:', serviceIdError);
+                                res.status(500).json({ error: 'Error getting service_id' });
+                            } else if (serviceIdResults.length === 0) {
+                                res.status(404).json({ error: 'Service not found' });
+                            } else {
+                                const serviceId = serviceIdResults[0].service_id;
+
+                                // Now update the service_location_tbl with status "Approved"
+                                const updateLocationQuery = `
+                            UPDATE service_location_tbll
+                            SET status = 'Approved'
+                            WHERE service_id = ?
+                        `;
+
+                                db.query(updateLocationQuery, [serviceId], (updateError, updateResults) => {
+                                    if (updateError) {
+                                        console.error('Error updating service_location_tbl:', updateError);
+                                        res.status(500).json({ error: 'Error updating service location status' });
+                                    } else {
+                                        // Successfully updated the status
+                                        res.status(200).json({ message: 'Payment details inserted, status updated successfully' });
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+
             }
         });
-        
-})
+
+    } catch (error) {
+        console.error('Error processing payment:', error);
+        res.status(500).json({ error: 'Error processing payment' });
+    }
+});
 
 
 function generateRandomPassword() {
