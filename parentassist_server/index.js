@@ -3009,22 +3009,25 @@ app.post('/acceptRequest', pdfUpload.fields([{ name: "file", maxCount: 1 }]), as
 });
 
 app.get('/getRequsetServicesList', (req, res) => {
+
+    const userId = req.query.userId;
+
     const getServiceQuery = `
-        SELECT sr.*, sa.*, sp.*
+        SELECT sr.*, sa.*, sp.*, sr.date AS request_date
         FROM service_request_tbl sr
         LEFT JOIN service_reqaccept_tbl sa ON sr.srq_id = sa.srq_id
         LEFT JOIN service_provider_tbl sp ON sa.sp_id = sp.sp_id
         JOIN users u ON sr.user_id = u.user_id
     WHERE ( 
         (sr.user_id IN (
-            SELECT user_id FROM adult_child WHERE adult_child_id = (SELECT adult_child_id FROM parents WHERE user_id = "61"))
-        OR (sr.user_id IN (SELECT user_id FROM parents WHERE adult_child_id = (SELECT adult_child_id FROM parents WHERE Gender = (SELECT Gender FROM parents WHERE user_id = "61") AND user_id = "61"))) OR 
-         (sr.user_id IN (SELECT user_id FROM parents WHERE Gender = "Male" AND adult_child_id = (SELECT adult_child_id FROM adult_child WHERE user_id = "61") ) OR (SELECT user_id FROM parents WHERE Gender = "Female" AND adult_child_id = (SELECT adult_child_id FROM adult_child WHERE user_id = "61")) )
+            SELECT user_id FROM adult_child WHERE adult_child_id = (SELECT adult_child_id FROM parents WHERE user_id = ?))
+        OR (sr.user_id IN (SELECT user_id FROM parents WHERE adult_child_id = (SELECT adult_child_id FROM parents WHERE Gender = (SELECT Gender FROM parents WHERE user_id = ?) AND user_id = ?))) OR 
+         (sr.user_id IN (SELECT user_id FROM parents WHERE Gender = "Male" AND adult_child_id = (SELECT adult_child_id FROM adult_child WHERE user_id = ?) ) OR (SELECT user_id FROM parents WHERE Gender = "Female" AND adult_child_id = (SELECT adult_child_id FROM adult_child WHERE user_id = ?)) )
         )
         )
         `;
 
-    db.query(getServiceQuery, (error, results) => {
+    db.query(getServiceQuery,[userId, userId, userId, userId, userId], (error, results) => {
         if (error) {
             console.error('Error executing MySQL query:', error);
             res.status(500).json({ error: 'Internal Server Error' });

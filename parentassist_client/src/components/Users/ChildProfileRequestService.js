@@ -123,7 +123,7 @@ function ChildProfileRequestService() {
                                         </button>
                                         <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleRequestService}>
                                             <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline text-truncate" data-bs-parent="#sidebar">
-                                                <i class="bi bi-house-gear-fill"><span>Request Service</span></i>
+                                                <i class="bi bi-house-gear-fill"><span>Service</span></i>
                                             </a>
                                         </button>
                                         <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={logOut}>
@@ -155,7 +155,7 @@ function ChildProfileRequestService() {
                         >
                             <IoMdClose className="bg-red-500 text-white" size={24} />
                         </button>
-                        <Requsetservice />
+                        <Requsetservice closeModal={closeModal} />
                     </div>
                 </div >
             }

@@ -9,6 +9,8 @@ function RequestAndAcceptList() {
 
   const user_id = parsedToken.userId;
   const [serviceList, setServiceList] = useState([]);
+  const [acceptedServices, setAcceptedServices] = useState([]);
+  const [requestedServices, setRequestedServices] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterService, setFilteredService] = useState([]);
   const [paymentStatus, setPaymentStatus] = useState(false);
@@ -18,8 +20,18 @@ function RequestAndAcceptList() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`http://localhost:9000/getRequsetServicesList?user_id=${user_id}`);
+        const response = await axios.get(`http://localhost:9000/getRequsetServicesList?userId=${user_id}`);
+
+        const services = response.data;
         setServiceList(response.data);
+
+        const accepted = services.filter(service => service.status === "Approved");
+        const requested = services.filter(service => service.status === "pending" || service.status === "Requested");
+
+        setAcceptedServices(accepted);
+        setRequestedServices(requested);
+
+
       } catch (error) {
         console.error('Error fetching service list:', error);
       }
@@ -29,6 +41,8 @@ function RequestAndAcceptList() {
   }, [user_id])
 
   console.log(serviceList);
+  console.log(requestedServices);
+  console.log(acceptedServices);
 
 
   const handleSearch = (value) => {
@@ -78,9 +92,9 @@ function RequestAndAcceptList() {
               razorpay_order_id: response.razorpay_order_id,
               amount: item.amount,
               date: new Date().toISOString(),
-              sp_id:item.sp_id,
+              sp_id: item.sp_id,
               srq_id: item.srq_id,
-              srqa_id:item.srqa_id,
+              srqa_id: item.srqa_id,
               status: response.razorpay_signature,
               serviceName: item.service_name
             });
@@ -88,6 +102,8 @@ function RequestAndAcceptList() {
 
             // Update payment status
             setPaymentStatus(true);
+
+            window.location.reload();
           } catch (error) {
             console.error("Payment Verification Error:", error);
             // Handle payment verification error
@@ -123,7 +139,7 @@ function RequestAndAcceptList() {
       <div className="md:flex flex-col md:flex-row mt-24 lg:mt-0 items-center justify-between mb-4">
         <div className="w-2/3">
           <h2 className="md:text-3xl font-bold text-xl mb-2 md:mb-0">
-            Request List
+            Service List
           </h2>
         </div>
         <input
@@ -134,71 +150,102 @@ function RequestAndAcceptList() {
           className="bodrder md:w-80 w-full md:max-w-sm h-12 md:ml-4 md:px-5 px-2 py-1 rounded-md"
         />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-4">
-        {serviceToRender && serviceToRender.length > 0 ? (
-          serviceToRender.map((item, index) => (
-            <>
+      <div className=" w-2/3   shadow-md shadow-gray-400 rounded-md mt-28 lg:mt-12 bg-white mx-auto ">
+        <div className="w-full bg-blue-700 text-white font-semibold text-xl  text-center px-3 py-4">
+          Service Accept List
+        </div>
+        <div className="max-h-96 overflow-y-auto">
+          {acceptedServices && acceptedServices.length > 0 ? (
+            acceptedServices.map((service, index) => (
               <div key={index} className="relative border border-gray-400 rounded-lg p-4 hover:shadow-md transition duration-300"
                 style={{
                   boxShadow: "5px 5px 12px 0px rgba(173, 216, 230, 0.9)",
                 }}>
+
+
                 <div className="top-0 right-0 p-2 flex items-center absolute">
-                  {item.status === "Approved" ? (
-                    <>
-                      <img
-                        src={geernTick}
-                        alt="Thumbnail"
-                        className="w-10 h-10 object-cover rounded ml-2"
-                      />
-                      <span className="text-gray px-2 py-1 rounded">
-                        Status: Approved
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <div
-                        style={{ display: "flex", alignItems: "center" }}
-                      >
-                        <span className="object-cover rounded ml-2">
-                          {<BsClockFill />}
-                        </span>
-                        <span className="text-gray px-2 py-1 rounded">
-                          Status: {item.status}
-                        </span>
-                      </div>
-                    </>
-                  )}
+
+                  <img
+                    src={geernTick}
+                    alt="Thumbnail"
+                    className="w-10 h-10 object-cover rounded ml-2"
+                  />
+                  <span className="text-gray px-2 py-1 rounded">
+                    Status: Approved
+                  </span>
                 </div>
                 <div className="p-4 border rounded-md bg-white">
-                  <h2 className="text-xl font-semibold mb-2">{item.service_name}</h2>
-                  <p className="text-gray-600 mb-2">Service Description: {item.service_dec}</p>
+                  <h2 className="text-xl font-semibold mb-2">{service.service_name}</h2>
+                  <p className="text-gray-600 mb-2">Service Description: {service.service_dec}</p>
+                  <p className="text-gray-700">Date: {service.date == "No" ? formatDateString(service.request_date) : formatDateString(service.date) } </p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="flex justify-center text-center">Nothing to show</p>
+          )}
+        </div>
+
+      </div>
+
+      <div className=" w-2/3   shadow-md shadow-gray-400 rounded-md mt-28 lg:mt-12 bg-white mx-auto mb-4 ">
+        <div className="w-full bg-blue-700 text-white font-semibold text-xl  text-center px-3 py-4">
+          Service Request List
+        </div>
+
+        <div className="max-h-96 overflow-y-auto">
+          {requestedServices && requestedServices.length > 0 ? (
+            requestedServices.map((service, index) => (
+              <div key={index} className="relative border border-gray-400 rounded-lg p-4 hover:shadow-md transition duration-300"
+                style={{
+                  boxShadow: "5px 5px 12px 0px rgba(173, 216, 230, 0.9)",
+                }}>
+
+
+                <div className="top-0 right-0 p-2 flex items-center absolute">
+                  <div
+                    style={{ display: "flex", alignItems: "center" }}
+                  >
+                    <span className="object-cover rounded ml-2">
+                      {<BsClockFill />}
+                    </span>
+                    <span className="text-gray px-2 py-1 rounded">
+                      Status: {service.locationStatus}
+                    </span>
+                  </div>
+
+                </div>
+                <div className="p-4 border rounded-md bg-white">
+                  <h2 className="text-xl font-semibold mb-2">{service.service_name}</h2>
+                  <p className="text-gray-600 mb-2">Service Description: {service.service_dec}</p>
+                  <p className="text-gray-600 mb-2">Request Date: {formatDateString(service.request_date)}</p>
                   <p className="text-gray-700 mb-2">
-                    {item.name ? (
+                    {service.name ? (
                       <>
-                        Service Provider : {item.name}
+                        Service Provider : {service.name}
                       </>
                     ) : ("")}
                   </p>
                   <p className="text-gray-700 mb-2">
-                    {item.phn_num ? (
+                    {service.phn_num ? (
                       <>
-                        Phone : {item.phn_num}
+                        Phone : {service.phn_num}
                       </>
                     ) : ("")}
                   </p>
 
                   <p className="text-gray-700 mb-2">
-                    {item.adhar_number ? (
+                    {service.adhar_number ? (
                       <>
-                        Adhar Number : {item.adhar_number}
+                        Adhar Number : {service.adhar_number}
                       </>
                     ) : ("")}
                   </p>
 
                   <p className="text-gray-700 mb-2">
-                    {item.adhar_card ? (
+                    {service.adhar_card ? (
                       <>
-                        ID Proof : <a href={`http://localhost:9000/${item.adhar_card}`} target="_blank" rel="noopener noreferrer" className="btn btn-danger mx-2 w-20  mt-3">
+                        ID Proof : <a href={`http://localhost:9000/${service.adhar_card}`} target="_blank" rel="noopener noreferrer" className="btn btn-danger mx-2 w-20  mt-3">
                           <i class="bi bi-file-arrow-down-fill"></i>
                         </a>
                       </>
@@ -206,17 +253,17 @@ function RequestAndAcceptList() {
                   </p>
 
                   <p className="text-gray-700 mb-2">
-                    {item.amount ? (
+                    {service.amount ? (
                       <>
-                        Amount to be Paid : {item.amount}
+                        Amount to be Paid : {service.amount}
                       </>
                     ) : ("")}
                   </p>
 
                   <p className="text-gray-700 mb-2">
-                    {item.invoice ? (
+                    {service.invoice ? (
                       <>
-                        Invoice : <a href={`http://localhost:9000/${item.invoice}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20  mt-3">
+                        Invoice : <a href={`http://localhost:9000/${service.invoice}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20  mt-3">
                           <i class="bi bi-file-arrow-down-fill"></i>
                         </a>
                       </>
@@ -226,19 +273,19 @@ function RequestAndAcceptList() {
 
 
                   <p className="text-gray-700 mb-2">
-                    {item.date === 'No' || item.date === null ? (
+                    {service.date === 'No' || service.date === null ? (
                       ""
                     ) : (
-                      <p className="text-gray-700">Date: {formatDateString(item.date)}</p>
+                      <p className="text-gray-700">Date: {formatDateString(service.date)}</p>
                     )}
                   </p>
 
-                  {item.name ? (
+                  {service.name ? (
                     <>
                       <div className="text-center">
                         <button
                           type="submit"
-                          onClick={() => handleSubmit(item)}
+                          onClick={() => handleSubmit(service)}
                           className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full">
                           Accept
                         </button>
@@ -248,12 +295,15 @@ function RequestAndAcceptList() {
 
 
                 </div>
+
+
               </div>
-            </>
-          ))
-        ) : (
-          <p>No data found</p>
-        )}
+            ))
+          ) : (
+            <p className="flex justify-center text-center">Nothing to show</p>
+          )}
+        </div>
+
       </div>
 
     </>

@@ -145,6 +145,7 @@ function ServiceProviderHomePage() {
             if (submitResponse.status === 200) {
                 toast.success('Invoice added successfully!');
                 setIsModalOpen(false);
+                window.location.reload();
             } else {
                 toast.error('Error adding invoice');
             }
@@ -349,6 +350,7 @@ function ServiceProviderHomePage() {
                                                         value={selectedAmount[index] || ''}
                                                         onChange={(e) => handleAmountChange(e.target.value, index)}
                                                         placeholder="Enter amount"
+                                                        required
                                                         className="w-full lg:w-2/3"
                                                     />
                                                     {amountError && <p className="text-red-500">{amountError}</p>}

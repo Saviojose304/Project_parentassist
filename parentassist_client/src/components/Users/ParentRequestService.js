@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { IoMdClose } from "react-icons/io";
 import axios from 'axios';
 import Requsetservice from "../Forms/RequestService";
+import RequestAndAcceptList from "../Pages/RequestAndAcceptList";
 
 function ParentRequsetService() {
 
@@ -142,7 +143,7 @@ function ParentRequsetService() {
                 </div>
                 <div style={{ paddingTop: '5rem' }} className='col-10'>
                     <main className="col overflow-auto h-100">
-                        <h1>Service List</h1>
+                        <RequestAndAcceptList />
                     </main>
                 </div>
             </div>

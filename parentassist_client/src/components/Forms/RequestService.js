@@ -5,7 +5,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Spinner from "../Spinner/Spinner";
 
-function Requsetservice() {
+function Requsetservice({closeModal}) {
 
     const token = localStorage.getItem('token');
     const parsedToken = JSON.parse(token);
@@ -174,6 +174,9 @@ function Requsetservice() {
                     setLocation("");
                     setLatitude("");
                     setLongitude("");
+
+                    closeModal();
+                    
                 } else {
                     if (response.data.error === 'Similar service request already exists for this date and user.') {
                         toast.error("Similar service request already exists for this date and user.");
