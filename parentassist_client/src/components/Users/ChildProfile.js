@@ -2,6 +2,8 @@ import { googleLogout } from "@react-oauth/google";
 import { useNavigate } from "react-router-dom";
 import { Dropdown, Modal, Button, Card } from 'react-bootstrap';
 import { useState, useEffect } from "react";
+import { IoChatbubblesSharp } from "react-icons/io5";
+import ChatBot from "../ChatBot/Chatbot";
 import { Page, Document, Text, View, StyleSheet, PDFViewer } from "@react-pdf/renderer";
 import axios from "axios";
 function ChildProfile() {
@@ -18,6 +20,7 @@ function ChildProfile() {
     const [doctorVisits, setDoctorVisits] = useState([]);
     const [medicineRoutine, setMedicineRoutine] = useState([]);
     const [showPdfModal, setShowPdfModal] = useState(false);
+    const [isChatbotOpen, setIsChatbotOpen] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -166,7 +169,7 @@ function ChildProfile() {
     };
 
     const handleParentDetails = () => {
-        navigate('/ChildProfile')
+        navigate('/Diabetes_prd')
     };
 
     const styles = StyleSheet.create({
@@ -305,6 +308,14 @@ function ChildProfile() {
         setShowPdfModal(false);
     };
 
+    const toggleChatbot = () => {
+        setIsChatbotOpen(!isChatbotOpen);
+    };
+
+    const closeChatbot = () => {
+        setIsChatbotOpen(false);
+      };
+
 
     return (
         <>
@@ -346,7 +357,7 @@ function ChildProfile() {
                                         </button>
                                         <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleParentDetails}>
                                             <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar">
-                                                <i className="bi bi-people-fill"><span>Parent Details</span></i>
+                                                <i className="bi bi-people-fill"><span>Diabetes Check</span></i>
                                             </a>
                                         </button>
                                         <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handledoctor}>
@@ -585,6 +596,17 @@ function ChildProfile() {
                                 </div>
                             </main>
                         )}
+
+                        <button
+                            className="btn btn-primary floating-button font-extrabold"
+                            onClick={toggleChatbot}
+                            style={{ position: 'fixed', bottom: '20px', right: '20px' }}
+                        >
+                            <IoChatbubblesSharp />
+                        </button>
+
+                        {/* Render the Chatbot component when isChatbotOpen is true */}
+                        {isChatbotOpen && <ChatBot onClose={closeChatbot} />}
                     </div>
                 </div>
             </div >

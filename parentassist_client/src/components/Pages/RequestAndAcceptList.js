@@ -177,6 +177,7 @@ function RequestAndAcceptList() {
                 <div className="p-4 border rounded-md bg-white">
                   <h2 className="text-xl font-semibold mb-2">{service.service_name}</h2>
                   <p className="text-gray-600 mb-2">Service Description: {service.service_dec}</p>
+                  <p className="text-gray-600 mb-2">Amount Paid: {service.amount}</p>
                   <p className="text-gray-700">Date: {service.date == "No" ? formatDateString(service.request_date) : formatDateString(service.date) } </p>
                 </div>
               </div>

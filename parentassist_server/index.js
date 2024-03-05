@@ -845,11 +845,11 @@ app.put('/ProfilePassUpdate', async (req, res) => {
 // Get Parent Data for ChildView API Endpoint
 app.get('/getParentViewData', async (req, res) => {
     try {
-        const { user_child_id } = req.query;
+        const { user_id } = req.query;
 
         // Retrieve the child's ID
         const getChildIdQuery = 'SELECT adult_child_id FROM adult_child WHERE user_id = ?';
-        const [childResult] = await db.promise().query(getChildIdQuery, [user_child_id]);
+        const [childResult] = await db.promise().query(getChildIdQuery, [user_id]);
 
         if (childResult.length === 0) {
             return res.status(400).json({ error: 'Child not found' });
@@ -859,7 +859,7 @@ app.get('/getParentViewData', async (req, res) => {
 
 
         // Select the parent data from the 'parents' table
-        const selectParentSql = 'SELECT name, age, phone FROM parents WHERE adult_child_id = ?'; // Add conditions as needed
+        const selectParentSql = 'SELECT name, age, phone, Gender FROM parents WHERE adult_child_id = ?'; // Add conditions as needed
         db.query(selectParentSql, [child_id], (selectErr, results) => {
             if (selectErr) {
                 console.error('Error selecting parent data:', selectErr);
