@@ -50,6 +50,7 @@ import AddService from './components/HomeMaintenance/AddService.js';
 import ChildProfileRequestService from './components/Users/ChildProfileRequestService.js';
 import ParentRequsetService from './components/Users/ParentRequestService.js';
 import Diabetes_prd from './components/MachineLearing/Diabetes_prd.js';
+import ServiceProfile from './components/HomeMaintenance/ServiceProviderProfilePage.js';
 
 const router = createBrowserRouter([
   {
@@ -198,6 +199,10 @@ const router = createBrowserRouter([
   {
     path:"/Diabetes_prd",
     element: <Diabetes_prd />
+  },
+  {
+    path:"/ServiceProviderProfilePage",
+    element: <ServiceProfile />
   }
   
 

@@ -219,6 +219,10 @@ function AddService() {
         navigate("/ServiceProviderHomePage")
     }
 
+    const handleProfile = () => {
+        navigate("/ServiceProviderProfilePage")
+    }
+
     return (
         <>
             <header>
@@ -241,7 +245,7 @@ function AddService() {
                             <div className=" px-0">
                                 <div id="sidebar" className='show border-end pt-2'>
                                     <div className="d-grid  mx-auto ">
-                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} >
+                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleProfile}>
                                             <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar">
                                                 <i class="bi bi-gear-fill"><span className="ml-2">View Profile</span></i>
                                             </a>

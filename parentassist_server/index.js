@@ -786,12 +786,12 @@ app.put('/Doctorprofileupdate', (req, res) => {
 
 // Get Medicine Seller Data API endpoint
 app.get('/getSellerData', (req, res) => {
-    const { user_child_id } = req.query;
+    const { user_id } = req.query;
 
     // Query the database to fetch user data by username
-    const query = 'SELECT name, address, phone FROM medicine_seller WHERE user_id = ?';
+    const query = 'SELECT name, address, phn_num FROM service_provider_tbl WHERE user_id = ?';
 
-    db.query(query, [user_child_id], (err, result) => {
+    db.query(query, [user_id], (err, result) => {
         if (err) {
             console.error('Error fetching user data from database:', err);
             res.status(500).json({ error: 'Internal Server Error' });
@@ -810,7 +810,7 @@ app.get('/getSellerData', (req, res) => {
 app.put('/Sellerprofileupdate', (req, res) => {
     const { name, address, phone, user_child_id } = req.body;
 
-    const updateQuery = 'UPDATE medicine_seller SET name=?, address=?, phone=? WHERE user_id=?';
+    const updateQuery = 'UPDATE service_provider_tbl SET name=?, address=?, phn_num=? WHERE user_id=?';
 
     db.query(updateQuery, [name, address, phone, user_child_id], (err, result) => {
         if (err) {

@@ -21,6 +21,35 @@ function Diabetes_prd() {
     const [isChatbotOpen, setIsChatbotOpen] = useState(false);
     const [parentsList, setParentsList] = useState([]);
     const [parentDetails, setParentDetails] = useState([]);
+    const [errors, setErrors] = useState({});
+    const [hasErrors, setHasErrors] = useState(false);
+    const [symptoms, setSymptoms] = useState(['', '', '', '', '']);
+
+    const list_a = ['itching', 'skin_rash', 'nodal_skin_eruptions', 'continuous_sneezing', 'shivering', 'chills', 'joint_pain',
+        'stomach_pain', 'acidity', 'ulcers_on_tongue', 'muscle_wasting', 'vomiting', 'burning_micturition',
+        'spotting_ urination', 'fatigue', 'weight_gain', 'anxiety', 'cold_hands_and_feets', 'mood_swings',
+        'weight_loss', 'restlessness', 'lethargy', 'patches_in_throat', 'irregular_sugar_level', 'cough',
+        'high_fever', 'sunken_eyes', 'breathlessness', 'sweating', 'dehydration', 'indigestion', 'headache',
+        'yellowish_skin', 'dark_urine', 'nausea', 'loss_of_appetite', 'pain_behind_the_eyes', 'back_pain',
+        'constipation', 'abdominal_pain', 'diarrhoea', 'mild_fever', 'yellow_urine', 'yellowing_of_eyes',
+        'acute_liver_failure', 'fluid_overload', 'swelling_of_stomach', 'swelled_lymph_nodes', 'malaise',
+        'blurred_and_distorted_vision', 'phlegm', 'throat_irritation', 'redness_of_eyes', 'sinus_pressure',
+        'runny_nose', 'congestion', 'chest_pain', 'weakness_in_limbs', 'fast_heart_rate',
+        'pain_during_bowel_movements', 'pain_in_anal_region', 'bloody_stool', 'irritation_in_anus', 'neck_pain',
+        'dizziness', 'cramps', 'bruising', 'obesity', 'swollen_legs', 'swollen_blood_vessels', 'puffy_face_and_eyes',
+        'enlarged_thyroid', 'brittle_nails', 'swollen_extremeties', 'excessive_hunger', 'extra_marital_contacts',
+        'drying_and_tingling_lips', 'slurred_speech', 'knee_pain', 'hip_joint_pain', 'muscle_weakness',
+        'stiff_neck', 'swelling_joints', 'movement_stiffness', 'spinning_movements', 'loss_of_balance',
+        'unsteadiness', 'weakness_of_one_body_side', 'loss_of_smell', 'bladder_discomfort', 'foul_smell_of urine',
+        'continuous_feel_of_urine', 'passage_of_gases', 'internal_itching', 'toxic_look_(typhos)', 'depression',
+        'irritability', 'muscle_pain', 'altered_sensorium', 'red_spots_over_body', 'belly_pain',
+        'abnormal_menstruation', 'dischromic _patches', 'watering_from_eyes', 'increased_appetite', 'polyuria',
+        'family_history', 'mucoid_sputum', 'rusty_sputum', 'lack_of_concentration', 'visual_disturbances',
+        'receiving_blood_transfusion', 'receiving_unsterile_injections', 'coma', 'stomach_bleeding',
+        'distention_of_abdomen', 'history_of_alcohol_consumption', 'fluid_overload', 'blood_in_sputum',
+        'prominent_veins_on_calf', 'palpitations', 'painful_walking', 'pus_filled_pimples', 'blackheads', 'scurring',
+        'skin_peeling', 'silver_like_dusting', 'small_dents_in_nails', 'inflammatory_nails', 'blister',
+        'red_sore_around_nose', 'yellow_crust_ooze']
 
     useEffect(() => {
         const fetchData = async () => {
@@ -40,39 +69,45 @@ function Diabetes_prd() {
 
     console.log(parentsList);
 
+    const [selectedOptions, setSelectedOptions] = useState(Array.from({ length: symptoms.length }, () => ''));
 
-
-    const handleChange = (e) => {
-        const name = e.target.name.toLowerCase(); // Convert the key to lowercase
-        setFormData({
-            ...formData,
-            [name]: e.target.value,
-        });
+    const handleChange = (index, value) => {
+        const updatedSelectedOptions = [...selectedOptions];
+        updatedSelectedOptions[index] = value;
+        setSelectedOptions(updatedSelectedOptions);
     };
 
+    const generateOptions = (symptomIndex) => {
+        const selectedOptionsSet = new Set(selectedOptions.slice(0, symptomIndex));
+        return list_a.filter(option => !selectedOptionsSet.has(option));
+    };
+
+
     const handlePredict = async () => {
+
+        console.log(selectedOptions);
+
+        if (hasErrors) {
+            console.log('Validation errors. Prediction cancelled.');
+            return;
+        }
+
+
         try {
             const response = await fetch('http://localhost:5000/predict', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    pregnancies: formData.pregnancies,
-                    glucose: formData.glucose,
-                    blood_pressure: formData.blood_pressure,
-                    skin_thickness: formData.skin_thickness,
-                    insulin: formData.insulin,
-                    bmi: formData.bmi,
-                    diabetes_pedigree_function: formData.diabetes_pedigree_function,
-                    age: formData.age,
-                }),
+                body: JSON.stringify({ symptoms: selectedOptions }),
             });
 
-            const data = await response.json();
-            setPrediction(data.result);
+            const result = await response.json();
+            setPrediction(result)
+            console.log(result);
+            // Handle the result as needed
         } catch (error) {
-            console.error('Error during prediction:', error);
+            console.error('Error:', error);
         }
     };
 
@@ -259,7 +294,7 @@ function Diabetes_prd() {
                                                         <button
                                                             type="button"
                                                             className="btn btn-success"
-                                                            onClick={() => handleCheck(pList.Gender,pList.age)}
+                                                            onClick={() => handleCheck(pList.Gender, pList.age)}
                                                         >
                                                             Check
                                                         </button>
@@ -302,121 +337,41 @@ function Diabetes_prd() {
                             <IoMdClose className="bg-red-500 text-white" size={24} />
                         </button>
 
-                        <h2 className="text-2xl font-bold mb-4">Check Diabetes</h2>
+                        <h2 className="text-2xl font-bold mb-4">Predict Disease</h2>
 
-                        <div className="mb-4 mt-4">
-                            <label className="block text-lg text-left font-semibold text-gray-700 mb-2">Pregnancies:</label>
-                            <input
-                                type="text"
-                                name="pregnancies"
-                                onChange={handleChange}
-                                required
-                                placeholder='Enter  number of pregnancies'
-                                className="border rounded-md p-2 w-full"
-                            />
-                            {/* <div className=" text-red-700" id="name_err">{locationError}</div> */}
-                        </div>
-                        <div className="mb-4 mt-4">
-                            <label className="block text-lg text-left font-semibold text-gray-700 mb-2">Glucose:</label>
-                            <input
-                                type="text"
-                                name="glucose"
-                                onChange={handleChange}
-                                required
-                                placeholder='Enter Glucose'
-                                className="border rounded-md p-2 w-full"
-                            />
-                            {/* <div className=" text-red-700" id="name_err">{locationError}</div> */}
-                        </div>
-                        <div className="mb-4 mt-4">
-                            <label className="block text-lg text-left font-semibold text-gray-700 mb-2">Blood Pressure:</label>
-                            <input
-                                type="text"
-                                name="blood_pressure"
-                                readOnly
-                                value={formData.blood_pressure}
-                                required
-                                placeholder='Enter Blood Pressure'
-                                className="border rounded-md p-2 w-full"
-                            />
-                            {/* <div className=" text-red-700" id="name_err">{locationError}</div> */}
-                        </div>
-                        <div className="mb-4 mt-4">
-                            <label className="block text-lg text-left font-semibold text-gray-700 mb-2">Skin Thickness:</label>
-                            <input
-                                type="text"
-                                name="skin_thickness"
-                                onChange={handleChange}
-                                required
-                                placeholder='Enter Skin Thickness'
-                                className="border rounded-md p-2 w-full"
-                            />
-                            {/* <div className=" text-red-700" id="name_err">{locationError}</div> */}
-                        </div>
-                        <div className="mb-4 mt-4">
-                            <label className="block text-lg text-left font-semibold text-gray-700 mb-2">Insulin:</label>
-                            <input
-                                type="text"
-                                name="insulin"
-                                onChange={handleChange}
-                                required
-                                placeholder='Enter Insulin'
-                                className="border rounded-md p-2 w-full"
-                            />
-                            {/* <div className=" text-red-700" id="name_err">{locationError}</div> */}
-                        </div>
-                        <div className="mb-4 mt-4">
-                            <label className="block text-lg text-left font-semibold text-gray-700 mb-2">BMI:</label>
-                            <input
-                                type="text"
-                                name="bmi"
-                                required
-                                readOnly
-                                value={formData.bmi}
-                                placeholder='Enter BMI'
-                                className="border rounded-md p-2 w-full"
-                            />
-                            {/* <div className=" text-red-700" id="name_err">{locationError}</div> */}
-                        </div>
-                        <div className="mb-4 mt-4">
-                            <label className="block text-lg text-left font-semibold text-gray-700 mb-2">Diabetes Pedigree Function:</label>
-                            <input
-                                type="text"
-                                name="diabetes_pedigree_function"
-                                onChange={handleChange}
-                                required
-                                placeholder='Enter Diabetes Pedigree Function'
-                                className="border rounded-md p-2 w-full"
-                            />
-                            {/* <div className=" text-red-700" id="name_err">{locationError}</div> */}
-                        </div>
-                        <div className="mb-4 mt-4">
-                            <label className="block text-lg text-left font-semibold text-gray-700 mb-2">Age:</label>
-                            <input
-                                type="text"
-                                name="age"
-                                onChange={handleChange}
-                                required
-                                placeholder='Enter Age'
-                                readOnly
-                                value={formData.age}
-                                className="border rounded-md p-2 w-full"
-                            />
-                            {/* <div className=" text-red-700" id="name_err">{locationError}</div> */}
+                        <div>
+                            {symptoms.map((symptom, index) => (
+                                <div key={index}>
+                                    <label htmlFor={`symptom${index + 1}`}>{`Select Symptom ${index + 1}`}</label>
+                                    <select
+                                        id={`symptom${index + 1}`}
+                                        value={selectedOptions[index]}
+                                        onChange={(e) => handleChange(index, e.target.value)}
+                                    >
+                                        <option value="">Select...</option>
+                                        {generateOptions(index).map((option, optionIndex) => (
+                                            <option key={optionIndex} value={option}>
+                                                {option}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            ))}
+                            <button
+                                onClick={handlePredict}
+                                className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-700"
+                            >
+                                Submit
+                            </button>
                         </div>
 
 
 
-                        <button
-                            onClick={handlePredict}
-                            className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-700"
-                        >
-                            Submit
-                        </button>
 
-                        {prediction !== null && (
-                            <p className=' font-semibold text-xl mt-2'>Prediction: {prediction}</p>
-                        )}
+
+                        <p className='font-semibold text-xl mt-2'>
+                            Prediction: {prediction ? prediction.disease : 'No prediction available'}
+                        </p>
 
                     </div>
                 </div >
