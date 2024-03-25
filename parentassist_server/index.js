@@ -3182,27 +3182,44 @@ app.post('/chatBotMessages', async (req, res) => {
 
     // MySQL query to retrieve the English words for each Manglish word in the message
     const query = 'SELECT Eword FROM manglish_key_words WHERE Mword IN (?)';
-    
-    // Execute the query
+
+    // Execute the query to retrieve English words
     db.query(query, [message.split(' ')], (err, results) => {
         if (err) {
             console.error('Error executing MySQL query to retrieve English words:', err);
-            res.status(500).json({ error: 'Internal Server Error' });
+            return res.status(500).json({ error: 'Internal Server Error' });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'No matching English words found' });
+        }
+
+        // Extract English words from the results
+        const englishWords = results.map(row => row.Eword);
+        // Join the English words back into a message
+        const englishMessage = englishWords.join(' ');
+
+        console.log(englishMessage);
+
+        // Check if the message contains specific keywords
+        if (englishMessage.includes('doctor') && englishMessage.includes('list')) {
+            // Execute query to fetch data from the desired table (example query)
+            const doctorQuery = 'SELECT name, specialization, hospital FROM doctors';
+            db.query(doctorQuery, (err, doctorResults) => {
+                if (err) {
+                    console.error('Error executing doctor query:', err);
+                    return res.status(500).json({ error: 'Error fetching doctor data' });
+                }
+                // Send the doctor data as response
+                res.json({ doctorData: doctorResults });
+            });
         } else {
-            if (results.length === 0) {
-                // No matching English words found
-                res.status(404).json({ error: 'No matching English words found' });
-            } else {
-                // Extract English words from the results
-                const englishWords = results.map(row => row.Eword);
-                // Join the English words back into a message
-                const englishMessage = englishWords.join(' ');
-                // Send the English message as response
-                res.json({ englishMessage });
-            }
+            // Send the English message as response
+            res.json({ englishMessage });
         }
     });
 });
+
 
 
 

@@ -78,14 +78,48 @@ function ChatBot({ onClose }) {
 
             try {
                 const response = await axios.post('/chatBotMessages', { message: convertedInput });
-                // Add the received message to the messages state
-                setMessages((prevMessages) =>
-                    prevMessages.map((message, index) =>
-                        index === prevMessages.length - 1
-                            ? { ...message, text: response.data.englishMessage }
-                            : message
-                    )
-                );
+
+                if (response.data.doctorData) {
+                    // Format doctor data as a message
+                    const doctorTable = (
+                        <div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Specialization</th>
+                                        <th>Hospital</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {response.data.doctorData.map((doctor, index) => (
+                                        <tr key={index}>
+                                            <td>{doctor.name}</td>
+                                            <td>{doctor.specialization}</td>
+                                            <td>{doctor.hospital}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    );
+
+                    // Add doctor message to messages state
+                    setMessages((prevMessages) => [
+                        ...prevMessages.slice(0, -1), // Remove the loading message
+                        { sender: 'left', text: "Ithan thangel chodhicha doctors list" },
+                        { sender: 'left', text: doctorTable }
+                    ]);
+                } else {
+                    // Add the received message to the messages state
+                    setMessages((prevMessages) =>
+                        prevMessages.map((message, index) =>
+                            index === prevMessages.length - 1
+                                ? { ...message, text: response.data.englishMessage }
+                                : message
+                        )
+                    );
+                }
                 setIsLoading(false);
             } catch (error) {
                 setMessages((prevMessages) =>

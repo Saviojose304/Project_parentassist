@@ -17,7 +17,7 @@ function AdminServiceReports({ userId }) {
                     if (response.status === 200) {
                         const { matchingServiceRequests, servicePaymentDetails } = response.data;
 
-                        const accepted = matchingServiceRequests.filter(service => service.locationStatus === "Approved");
+                        const accepted = matchingServiceRequests.filter(service => service.status === "Approved");
                         // For each accepted service, find corresponding payment details
                         const acceptedWithAmount = accepted.map(service => {
                             const paymentDetail = servicePaymentDetails.find(payment => payment.srq_id === service.srq_id);

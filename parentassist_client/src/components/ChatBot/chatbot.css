@@ -90,7 +90,7 @@
   background-color: #56c55d;
   padding: 10px;
   border-radius: 10px;
-  max-width: 60%;
+  width: auto;
 }
 
 /* loading.css */
