@@ -146,6 +146,7 @@ app.post('/login', async (req, res) => {
         const selectNameQuery = getSelectNameQuery(user.role);
         const [nameRows] = await db.promise().query(selectNameQuery, [user.user_id]);
 
+
         if (nameRows.length === 0) {
             return res.status(401).json({ error: 'Name not found for the user' });
         }
@@ -182,6 +183,8 @@ app.post('/login', async (req, res) => {
 
 function getSelectNameQuery(userRole) {
     switch (userRole) {
+        case 'Admin':
+            return 'SELECT email FROM users WHERE user_id = ?';
         case 'Child':
             return 'SELECT name FROM adult_child WHERE user_id = ?';
         case 'Parent':
@@ -2883,6 +2886,7 @@ app.get('/getRequestServices', async (req, res) => {
             const serviceRequestsQuery = `
                 SELECT
                     sr.*,
+                    ${userDetailsTable}.name,
                     ${userDetailsTable}.address,
                     ${userDetailsTable}.phone
                 FROM
@@ -2934,7 +2938,32 @@ app.get('/getRequestServices', async (req, res) => {
             // Flatten the array
             const matchingServiceRequests = [].concat(...validRequests);
 
-            return res.status(200).json({ matchingServiceRequests });
+            const servicePaymentQuery = `
+            SELECT
+                spd.srq_id,
+                spd.amount
+            FROM
+                service_payment_details spd
+            WHERE
+                spd.sp_id IN (
+                    SELECT
+                        sp.sp_id
+                    FROM
+                        service_provider_tbl sp
+                    WHERE
+                        sp.user_id = ?
+                )
+        `;
+
+        const [servicePaymentDetails] = await db.promise().query(servicePaymentQuery, [userId]);
+
+        // Check if there are no service payment details found
+        // if (servicePaymentDetails.length === 0) {
+        //     return res.status(404).json({ message: 'No service payment details found for this user' });
+        // }
+
+
+            return res.status(200).json({ matchingServiceRequests, servicePaymentDetails });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: 'Internal Server Error' });
@@ -2944,7 +2973,6 @@ app.get('/getRequestServices', async (req, res) => {
         return res.status(500).json({ message: 'Internal Server Error' });
     }
 });
-
 
 
 app.post('/acceptRequest', pdfUpload.fields([{ name: "file", maxCount: 1 }]), async (req, res) => {
@@ -2989,7 +3017,7 @@ app.post('/acceptRequest', pdfUpload.fields([{ name: "file", maxCount: 1 }]), as
         // Update status in service_location_tbll
         const updateQuery = `
           UPDATE service_location_tbll
-          SET status = 'pending'
+          SET status = ''
           WHERE service_id = ?;
         `;
         await db.promise().query(updateQuery, [service_id]);
@@ -3089,7 +3117,7 @@ app.post('/verify-service-payment', async (req, res) => {
                                 // Now update the service_location_tbl with status "Approved"
                                 const updateLocationQuery = `
                             UPDATE service_location_tbll
-                            SET status = 'Approved'
+                            SET status = ''
                             WHERE service_id = ?
                         `;
 
@@ -3115,6 +3143,69 @@ app.post('/verify-service-payment', async (req, res) => {
         res.status(500).json({ error: 'Error processing payment' });
     }
 });
+
+app.get('/srvcpayment/:userId', async (req, res) => {
+    const userId = req.params.userId;
+
+    // Query to retrieve sp_id from service_provider_tbl based on user_id
+    const getSpIdQuery = 'SELECT sp_id FROM service_provider_tbl WHERE user_id = ?';
+
+    db.query(getSpIdQuery, [userId], (error, spResults) => {
+        if (error) {
+            console.error('Error executing MySQL query to retrieve sp_id:', error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        } else {
+            if (spResults.length === 0) {
+                res.status(404).json({ error: 'Service provider not found' });
+                return;
+            }
+            const spId = spResults[0].sp_id;
+
+            // Query to calculate total amount received and number of service records
+            const getServicePaymentQuery = 'SELECT COUNT(srqa_id) AS totalServiceDone, SUM(amount) AS totalAmountReceived FROM service_payment_details WHERE sp_id = ?';
+
+            db.query(getServicePaymentQuery, [spId], (err, paymentResults) => {
+                if (err) {
+                    console.error('Error executing MySQL query to calculate total amount received and number of service records:', err);
+                    res.status(500).json({ error: 'Internal Server Error' });
+                } else {
+                    const { totalServiceDone, totalAmountReceived } = paymentResults[0];
+                    res.json({ totalServiceDone, totalAmountReceived });
+                }
+            });
+        }
+    });
+});
+
+app.post('/chatBotMessages', async (req, res) => {
+    const { message } = req.body;
+
+    // MySQL query to retrieve the English words for each Manglish word in the message
+    const query = 'SELECT Eword FROM manglish_key_words WHERE Mword IN (?)';
+    
+    // Execute the query
+    db.query(query, [message.split(' ')], (err, results) => {
+        if (err) {
+            console.error('Error executing MySQL query to retrieve English words:', err);
+            res.status(500).json({ error: 'Internal Server Error' });
+        } else {
+            if (results.length === 0) {
+                // No matching English words found
+                res.status(404).json({ error: 'No matching English words found' });
+            } else {
+                // Extract English words from the results
+                const englishWords = results.map(row => row.Eword);
+                // Join the English words back into a message
+                const englishMessage = englishWords.join(' ');
+                // Send the English message as response
+                res.json({ englishMessage });
+            }
+        }
+    });
+});
+
+
+
 
 
 function generateRandomPassword() {

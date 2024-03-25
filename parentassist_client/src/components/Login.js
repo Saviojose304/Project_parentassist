@@ -161,7 +161,9 @@ function Login() {
         if (!emailError && !passwordError) {
             try {
                 setSubmitClicked(true);
-                const response = await axios.post('http://localhost:9000/login', { email, password, role });
+                const response = await axios.post('http://localhost:9000/login', { email, password });
+
+                
 
                 const token = response.data; //  token field
                 const userRole = token.role
@@ -205,6 +207,7 @@ function Login() {
 
 
     };
+
 
     const sendmail = async (e) => {
         e.preventDefault();

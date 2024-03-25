@@ -1,17 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './chatbot.css';
 import { AiOutlineClose } from "react-icons/ai";
+import { toast } from 'react-toastify';
+import axios from 'axios';
 
 function ChatBot({ onClose }) {
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const messagesEndRef = useRef(null);
 
-    const handleSendMessage = () => {
-        if (inputValue.trim() !== '') {
-            setMessages([...messages, { text: inputValue, sender: 'user' }]);
-            setInputValue('');
-        }
-    };
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
 
     const convertInput = async (input) => {
         const params = new URLSearchParams({
@@ -46,20 +51,62 @@ function ChatBot({ onClose }) {
         }
     };
 
-    const handleInputKeyDown = async (e) => {
-        // Check if the key pressed is the space bar
-        if (e.key === ' ' || e.keyCode === 32) {
-            // Prevent the default space behavior (like scrolling down the page)
-            e.preventDefault();
+    const handleSend = async () => {
+        // Check if the input value contains only alphabets and spaces
+        const isValidInput = /^[a-zA-Z\s]*$/.test(inputValue);
 
-            // Perform the conversion and update the messages
+        if (!isValidInput) {
+            // If not valid, show toast warning
+            toast.warning("Only Allow Alphabets");
+        } else {
+            setIsLoading(true);
+            setMessages((prevMessages) => [
+                ...prevMessages,
+                { sender: 'right', text: inputValue },
+                {
+                    sender: 'left', text: <div className="loading-dots">
+                        <span className="loading-dot"></span>
+                        <span className="loading-dot"></span>
+                        <span className="loading-dot"></span>
+                    </div>
+                },
+            ]);
+            // If valid, proceed with conversion and update messages
             const convertedInput = await convertInput(inputValue);
-            setMessages([...messages, { text: convertedInput, sender: 'user' }]);
 
-            // Clear the input value
-            setInputValue('');
+            console.log(convertedInput);
+
+            try {
+                const response = await axios.post('/chatBotMessages', { message: convertedInput });
+                // Add the received message to the messages state
+                setMessages((prevMessages) =>
+                    prevMessages.map((message, index) =>
+                        index === prevMessages.length - 1
+                            ? { ...message, text: response.data.englishMessage }
+                            : message
+                    )
+                );
+                setIsLoading(false);
+            } catch (error) {
+                setMessages((prevMessages) =>
+                    prevMessages.map((message, index) =>
+                        index === prevMessages.length - 1
+                            ? { ...message, text: "kshamikkanam, ningal enthaanu parayunnathennu enikku manasilaakunnilla" }
+                            : message
+                    )
+                );
+                setIsLoading(false);
+            }
+
+            // Update the last message with the converted input
+
         }
+
+        // Clear the input value
+        setInputValue('');
     };
+
+
 
     return (
         <>
@@ -76,6 +123,7 @@ function ChatBot({ onClose }) {
                             {message.text}
                         </div>
                     ))}
+                    <div ref={messagesEndRef} />
                 </div>
                 <div className="chatbot-input">
                     <input
@@ -83,9 +131,9 @@ function ChatBot({ onClose }) {
                         placeholder="Type a message..."
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
-                        onKeyDown={handleInputKeyDown}
+                        disabled={isLoading}
                     />
-                    <button className='bg-green-500 rounded-lg w-16 text-white' onClick={handleSendMessage}>
+                    <button className='bg-green-500 rounded-lg w-16 text-white' onClick={handleSend}>
                         Send
                     </button>
                 </div>

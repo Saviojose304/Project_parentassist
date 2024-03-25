@@ -8,6 +8,7 @@ import paintingicon from "../../assets/images/painting.png";
 import pestcontrolicon from "../../assets/images/pestcontrol.png";
 import plumbingicon from "../../assets/images/plumbing.png";
 import cleaningIcon from "../../assets/images/cleaning.png";
+import driverIcon from "../../assets/images/driverIcon.png"
 import { IoClose } from "react-icons/io5";
 import { useParams } from 'react-router-dom';
 
@@ -47,6 +48,8 @@ function ServiceContainer({ latitude, longitude }) {
                 return carpentaryicon;
             case 'Builder':
                 return Buildericon;
+            case 'Driver':
+                return driverIcon;
             default:
                 return Electricalicon;
         }

@@ -180,17 +180,13 @@ function Requsetservice({closeModal}) {
                 } else {
                     if (response.data.error === 'Similar service request already exists for this date and user.') {
                         toast.error("Similar service request already exists for this date and user.");
-                    } else {
-                        toast.error("Failed to add service. Please try again.");
-                    }
+                    } 
                 }
             } catch (error) {
                 console.error('Error adding service:', error);
 
                 if (error.response && error.response.status === 500 && error.response.data.error === 'Similar service request already exists for this date and user.') {
                     toast.error("Similar service request already exists for this date and user.");
-                } else {
-                    toast.error("Failed to add service. Please try again.");
                 }
             }
 
@@ -211,6 +207,7 @@ function Requsetservice({closeModal}) {
                 <div className="mb-4">
                     <label className="block text-lg text-left font-semibold text-gray-700 mb-2">Enter Service</label>
                     <select
+                    id='service-dropdown'
                         value={selectedService}
                         onChange={(e) => setSelectedService(e.target.value)}
                         className="border rounded-md p-2 w-full"
@@ -228,7 +225,7 @@ function Requsetservice({closeModal}) {
                 <div className="mb-4">
                     <label className="block text-lg text-left font-semibold text-gray-700 mb-2">Enter Service Description</label>
                     <textarea
-                        id="addSubService"
+                        id="service-description"
                         name="addSubServiceDes"
                         value={subServiceDes}
                         onChange={handleSubServiceDes}
@@ -245,7 +242,7 @@ function Requsetservice({closeModal}) {
                     <label className="block text-lg text-left font-semibold text-gray-700 mb-2">Enter Location</label>
                     <input
                         type="text"
-                        id="addLocation"
+                        id="location"
                         name="addLocation"
                         value={location}
                         onChange={handleLocation}
@@ -258,6 +255,7 @@ function Requsetservice({closeModal}) {
                 <div className="mb-4">
                     <label className="block text-lg text-left font-semibold text-gray-700 mb-2">Select Date</label>
                     <DatePicker
+                        id="datepicker"
                         selected={selectedDate}
                         onChange={handleDateChange}
                         minDate={new Date()} // Set the minimum date to today
@@ -268,6 +266,7 @@ function Requsetservice({closeModal}) {
                 </div>
                 <div className="text-center">
                     <button
+                        id="submitBtn"
                         type="submit"
                         onClick={handleSubmit}
                         className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full"

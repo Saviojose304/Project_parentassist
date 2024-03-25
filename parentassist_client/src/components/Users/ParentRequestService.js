@@ -78,7 +78,7 @@ function ParentRequsetService() {
                         <a style={{ color: "white" }} className="navbar-brand ms-5" href="#">ParentAssist</a>
                         <ul className="navbar-nav ms-auto me-5">
                             <li className="nav-item px-3">
-                                <button type="button" className="btn btn-success" onClick={handleModal}>Request Service</button>
+                                <button id="requestBtn" type="button" className="btn btn-success" onClick={handleModal}>Request Service</button>
                             </li>
                             <li className="nav-item px-3 py-2">
                                 <a style={{ color: "white" }} href="#" data-bs-target="#sidebar" id="username" data-bs-toggle="collapse" className="text-decoration-none text-end">{parsedToken ? parsedToken.userName : 'Name'}</a>

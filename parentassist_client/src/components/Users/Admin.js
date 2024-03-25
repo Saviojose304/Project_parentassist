@@ -6,6 +6,7 @@ import '../Register.css'
 import AlertBox from "../Alert";
 import { Modal } from "react-bootstrap";
 import { Document, Page, Text, View, StyleSheet, PDFViewer } from "@react-pdf/renderer";
+import AdminSideBar from './AdminSideBar';
 
 function Admin() {
 
@@ -219,7 +220,7 @@ function Admin() {
                         </div>
                         <ul className="navbar-nav ms-auto me-5">
                             <li className="nav-item px-3">
-                                <a style={{ color: "white" }} href="#" data-bs-target="#sidebar" data-bs-toggle="collapse" className="text-decoration-none" onClick={toggleSidebar}>{token ? token.email : ''}</a>
+                                <a style={{ color: "white" }} href="#" data-bs-target="#sidebar" data-bs-toggle="collapse" className="text-decoration-none">{token ? token.email : ''}</a>
                             </li>
                         </ul>
                     </div>
@@ -227,35 +228,9 @@ function Admin() {
             </header>
             <div className='row d-flex'>
                 <div className='col-2' id="sidebar-nav">
-                    <div className="container mt-9 pt-5">
-                        <div className="row flex-nowrap" >
-                            <div className=" px-0">
-                                <div id="sidebar" className={isSidebarOpen ? 'collapse collapse-horizontal ' : 'show border-end pt-2'}>
-                                    <div className="d-grid  mx-auto ">
-                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleservice}>
-                                            <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar">
-                                                <i className="bi bi-people-fill"><span>Services</span></i>
-                                            </a>
-                                        </button>
-                                        {/* <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleReports}>
-                                            <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline text-truncate" data-bs-parent="#sidebar">
-                                                <i className="bi bi-file-earmark-pdf"><span>Reports</span></i>
-                                            </a>
-                                        </button> */}
-                                        <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={Logout}>
-                                            <a href='' className="text-decoration-none list-group-item border-end-0 d-inline text-truncate" data-bs-parent="#sidebar">
-                                                <i className="bi bi-box-arrow-right"><span >Logout</span></i>
-                                            </a>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-
+                   <AdminSideBar />
                 </div>
-                <div className={isSidebarOpen ? 'col-12' : 'col-10 pt-2'}>
+                <div className="col-10 pt-2">
                     <main className="col overflow-auto h-100">
                         <div className="bg-light border rounded-3 p-5">
                             <div className="container mt-5">

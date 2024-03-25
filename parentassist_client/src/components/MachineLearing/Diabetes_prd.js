@@ -24,6 +24,7 @@ function Diabetes_prd() {
     const [errors, setErrors] = useState({});
     const [hasErrors, setHasErrors] = useState(false);
     const [symptoms, setSymptoms] = useState(['', '', '', '', '']);
+    const [selectedSymptoms, setSelectedSymptoms] = useState([]);
 
     const list_a = ['itching', 'skin_rash', 'nodal_skin_eruptions', 'continuous_sneezing', 'shivering', 'chills', 'joint_pain',
         'stomach_pain', 'acidity', 'ulcers_on_tongue', 'muscle_wasting', 'vomiting', 'burning_micturition',
@@ -69,23 +70,21 @@ function Diabetes_prd() {
 
     console.log(parentsList);
 
-    const [selectedOptions, setSelectedOptions] = useState(Array.from({ length: symptoms.length }, () => ''));
 
-    const handleChange = (index, value) => {
-        const updatedSelectedOptions = [...selectedOptions];
-        updatedSelectedOptions[index] = value;
-        setSelectedOptions(updatedSelectedOptions);
-    };
-
-    const generateOptions = (symptomIndex) => {
-        const selectedOptionsSet = new Set(selectedOptions.slice(0, symptomIndex));
-        return list_a.filter(option => !selectedOptionsSet.has(option));
-    };
+    const handleInputChange = (index, value) => {
+        const updatedSymptoms = [...symptoms];
+        updatedSymptoms[index] = value;
+        setSymptoms(updatedSymptoms);
+      
+        if (value) {
+          setSelectedSymptoms([...selectedSymptoms, value]);
+        }
+      };
 
 
     const handlePredict = async () => {
 
-        console.log(selectedOptions);
+        console.log(symptoms);
 
         if (hasErrors) {
             console.log('Validation errors. Prediction cancelled.');
@@ -99,7 +98,7 @@ function Diabetes_prd() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ symptoms: selectedOptions }),
+                body: JSON.stringify({ symptoms: symptoms }),
             });
 
             const result = await response.json();
@@ -220,7 +219,7 @@ function Diabetes_prd() {
                                         </button>
                                         <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handleParentDetails}>
                                             <a href="#" className="text-decoration-none list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar">
-                                                <i className="bi bi-people-fill"><span>Diabetes Check</span></i>
+                                                <i className="bi bi-people-fill"><span>Disease Prediction</span></i>
                                             </a>
                                         </button>
                                         <button type="button" className="btn border-light btn-outline-primary" style={{ width: "100%", borderRadius: "0px" }} onClick={handledoctor}>
@@ -328,30 +327,31 @@ function Diabetes_prd() {
             </div >
 
             {isModalOpen &&
-                < div className="fixed  inset-0 z-50 mt-16 h-[75vh] opacity-1 flex items-center justify-center">
-                    <div className="bg-white overflow-y-scroll relative bottom-3  h-[75vh] w-1/2 mt-10 shadow-md shadow-gray-400 p-8 rounded-lg text-center">
+                <div className="fixed inset-0 z-50 mt-16 h-[75vh] opacity-1 flex items-center justify-center">
+                    <div className="bg-white overflow-y-scroll relative bottom-3 h-[75vh] w-1/2 mt-10 shadow-md shadow-gray-400 p-8 rounded-lg text-center">
                         <button
                             className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
                             onClick={closeModal}
                         >
                             <IoMdClose className="bg-red-500 text-white" size={24} />
                         </button>
-
                         <h2 className="text-2xl font-bold mb-4">Predict Disease</h2>
-
                         <div>
                             {symptoms.map((symptom, index) => (
-                                <div key={index}>
-                                    <label htmlFor={`symptom${index + 1}`}>{`Select Symptom ${index + 1}`}</label>
+                                <div key={index} className="flex mb-4">
+                                    <label htmlFor={`symptom${index + 1}`} className="w-1/4 text-right pr-2">
+                                        {`Select Symptom ${index + 1}`}
+                                    </label>
                                     <select
                                         id={`symptom${index + 1}`}
-                                        value={selectedOptions[index]}
-                                        onChange={(e) => handleChange(index, e.target.value)}
+                                        value={symptom}
+                                        onChange={(e) => handleInputChange(index, e.target.value)}
+                                        className="w-3/4 border-2 border-black focus:border-blue-500"
                                     >
-                                        <option value="">Select...</option>
-                                        {generateOptions(index).map((option, optionIndex) => (
-                                            <option key={optionIndex} value={option}>
-                                                {option}
+                                        <option value="">Select a symptom</option>
+                                        {list_a.map((symptomOption) => (
+                                            <option key={symptomOption} value={symptomOption}>
+                                                {symptomOption.replace(/_/g, ' ')}
                                             </option>
                                         ))}
                                     </select>
@@ -364,17 +364,12 @@ function Diabetes_prd() {
                                 Submit
                             </button>
                         </div>
-
-
-
-
-
                         <p className='font-semibold text-xl mt-2'>
                             Prediction: {prediction ? prediction.disease : 'No prediction available'}
                         </p>
-
                     </div>
-                </div >
+                </div>
+
             }
         </>
     );

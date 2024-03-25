@@ -46,9 +46,10 @@ function ServiceProviderHomePage() {
                 .then((response) => {
                     if (response.status === 200) {
                         const services = response.data;
+                        console.log(response.data);
                         setServiceList(response.data);
-                        const accepted = services.matchingServiceRequests.filter(service => service.locationStatus === "Approved");
-                        const requested = services.matchingServiceRequests.filter(service => service.locationStatus === "" || service.locationStatus === "pending");
+                        const accepted = services.matchingServiceRequests.filter(service => service.status === "Approved");
+                        const requested = services.matchingServiceRequests.filter(service => service.status === "Requested" || service.status === "pending");
 
                         setAcceptedServices(accepted);
                         setRequestedServices(requested);
@@ -104,17 +105,20 @@ function ServiceProviderHomePage() {
     const handleAmountChange = (value, index) => {
         // Use a regular expression to allow only numeric values
         const numericValue = value.replace(/[^0-9]/g, '');
-
+    
         if (value !== numericValue) {
             setAmountError('Please enter only numbers');
+        } else if (parseInt(numericValue) > 200000) {
+            setAmountError('Please enter an amount under 200000');
         } else {
             setAmountError('');
         }
-
+    
         setSelectedAmount((prevAmounts) => {
             return { ...prevAmounts, [index]: numericValue };
         });
     };
+    
 
 
     const handleAddInvoice = async (serviceId, index, serviceName) => {
