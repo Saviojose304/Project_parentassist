@@ -5,6 +5,8 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 
 function ChatBot({ onClose }) {
+    const token = localStorage.getItem('token');
+    const parsedToken = JSON.parse(token);
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -13,6 +15,15 @@ function ChatBot({ onClose }) {
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
+
+    useEffect(() => {
+        // Add a welcome message when the component mounts
+        setMessages([
+            { sender: 'left', text: `Hello ${parsedToken ? parsedToken.userName : ''}, ParentAssist-lekku swagatham, enikku ningale engane sahaayikkanaakum` }
+        ]);
+        scrollToBottom();
+    }, []);
+
 
     useEffect(() => {
         scrollToBottom();

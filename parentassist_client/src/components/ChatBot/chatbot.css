@@ -79,8 +79,9 @@
   background-color: #0084ff;
   color: white;
   padding: 10px;
+  font-family: Georgia, 'Times New Roman', Times, serif;
   border-radius: 10px;
-  max-width: 60%;
+  width:fit-content;
 }
 
 .message.left {
@@ -88,9 +89,10 @@
   margin-right: auto;
   margin-left: 10px;
   background-color: #56c55d;
+  font-family:'Times New Roman', Times, serif;
   padding: 10px;
   border-radius: 10px;
-  width: auto;
+  width:fit-content;
 }
 
 /* loading.css */

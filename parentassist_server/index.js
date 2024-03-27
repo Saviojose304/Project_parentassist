@@ -3199,7 +3199,7 @@ app.post('/chatBotMessages', async (req, res) => {
         // Join the English words back into a message
         const englishMessage = englishWords.join(' ');
 
-        console.log(englishMessage);
+        //console.log(englishMessage);
 
         // Check if the message contains specific keywords
         if (englishMessage.includes('doctor') && englishMessage.includes('list')) {

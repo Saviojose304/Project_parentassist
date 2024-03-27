@@ -5,7 +5,6 @@ import '../Register.css'
 import AlertBox from "../Alert";
 import format from "date-fns/format";
 import PatientDetailsModal from "../UsersView/PatientDetailsModal";
-import EveFooter from "../EveFooter"
 function Doctor() {
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [isshowgeneral, setShowGeneral] = useState(true);
@@ -402,7 +401,6 @@ function Doctor() {
                 parent_id={selectedParentId}
                 userId = {doctor_user_id}
             />
-            <EveFooter />
         </>
     );
 }
