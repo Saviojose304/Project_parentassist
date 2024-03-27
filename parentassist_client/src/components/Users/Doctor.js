@@ -6,6 +6,9 @@ import AlertBox from "../Alert";
 import format from "date-fns/format";
 import PatientDetailsModal from "../UsersView/PatientDetailsModal";
 function Doctor() {
+
+
+    
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [isshowgeneral, setShowGeneral] = useState(true);
     const [isshowpass, setShowPass] = useState(false);
