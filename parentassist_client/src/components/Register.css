@@ -1,0 +1,26 @@
+input,select {
+    width: 90%;
+    margin-bottom: 25px;
+    padding: 0px 30px 15px;
+    font-size: 16px;
+    border: none;
+    border-bottom: 1px solid #000;
+    outline: none;
+    color: #000;
+  }
+  input:focus{
+    border-bottom: 1px solid rgb(22, 216, 193);
+  }
+  .icon {
+    position: absolute;
+  }
+  .red-text{
+      color: red;
+  }
+
+  .edit_pro{
+    width: 35%;
+  }
+
+
+  

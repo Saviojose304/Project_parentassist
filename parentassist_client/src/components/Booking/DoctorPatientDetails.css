@@ -1,0 +1,19 @@
+@media (max-width: 576px) {
+    .mt-sm-5rem {
+      margin-top: 18rem;
+    }
+  }
+  
+  /* Define margin-top for medium screens */
+  @media (min-width: 577px) and (max-width: 992px) {
+    .mt-md-5rem {
+      margin-top: 5rem;
+    }
+  }
+  
+  /* Define margin-top for large screens */
+  @media (min-width: 993px) {
+    .mt-lg-5rem {
+      margin-top: 8rem;
+    }
+  }
