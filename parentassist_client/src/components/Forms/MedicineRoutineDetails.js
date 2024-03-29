@@ -51,7 +51,7 @@ function MedicineRoutineDetails(props) {
             setSubmitClicked(true);
             setCheckboxError('');
             // Send a POST request to save the data to your database
-            const response = await axios.post('http://localhost:9000/saveMedicineRoutine', requestData);
+            const response = await axios.post('http://13.233.162.230:9000/saveMedicineRoutine', requestData);
             if (response.status === 200) {
                 setAlertInfo({ variant: 'success', message: 'Subimitted successfully', show: true });
                 setIsSubmissionSuccessful(true);

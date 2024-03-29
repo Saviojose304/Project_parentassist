@@ -54,7 +54,7 @@ function AddVideoForm() {
             formData.append('date', currentDate);
 
             try {
-                const response = await axios.post('http://localhost:9000/adminaddVideo', formData, {
+                const response = await axios.post('http://13.233.162.230:9000/adminaddVideo', formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     },

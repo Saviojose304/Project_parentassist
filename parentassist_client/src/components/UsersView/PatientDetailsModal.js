@@ -9,7 +9,7 @@ function PatientDetailsModal({ show, onHide, parent_id, userId }) {
 
     const fetchPatientDetails = async () => {
         try {
-            const response = await axios.get(`http://localhost:9000/getPatientDetailsDoctorView?parent_id=${parent_id}&user_id=${userId}`);
+            const response = await axios.get(`http://13.233.162.230:9000/getPatientDetailsDoctorView?parent_id=${parent_id}&user_id=${userId}`);
             if (response.status === 200) {
                 setPatientDetails(response.data);
             } else {
@@ -22,7 +22,7 @@ function PatientDetailsModal({ show, onHide, parent_id, userId }) {
 
     const fetchMedicineDetails = async () => {
         try {
-            const response = await axios.get(`http://localhost:9000/getMedicineDetailsDoctorView?parent_id=${parent_id}&user_id=${userId}`);
+            const response = await axios.get(`http://13.233.162.230:9000/getMedicineDetailsDoctorView?parent_id=${parent_id}&user_id=${userId}`);
             if (response.status === 200) {
                 setMedicineDetails(response.data);
             } else {
@@ -71,7 +71,7 @@ function PatientDetailsModal({ show, onHide, parent_id, userId }) {
                                         {details.past_surgeries === "No" ? (
                                             <span>No</span>
                                         ) : (
-                                            <a href={`http://localhost:9000/${details.past_surgeries}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20 mt-3">
+                                            <a href={`http://13.233.162.230:9000/${details.past_surgeries}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20 mt-3">
                                                 <i className="bi bi-file-arrow-down-fill"></i>
                                             </a>
                                         )}
@@ -81,7 +81,7 @@ function PatientDetailsModal({ show, onHide, parent_id, userId }) {
                                         {details.text_result === "No" ? (
                                             <span>No</span>
                                         ) : (
-                                            <a href={`http://localhost:9000/${details.test_result}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20 mt-3">
+                                            <a href={`http://13.233.162.230:9000/${details.test_result}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20 mt-3">
                                                 <i className="bi bi-file-arrow-down-fill"></i>
                                             </a>
                                         )}

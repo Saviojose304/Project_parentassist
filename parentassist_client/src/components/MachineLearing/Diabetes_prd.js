@@ -54,7 +54,7 @@ function Diabetes_prd() {
 
     useEffect(() => {
         const fetchData = async () => {
-            axios.get(`http://localhost:9000/getParentViewData?user_id=${user_id}`)
+            axios.get(`http://13.233.162.230:9000/getParentViewData?user_id=${user_id}`)
                 .then((response) => {
                     if (response.status === 200) {
                         setParentsList(response.data.results);

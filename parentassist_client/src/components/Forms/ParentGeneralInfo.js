@@ -211,7 +211,7 @@ function ParentGeneralInfo(props) {
             formData.append("doctor_user_id", doctor_user_id);
 
             // Send a POST request to your Express API
-            const response = await axios.post("http://localhost:9000/parentGeneralInfo", formData);
+            const response = await axios.post("http://13.233.162.230:9000/parentGeneralInfo", formData);
 
             if (response.status === 200) {
                 //console.log(response.data.message);

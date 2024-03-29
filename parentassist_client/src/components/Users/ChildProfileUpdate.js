@@ -38,7 +38,7 @@ function ChildProfileUpdate() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get('http://localhost:9000/getUserData', { params: { user_child_id }});
+                const response = await axios.get('http://13.233.162.230:9000/getUserData', { params: { user_child_id }});
                 const userData = response.data;
                 // Update the state with the user data
                 setName(userData.name);
@@ -181,7 +181,7 @@ function ChildProfileUpdate() {
         e.preventDefault();
         setSubmitClicked(true);
         try {
-            const response = await axios.put('http://localhost:9000/Childprofileupdate',{name, address, phone, user_child_id});
+            const response = await axios.put('http://13.233.162.230:9000/Childprofileupdate',{name, address, phone, user_child_id});
             if (response.status === 200) {
                 setAlertInfo({ variant: 'success', message: 'Profile Update Successfully', show: true });
             }
@@ -196,7 +196,7 @@ function ChildProfileUpdate() {
         setSubmitClicked(true);
 
         try {
-            const response = await axios.put('http://localhost:9000/ProfilePassUpdate',{password, user_child_id});
+            const response = await axios.put('http://13.233.162.230:9000/ProfilePassUpdate',{password, user_child_id});
             if (response.status === 200) {
                 setAlertInfo({ variant: 'success', message: 'Password Update Successfully', show: true });
             }

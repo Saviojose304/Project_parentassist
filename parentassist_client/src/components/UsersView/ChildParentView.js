@@ -14,7 +14,7 @@ function ChildParentView() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get('http://localhost:9000/getParentViewData', { params: { user_child_id } });
+                const response = await axios.get('http://13.233.162.230:9000/getParentViewData', { params: { user_child_id } });
                 setParentData(response.data.results);
 
             } catch (error) {

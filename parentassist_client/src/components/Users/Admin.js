@@ -38,7 +38,7 @@ function Admin() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get('http://localhost:9000/users');
+                const response = await axios.get('http://13.233.162.230:9000/users');
                 setUsers(response.data);
             } catch (error) {
                 console.error('Error fetching data: ', error);
@@ -112,7 +112,7 @@ function Admin() {
         setSubmitClicked(true);
 
         try {
-            const response = await axios.post('http://localhost:9000/send-terms-email', {
+            const response = await axios.post('http://13.233.162.230:9000/send-terms-email', {
                 recipientEmail: email,
             });
 
@@ -276,7 +276,7 @@ function Admin() {
                                                                 const confirmed = window.confirm("Are you sure you want to Deactivate the user?");
                                                                 if (confirmed) {
                                                                     // Make an API request to deactivate the user
-                                                                    const response = await axios.post(`http://localhost:9000/deactivateUser/${user.user_id}`);
+                                                                    const response = await axios.post(`http://13.233.162.230:9000/deactivateUser/${user.user_id}`);
                                                                     if (response.status === 200) {
                                                                         // Update the UI or handle success as needed
                                                                         console.log("User Deactivated successfully");
@@ -299,7 +299,7 @@ function Admin() {
                                                                 const confirmed = window.confirm("Are you sure you want to Activate the user?");
                                                                 if (confirmed) {
                                                                     // Make an API request to deactivate the user
-                                                                    const response = await axios.post(`http://localhost:9000/activateUser/${user.user_id}`);
+                                                                    const response = await axios.post(`http://13.233.162.230:9000/activateUser/${user.user_id}`);
                                                                     if (response.status === 200) {
                                                                         // Update the UI or handle success as needed
                                                                         console.log("User Activated successfully");

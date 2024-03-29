@@ -20,7 +20,7 @@ function RequestAndAcceptList() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`http://localhost:9000/getRequsetServicesList?userId=${user_id}`);
+        const response = await axios.get(`http://13.233.162.230:9000/getRequsetServicesList?userId=${user_id}`);
 
         const services = response.data;
         setServiceList(response.data);
@@ -69,7 +69,7 @@ function RequestAndAcceptList() {
 
   const handleSubmit = async (item) => {
     try {
-      const initiatePaymentResponse = await axios.post("http://localhost:9000/initiate-payment", {
+      const initiatePaymentResponse = await axios.post("http://13.233.162.230:9000/initiate-payment", {
         amount: item.amount,
         date: new Date().toISOString(), // Pass the desired date
       });
@@ -88,7 +88,7 @@ function RequestAndAcceptList() {
           //console.log(totalBillAmount);
           try {
             // Send the payment response to your backend for verification
-            const paymentResponse = await axios.post("http://localhost:9000/verify-service-payment", {
+            const paymentResponse = await axios.post("http://13.233.162.230:9000/verify-service-payment", {
               razorpay_order_id: response.razorpay_order_id,
               amount: item.amount,
               date: new Date().toISOString(),
@@ -246,7 +246,7 @@ function RequestAndAcceptList() {
                   <p className="text-gray-700 mb-2">
                     {service.adhar_card ? (
                       <>
-                        ID Proof : <a href={`http://localhost:9000/${service.adhar_card}`} target="_blank" rel="noopener noreferrer" className="btn btn-danger mx-2 w-20  mt-3">
+                        ID Proof : <a href={`http://13.233.162.230:9000/${service.adhar_card}`} target="_blank" rel="noopener noreferrer" className="btn btn-danger mx-2 w-20  mt-3">
                           <i class="bi bi-file-arrow-down-fill"></i>
                         </a>
                       </>
@@ -264,7 +264,7 @@ function RequestAndAcceptList() {
                   <p className="text-gray-700 mb-2">
                     {service.invoice ? (
                       <>
-                        Invoice : <a href={`http://localhost:9000/${service.invoice}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20  mt-3">
+                        Invoice : <a href={`http://13.233.162.230:9000/${service.invoice}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20  mt-3">
                           <i class="bi bi-file-arrow-down-fill"></i>
                         </a>
                       </>

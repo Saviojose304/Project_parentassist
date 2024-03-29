@@ -26,7 +26,7 @@ function AdminAddServices() {
 
     useEffect(() => {
         // Fetch videos from your backend API
-        axios.get("http://localhost:9000/videos")
+        axios.get("http://13.233.162.230:9000/videos")
             .then((response) => {
                 setVideos(response.data);
             })
@@ -40,7 +40,7 @@ function AdminAddServices() {
         const confirmed = window.confirm("Are you sure you want to Delete the video?");
         if (confirmed) {
             // Make an API request to deactivate the user
-            axios.delete(`http://localhost:9000/deletevideos/${videoId}`)
+            axios.delete(`http://13.233.162.230:9000/deletevideos/${videoId}`)
                 .then(() => {
                     // Remove the deleted video from the videos state
                     setVideos((prevVideos) => prevVideos.filter((video) => video.id !== videoId));
@@ -105,7 +105,7 @@ function AdminAddServices() {
                         <div sty className="col-md-4 mb-4" key={video.stress_relief_video_id}>
                             <div className="card d-flex flex-column h-100">
                                 <video
-                                    src={`http://localhost:9000/${video.video}`}
+                                    src={`http://13.233.162.230:9000/${video.video}`}
                                     alt={video.stress_relief_video_id}
                                     autoPlay
                                     loop

@@ -87,7 +87,7 @@ function MedicineSeller() {
 
     const fetchMedicineDetails = async () => {
         try {
-            const response = await axios.get(`http://localhost:9000/sellerMedicineView/${seller_user_id}`);
+            const response = await axios.get(`http://13.233.162.230:9000/sellerMedicineView/${seller_user_id}`);
             if (response.status === 200) {
                 setMedicineDetails(response.data);
             }
@@ -119,7 +119,7 @@ function MedicineSeller() {
                 if (isEditMode && editedMedicine) {
                     // Update the medicine if in edit mode
                     const response = await axios.put(
-                        `http://localhost:9000/updateMedicine/${editedMedicine}`,
+                        `http://13.233.162.230:9000/updateMedicine/${editedMedicine}`,
                         {
                             expiryDate: date,
                         }
@@ -140,7 +140,7 @@ function MedicineSeller() {
                     }
                 } else {
                     // Add a new medicine if not in edit mode
-                    const response = await axios.post('http://localhost:9000/addMedicine', {
+                    const response = await axios.post('http://13.233.162.230:9000/addMedicine', {
                         name: medicinename,
                         expiryDate: date,
                         userId: seller_user_id,

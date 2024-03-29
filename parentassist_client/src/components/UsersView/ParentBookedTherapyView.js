@@ -24,7 +24,7 @@ function ParentBookedTherapyView() {
 
     useEffect(() => {
         // Fetch booked therapies when the component mounts
-        axios.get(`http://localhost:9000/booked-therapies/${parent_user_id}`)
+        axios.get(`http://13.233.162.230:9000/booked-therapies/${parent_user_id}`)
             .then((response) => {
                 const today = new Date().toISOString().split('T')[0];
                 const filteredBookedTherapies = response.data.filter(therapy => therapy.status === 'Success' && therapy.formatted_date <= today);

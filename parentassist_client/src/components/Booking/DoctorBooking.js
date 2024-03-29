@@ -36,7 +36,7 @@ function DoctorBooking() {
 
     useEffect(() => {
         // console.log("Fetching data...");
-        axios.get("http://localhost:9000/doctorslist")
+        axios.get("http://13.233.162.230:9000/doctorslist")
             .then((response) => {
                 // console.log("Data received:", response.data);
                 setDoctorList(response.data);
@@ -109,7 +109,7 @@ function DoctorBooking() {
 
     useEffect(() => {
         if (doctorid) { // Check if doctorid is truthy
-            axios.get(`http://localhost:9000/doctorslist/${doctorid}`).then((response) => {
+            axios.get(`http://13.233.162.230:9000/doctorslist/${doctorid}`).then((response) => {
                 const { doctorDetails, leaveDays } = response.data;
                 setSpecialization(doctorDetails.specialization);
                 setHospital(doctorDetails.hospital);
@@ -178,7 +178,7 @@ function DoctorBooking() {
         try {
             if (editMode) {
                 // Handle update appointment logic
-                const response = await axios.put(`http://localhost:9000/updatedoctorbooking/${doctorDetails.doctor_id}/${appointmentDetails.formatted_date}`,
+                const response = await axios.put(`http://13.233.162.230:9000/updatedoctorbooking/${doctorDetails.doctor_id}/${appointmentDetails.formatted_date}`,
                     {
                         selectedDate,
                         time,
@@ -191,7 +191,7 @@ function DoctorBooking() {
                 }
             } else {
                 // Handle create appointment logic (as you were doing before)
-                const response = await axios.post('http://localhost:9000/doctorbooking', { selectedDate, time, gender, doctorid });
+                const response = await axios.post('http://13.233.162.230:9000/doctorbooking', { selectedDate, time, gender, doctorid });
                 console.log(selectedDate, time, gender, doctorid);
                 if (response.status === 200) {
                     setAlertInfo({ variant: 'success', message: 'Appointment Booked Successfully', show: true });

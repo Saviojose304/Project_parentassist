@@ -34,7 +34,7 @@ function ChildProfile() {
             const user_id = parsedToken.userId;
 
             // Fetch latest doctor visit details for the parent
-            axios.get(`http://localhost:9000/getLatestDoctorVisitDetailsChild?user_id=${user_id}&gender=${gender}`)
+            axios.get(`http://13.233.162.230:9000/getLatestDoctorVisitDetailsChild?user_id=${user_id}&gender=${gender}`)
                 .then((response) => {
                     if (response.status === 200) {
                         setDoctorVisits(response.data);
@@ -45,7 +45,7 @@ function ChildProfile() {
                 });
 
             // Fetch medicine routine details for the parent's doctor visits
-            axios.get(`http://localhost:9000/getMedicineRoutineDetailsChild?user_id=${user_id}&gender=${gender}`)
+            axios.get(`http://13.233.162.230:9000/getMedicineRoutineDetailsChild?user_id=${user_id}&gender=${gender}`)
                 .then((response) => {
                     if (response.status === 200) {
                         setMedicineRoutine(response.data);
@@ -100,7 +100,7 @@ function ChildProfile() {
 
         const user_id = parsedToken.userId;
 
-        axios.get(`http://localhost:9000/getLatestDoctorVisitDetailsChild?user_id=${user_id}&gender=${updatedGender}`)
+        axios.get(`http://13.233.162.230:9000/getLatestDoctorVisitDetailsChild?user_id=${user_id}&gender=${updatedGender}`)
             .then((response) => {
                 if (response.status === 200) {
                     setDoctorVisits(response.data);
@@ -110,7 +110,7 @@ function ChildProfile() {
                 console.error("Error fetching doctor visit details:", error);
             });
 
-        axios.get(`http://localhost:9000/getMedicineRoutineDetailsChild?user_id=${user_id}&gender=${updatedGender}`)
+        axios.get(`http://13.233.162.230:9000/getMedicineRoutineDetailsChild?user_id=${user_id}&gender=${updatedGender}`)
             .then((response) => {
                 if (response.status === 200) {
                     setMedicineRoutine(response.data);
@@ -136,7 +136,7 @@ function ChildProfile() {
         const user_id = parsedToken.userId;
 
         // Fetch latest doctor visit details for the parent with the updated gender
-        axios.get(`http://localhost:9000/getLatestDoctorVisitDetailsChild?user_id=${user_id}&gender=${updatedGender}`)
+        axios.get(`http://13.233.162.230:9000/getLatestDoctorVisitDetailsChild?user_id=${user_id}&gender=${updatedGender}`)
             .then((response) => {
                 if (response.status === 200) {
                     setDoctorVisits(response.data);
@@ -147,7 +147,7 @@ function ChildProfile() {
             });
 
         // Fetch medicine routine details for the parent's doctor visits with the updated gender
-        axios.get(`http://localhost:9000/getMedicineRoutineDetailsChild?user_id=${user_id}&gender=${updatedGender}`)
+        axios.get(`http://13.233.162.230:9000/getMedicineRoutineDetailsChild?user_id=${user_id}&gender=${updatedGender}`)
             .then((response) => {
                 if (response.status === 200) {
                     setMedicineRoutine(response.data);
@@ -439,14 +439,14 @@ function ChildProfile() {
                                                                     {visit.past_surgeries === "No" ? (
                                                                         <span>No</span>
                                                                     ) : (
-                                                                        <a href={`http://localhost:9000/${visit.past_surgeries}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20 mt-3">
+                                                                        <a href={`http://13.233.162.230:9000/${visit.past_surgeries}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20 mt-3">
                                                                             <i className="bi bi-file-arrow-down-fill"></i>
                                                                         </a>
                                                                     )}
                                                                 </p>
                                                                 <p>
                                                                     Test Results:
-                                                                    <a href={`http://localhost:9000/${visit.test_result}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20 mt-3">
+                                                                    <a href={`http://13.233.162.230:9000/${visit.test_result}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20 mt-3">
                                                                         <i className="bi bi-file-arrow-down-fill"></i>
                                                                     </a>
                                                                 </p>
@@ -542,14 +542,14 @@ function ChildProfile() {
                                                                     {visit.past_surgeries === "No" ? (
                                                                         <span>No</span>
                                                                     ) : (
-                                                                        <a href={`http://localhost:9000/${visit.past_surgeries}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20 mt-3">
+                                                                        <a href={`http://13.233.162.230:9000/${visit.past_surgeries}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20 mt-3">
                                                                             <i className="bi bi-file-arrow-down-fill"></i>
                                                                         </a>
                                                                     )}
                                                                 </p>
                                                                 <p>
                                                                     Test Results:
-                                                                    <a href={`http://localhost:9000/${visit.test_result}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20 mt-3">
+                                                                    <a href={`http://13.233.162.230:9000/${visit.test_result}`} target="_blank" rel="noopener noreferrer" className="btn btn-success mx-2 w-20 mt-3">
                                                                         <i className="bi bi-file-arrow-down-fill"></i>
                                                                     </a>
                                                                 </p>

@@ -31,7 +31,7 @@ function ParentTherapyBooking() {
 
     useEffect(() => {
         // console.log("Fetching data...");
-        axios.get("http://localhost:9000/doctorslist")
+        axios.get("http://13.233.162.230:9000/doctorslist")
             .then((response) => {
                 // Filter the doctors based on the desired specializations
                 const filteredDoctors = response.data.filter((doctor) => {
@@ -69,7 +69,7 @@ function ParentTherapyBooking() {
 
     useEffect(() => {
         if (doctorid) { // Check if doctorid is truthy
-            axios.get(`http://localhost:9000/doctorslist/${doctorid}`).then((response) => {
+            axios.get(`http://13.233.162.230:9000/doctorslist/${doctorid}`).then((response) => {
                 const { doctorDetails, leaveDays } = response.data;
                 setSpecialization(doctorDetails.specialization);
                 setHospital(doctorDetails.hospital);
@@ -113,7 +113,7 @@ function ParentTherapyBooking() {
         try {
             setSubmitClicked(true);
             // Send your request to the backend and handle the response
-            const response = await axios.post("http://localhost:9000/therapyBooking", {
+            const response = await axios.post("http://13.233.162.230:9000/therapyBooking", {
                 selectedDate, time, parent_user_id, doctorid 
             });
     

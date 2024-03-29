@@ -15,7 +15,7 @@ function TherapyBookingBilling(props) {
     const handlePayment = async () => {
 
         try {
-            const initiatePaymentResponse = await axios.post("http://localhost:9000/initiate-payment", {
+            const initiatePaymentResponse = await axios.post("http://13.233.162.230:9000/initiate-payment", {
                 amount: totalBillAmount,
                 date: new Date().toISOString(), // Pass the desired date
             });
@@ -33,7 +33,7 @@ function TherapyBookingBilling(props) {
                 handler: async (response) => {
                     try {
                         // Send the payment response to your backend for verification
-                        const paymentResponse = await axios.post("http://localhost:9000/verify-payment", {
+                        const paymentResponse = await axios.post("http://13.233.162.230:9000/verify-payment", {
                             razorpay_order_id: response.razorpay_order_id,
                             amount: totalBillAmount,
                             date: new Date().toISOString(),
@@ -89,7 +89,7 @@ function TherapyBookingBilling(props) {
                                 const confirmed = window.confirm("Are you sure you want to cancel this appointment?");
                                 if (confirmed) {
                                     // Make an API request to cancel the appointment
-                                    const response = await axios.delete(`http://localhost:9000/cancelTherappyappointment/${doctorId}/${parentUserId}/${selectedDate}`);
+                                    const response = await axios.delete(`http://13.233.162.230:9000/cancelTherappyappointment/${doctorId}/${parentUserId}/${selectedDate}`);
                                     if (response.status === 200) {
                                         // Update the UI or handle success as needed
                                         console.log("Appointment cancelled successfully");

@@ -71,7 +71,7 @@ function ChildDoctorView() {
 
     const fetchDoctors = async () => {
         try {
-            const response = await fetch(`http://localhost:9000/ChildDoctorList`);
+            const response = await fetch(`http://13.233.162.230:9000/ChildDoctorList`);
             if (response.ok) {
                 const data = await response.json();
                 setDoctors(data);
@@ -87,7 +87,7 @@ function ChildDoctorView() {
     const fetchTodaysAppointments = async () => {
         try {
             if (userRole === 'Child') { // Assuming 'child' is the role you want to check
-                const response = await axios.get(`http://localhost:9000/ChildTodaysAppointments?user_id=${child_user_id}`);
+                const response = await axios.get(`http://13.233.162.230:9000/ChildTodaysAppointments?user_id=${child_user_id}`);
                 if (response.status === 200) {
                     const data = response.data;
                     setTodaysAppointments(data);
@@ -97,7 +97,7 @@ function ChildDoctorView() {
             } else if (userRole === 'Parent') { // You can add more conditions for different roles
                 // Make another Axios request for the parent role
                 const currentDate = format(new Date(), "yyyy-MM-dd");
-                const response = await axios.get(`http://localhost:9000/ParentViewAppointments?parent_user_id=${child_user_id}&date=${currentDate}`);
+                const response = await axios.get(`http://13.233.162.230:9000/ParentViewAppointments?parent_user_id=${child_user_id}&date=${currentDate}`);
                 // Process the parentResponse data and update state as needed
                 const data = response.data;
                 setTodaysAppointments(data);
@@ -109,7 +109,7 @@ function ChildDoctorView() {
     //console.log(todaysAppointments);
     const fetchDoctorDetails = async (doctorId) => {
         try {
-            const response = await axios.get(`http://localhost:9000/editdoctorslist/${doctorId}`);
+            const response = await axios.get(`http://13.233.162.230:9000/editdoctorslist/${doctorId}`);
             if (response.status === 200) {
                 return response.data;
             } else {
@@ -334,7 +334,7 @@ function ChildDoctorView() {
                                                                                     const confirmed = window.confirm("Are you sure you want to cancel this appointment?");
                                                                                     if (confirmed) {
                                                                                         // Make an API request to cancel the appointment
-                                                                                        const response = await axios.delete(`http://localhost:9000/cancelappointment/${appointment.doctor_id}/${appointment.parent_id}/${appointment.formatted_date}`);
+                                                                                        const response = await axios.delete(`http://13.233.162.230:9000/cancelappointment/${appointment.doctor_id}/${appointment.parent_id}/${appointment.formatted_date}`);
                                                                                         if (response.status === 200) {
                                                                                             // Update the UI or handle success as needed
                                                                                             console.log("Appointment cancelled successfully");

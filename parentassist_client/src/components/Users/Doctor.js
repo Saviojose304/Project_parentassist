@@ -67,7 +67,7 @@ function Doctor() {
     const fetchParents = async () => {
         try {
             // Fetch parent data from your backend API
-            const response = await fetch(`http://localhost:9000/DoctorViewParents?userId=${doctor_user_id}`);
+            const response = await fetch(`http://13.233.162.230:9000/DoctorViewParents?userId=${doctor_user_id}`);
             if (response.ok) {
                 const data = await response.json();
                 setParents(data); // Update the parents state with the fetched data
@@ -85,7 +85,7 @@ function Doctor() {
             const currentDate = format(new Date(), "yyyy-MM-dd");
             const todaytime = new Date().toLocaleTimeString('en-US', { hour12: false });
             // Fetch today's appointments for the current doctor from your backend API
-            const response = await fetch(`http://localhost:9000/DoctorViewAppointments?userId=${doctor_user_id}&date=${currentDate}`);
+            const response = await fetch(`http://13.233.162.230:9000/DoctorViewAppointments?userId=${doctor_user_id}&date=${currentDate}`);
             if (response.ok) {
                 const data = await response.json();
 
@@ -162,7 +162,7 @@ function Doctor() {
         setSubmitClicked(true);
 
         try {
-            const response = await fetch('http://localhost:9000/saveLeaveDays', {
+            const response = await fetch('http://13.233.162.230:9000/saveLeaveDays', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

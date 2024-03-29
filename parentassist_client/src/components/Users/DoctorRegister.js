@@ -135,7 +135,7 @@ function DoctorRegister() {
         setSubmitClicked(true);
 
         try {
-            const response = await axios.post('http://localhost:9000/doctor-register', { name, email, specialization, hospital, phone, user_child_id });
+            const response = await axios.post('http://13.233.162.230:9000/doctor-register', { name, email, specialization, hospital, phone, user_child_id });
             if (response.status === 200) {
                 setAlertInfo({ variant: 'success', message: 'Registration successful. Notification Email Sent', show: true });
             }

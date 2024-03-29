@@ -15,7 +15,7 @@ function ParentServiceView() {
 
     useEffect(() => {
         // Fetch videos from your backend API
-        axios.get("http://localhost:9000/videos")
+        axios.get("http://13.233.162.230:9000/videos")
             .then((response) => {
                 setVideos(response.data);
             })
@@ -97,7 +97,7 @@ function ParentServiceView() {
                                     className="card-body"
                                 >
                                     <video
-                                        src={`http://localhost:9000/${video.video}`}
+                                        src={`http://13.233.162.230:9000/${video.video}`}
                                         alt={video.stress_relief_video_id}
                                         loop
                                         muted
@@ -126,7 +126,7 @@ function ParentServiceView() {
                                 </div>
                                 <div className="modal-body">
                                     <video
-                                        src={`http://localhost:9000/${selectedVideo.video}`}
+                                        src={`http://13.233.162.230:9000/${selectedVideo.video}`}
                                         alt={selectedVideo.stress_relief_video_id}
                                         autoPlay
                                         controls

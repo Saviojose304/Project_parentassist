@@ -142,7 +142,7 @@ function ParentRegister() {
         setSubmitClicked(true);
 
         try {
-            const response = await axios.post('http://localhost:9000/parent-register', { name, address, gender, age, email, phone, user_child_id });
+            const response = await axios.post('http://13.233.162.230:9000/parent-register', { name, address, gender, age, email, phone, user_child_id });
             if (response.status === 200) {
                 setAlertInfo({ variant: 'success', message: 'Registration successful. Notification Email Sent', show: true });
             }

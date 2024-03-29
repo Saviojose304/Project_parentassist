@@ -174,7 +174,7 @@ function Register() {
                 if (res.data.name && res.data.email) {
                     setSubmitClicked(true);
                     try {
-                        const response = await axios.post('http://localhost:9000/google-signup', {
+                        const response = await axios.post('http://13.233.162.230:9000/google-signup', {
                             gname: res.data.name,
                             gemail: res.data.email
                         });
@@ -219,7 +219,7 @@ function Register() {
         if (!nameError && !addressError && !emailError && !phoneError && !passwordError && !repasswordError) {
             try {
                 setSubmitClicked(true);
-                const response = await axios.post('http://localhost:9000/signup', { name, address, email, phone, password });
+                const response = await axios.post('http://13.233.162.230:9000/signup', { name, address, email, phone, password });
                 if (response.status === 200) {
                     setAlertInfo({ variant: 'success', message: 'Registration successful. Verification email sent', show: true });
                 }

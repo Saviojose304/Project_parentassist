@@ -32,7 +32,7 @@ function Requsetservice({closeModal}) {
 
         const fetchData = async () => {
             try {
-                const response = await axios.get(`http://localhost:9000/distinct-Service`);
+                const response = await axios.get(`http://13.233.162.230:9000/distinct-Service`);
                 setServiceList(response.data);
             } catch (error) {
                 console.error('Error fetching service list:', error);
@@ -152,7 +152,7 @@ function Requsetservice({closeModal}) {
             }
             try {
                 // Assuming you have a backend API endpoint to handle this request
-                const backendEndpoint = 'http://localhost:9000/requestService';
+                const backendEndpoint = 'http://13.233.162.230:9000/requestService';
 
 
                 const requestBody = {

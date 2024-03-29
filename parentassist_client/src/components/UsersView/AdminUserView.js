@@ -35,7 +35,7 @@ function AdminUserView() {
 
     const fetchUserDetails = async () => {
         try {
-            const response = await axios.get(`http://localhost:9000/users/${user_id}`);
+            const response = await axios.get(`http://13.233.162.230:9000/users/${user_id}`);
             setUserDetails(response.data);
             console.log(response);
         } catch (error) {
@@ -43,7 +43,7 @@ function AdminUserView() {
         }
 
         try {
-            const responseSrvc = await axios.get(`http://localhost:9000/srvcpayment/${user_id}`);
+            const responseSrvc = await axios.get(`http://13.233.162.230:9000/srvcpayment/${user_id}`);
             setCountPay(responseSrvc.data);
         } catch (error) {
             console.error('Error fetching user details: ', error);
@@ -125,7 +125,7 @@ function AdminUserView() {
                                     {userDetails.role === 'SRVCPRVDR' && (
                                         <>
                                             <p className="card-text">Adhar Card Details:
-                                                <a href={`http://localhost:9000/${userDetails.adhar_card}`} target="_blank" rel="noopener noreferrer" className="btn btn-danger mx-2 w-20  mt-3">
+                                                <a href={`http://13.233.162.230:9000//${userDetails.adhar_card}`} target="_blank" rel="noopener noreferrer" className="btn btn-danger mx-2 w-20  mt-3">
                                                     <i class="bi bi-file-arrow-down-fill"></i>
                                                 </a>
                                             </p>

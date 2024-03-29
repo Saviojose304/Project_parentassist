@@ -98,7 +98,7 @@ function Login() {
                     setSubmitClicked(true);
 
                     try {
-                        const response = await axios.post('http://localhost:9000/google-signin', {
+                        const response = await axios.post('http://13.233.162.230:9000/google-signin', {
                             gname: res.data.name,
                             gemail: res.data.email
                         });
@@ -161,7 +161,7 @@ function Login() {
         if (!emailError && !passwordError) {
             try {
                 setSubmitClicked(true);
-                const response = await axios.post('http://localhost:9000/login', { email, password });
+                const response = await axios.post('http://13.233.162.230:9000/login', { email, password });
 
                 
 
@@ -215,7 +215,7 @@ function Login() {
         setSubmitClicked(true);
 
         try {
-            const response = await axios.post('http://localhost:9000/forgot-password', { email });
+            const response = await axios.post('http://13.233.162.230:9000/forgot-password', { email });
             if (response.status === 200) {
                 setAlertInfo({ variant: 'success', message: 'Verification email sent', show: true });
             }

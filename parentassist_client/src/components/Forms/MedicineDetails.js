@@ -10,7 +10,7 @@ function MedicineDetails(props) {
 
     const fetchMedicineNames = async () => {
         try {
-            const response = await axios.get('http://localhost:9000/medicineNames');
+            const response = await axios.get('http://13.233.162.230:9000/medicineNames');
             if (response.status === 200) {
                 const data = response.data; // Assuming the response is an array of objects with medicine_id and name
                 setMedicineOptions(data);
@@ -53,7 +53,7 @@ function MedicineDetails(props) {
 
     const checkDuplicateMedicineSelection = async (medicineId) => {
         try {
-            const response = await axios.get('http://localhost:9000/checkDuplicateMedicineSelection', {
+            const response = await axios.get('http://13.233.162.230:9000/checkDuplicateMedicineSelection', {
                 params: {
                     parent_id: parentId,
                     medicine_id: medicineId,
