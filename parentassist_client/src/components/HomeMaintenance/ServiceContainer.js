@@ -22,7 +22,7 @@ function ServiceContainer({ latitude, longitude }) {
     useEffect(() => {
         const fetchServices = async () => {
             try {
-                const response = await fetch(`http://13.233.162.230:9000/servicesperlocation?latitude=${latitude}&longitude=${longitude}`);
+                const response = await fetch(`https://13.233.162.230:9000/servicesperlocation?latitude=${latitude}&longitude=${longitude}`);
                 const data = await response.json();
                 console.log(data);
                 setServices(data);
