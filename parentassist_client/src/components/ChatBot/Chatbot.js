@@ -88,7 +88,7 @@ function ChatBot({ onClose }) {
             console.log(convertedInput);
 
             try {
-                const response = await axios.post('/chatBotMessages', { message: convertedInput });
+                const response = await axios.post('http://13.233.162.230:9000/chatBotMessages', { message: convertedInput });
 
                 if (response.data.doctorData) {
                     // Format doctor data as a message
